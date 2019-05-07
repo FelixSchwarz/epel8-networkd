@@ -13,7 +13,7 @@
 Name:           systemd
 Url:            http://www.freedesktop.org/wiki/Software/systemd
 Version:        239
-Release:        13%{?dist}
+Release:        13%{?dist}.3
 # For a breakdown of the licensing, see README
 License:        LGPLv2+ and MIT and GPLv2+
 Summary:        System and Service Manager
@@ -140,6 +140,10 @@ Patch0087: 0087-test-replace-echo-with-socat.patch
 Patch0088: 0088-test-network-ignore-tunnel-devices-automatically-add.patch
 Patch0089: 0089-rules-add-elevator-kernel-command-line-parameter.patch
 Patch0090: 0090-rules-add-the-rule-that-adds-elevator-kernel-command.patch
+Patch0091: 0091-bus-socket-Fix-line_begins-to-accept-word-matching-f.patch
+Patch0092: 0092-Refuse-dbus-message-paths-longer-than-BUS_PATH_SIZE_.patch
+Patch0093: 0093-Allocate-temporary-strings-to-hold-dbus-paths-on-the.patch
+Patch0094: 0094-sd-bus-if-we-receive-an-invalid-dbus-message-ignore-.patch
 
 
 %ifarch %{ix86} x86_64 aarch64
@@ -759,6 +763,17 @@ fi
 %files tests -f .file-list-tests
 
 %changelog
+* Tue Apr 09 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-13.3
+- rebuilt
+
+* Mon Apr 08 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-13.2
+- Refuse dbus message paths longer than BUS_PATH_SIZE_MAX limit. (#1678641)
+- Allocate temporary strings to hold dbus paths on the heap (#1678641)
+- sd-bus: if we receive an invalid dbus message, ignore and proceeed (#1678641)
+
+* Thu Mar 28 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-13.1
+- bus-socket: Fix line_begins() to accept word matching full string (#1692991)
+
 * Tue Feb 26 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-13
 - rules: add the rule that adds elevator= kernel command line parameter (#1670126)
 
