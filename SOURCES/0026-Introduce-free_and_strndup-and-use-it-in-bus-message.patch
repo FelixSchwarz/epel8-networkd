@@ -1,0 +1,279 @@
+From 26de3af817b0c5746cb61b798ae8e138e01ea17c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Mon, 9 Jul 2018 07:03:01 +0200
+Subject: [PATCH] Introduce free_and_strndup and use it in bus-message.c
+
+v2: fix error in free_and_strndup()
+
+When the orignal and copied message were the same, but shorter than specified
+length l, memory read past the end of the buffer would be performed. A test
+case is included: a string that had an embedded NUL ("q\0") is used to replace
+"q".
+
+v3: Fix one more bug in free_and_strndup and add tests.
+
+v4: Some style fixed based on review, one more use of free_and_replace, and
+make the tests more comprehensive.
+
+(cherry picked from commit 7f546026abbdc56c453a577e52d57159458c3e9c)
+
+Resolves: #1635428
+---
+ src/basic/string-util.c                       |  28 +++++++-
+ src/basic/string-util.h                       |   1 +
+ src/libsystemd/sd-bus/bus-message.c           |  34 ++++------
+ src/test/test-string-util.c                   |  62 ++++++++++++++++++
+ ...h-b88ad9ecf4aacf4a0caca5b5543953265367f084 | Bin 0 -> 32 bytes
+ 5 files changed, 103 insertions(+), 22 deletions(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-b88ad9ecf4aacf4a0caca5b5543953265367f084
+
+diff --git a/src/basic/string-util.c b/src/basic/string-util.c
+index 0a4068349..dfa739996 100644
+--- a/src/basic/string-util.c
++++ b/src/basic/string-util.c
+@@ -1004,7 +1004,7 @@ int free_and_strdup(char **p, const char *s) {
+ 
+         assert(p);
+ 
+-        /* Replaces a string pointer with an strdup()ed new string,
++        /* Replaces a string pointer with a strdup()ed new string,
+          * possibly freeing the old one. */
+ 
+         if (streq_ptr(*p, s))
+@@ -1023,6 +1023,32 @@ int free_and_strdup(char **p, const char *s) {
+         return 1;
+ }
+ 
++int free_and_strndup(char **p, const char *s, size_t l) {
++        char *t;
++
++        assert(p);
++        assert(s || l == 0);
++
++        /* Replaces a string pointer with a strndup()ed new string,
++         * freeing the old one. */
++
++        if (!*p && !s)
++                return 0;
++
++        if (*p && s && strneq(*p, s, l) && (l > strlen(*p) || (*p)[l] == '\0'))
++                return 0;
++
++        if (s) {
++                t = strndup(s, l);
++                if (!t)
++                        return -ENOMEM;
++        } else
++                t = NULL;
++
++        free_and_replace(*p, t);
++        return 1;
++}
++
+ #if !HAVE_EXPLICIT_BZERO
+ /*
+  * Pointer to memset is volatile so that compiler must de-reference
+diff --git a/src/basic/string-util.h b/src/basic/string-util.h
+index c0cc4e78d..96a9260f9 100644
+--- a/src/basic/string-util.h
++++ b/src/basic/string-util.h
+@@ -176,6 +176,7 @@ char *strrep(const char *s, unsigned n);
+ int split_pair(const char *s, const char *sep, char **l, char **r);
+ 
+ int free_and_strdup(char **p, const char *s);
++int free_and_strndup(char **p, const char *s, size_t l);
+ 
+ /* Normal memmem() requires haystack to be nonnull, which is annoying for zero-length buffers */
+ static inline void *memmem_safe(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen) {
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 381034f5f..7c8bad2bd 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -4175,20 +4175,19 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+ 
+                 if (contents) {
+                         size_t l;
+-                        char *sig;
+ 
+                         r = signature_element_length(c->signature+c->index+1, &l);
+                         if (r < 0)
+                                 return r;
+ 
+-                        assert(l >= 1);
++                        /* signature_element_length does verification internally */
+ 
+-                        sig = strndup(c->signature + c->index + 1, l);
+-                        if (!sig)
++                        assert(l >= 1);
++                        if (free_and_strndup(&c->peeked_signature,
++                                             c->signature + c->index + 1, l) < 0)
+                                 return -ENOMEM;
+ 
+-                        free(c->peeked_signature);
+-                        *contents = c->peeked_signature = sig;
++                        *contents = c->peeked_signature;
+                 }
+ 
+                 if (type)
+@@ -4201,19 +4200,17 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+ 
+                 if (contents) {
+                         size_t l;
+-                        char *sig;
+ 
+                         r = signature_element_length(c->signature+c->index, &l);
+                         if (r < 0)
+                                 return r;
+ 
+                         assert(l >= 2);
+-                        sig = strndup(c->signature + c->index + 1, l - 2);
+-                        if (!sig)
++                        if (free_and_strndup(&c->peeked_signature,
++                                             c->signature + c->index + 1, l - 2) < 0)
+                                 return -ENOMEM;
+ 
+-                        free(c->peeked_signature);
+-                        *contents = c->peeked_signature = sig;
++                        *contents = c->peeked_signature;
+                 }
+ 
+                 if (type)
+@@ -4253,9 +4250,8 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+                                 if (k > c->item_size)
+                                         return -EBADMSG;
+ 
+-                                free(c->peeked_signature);
+-                                c->peeked_signature = strndup((char*) q + 1, k - 1);
+-                                if (!c->peeked_signature)
++                                if (free_and_strndup(&c->peeked_signature,
++                                                     (char*) q + 1, k - 1) < 0)
+                                         return -ENOMEM;
+ 
+                                 if (!signature_is_valid(c->peeked_signature, true))
+@@ -5085,25 +5081,21 @@ int bus_message_parse_fields(sd_bus_message *m) {
+ 
+                         if (*p == 0) {
+                                 size_t l;
+-                                char *c;
+ 
+                                 /* We found the beginning of the signature
+                                  * string, yay! We require the body to be a
+                                  * structure, so verify it and then strip the
+                                  * opening/closing brackets. */
+ 
+-                                l = ((char*) m->footer + m->footer_accessible) - p - (1 + sz);
++                                l = (char*) m->footer + m->footer_accessible - p - (1 + sz);
+                                 if (l < 2 ||
+                                     p[1] != SD_BUS_TYPE_STRUCT_BEGIN ||
+                                     p[1 + l - 1] != SD_BUS_TYPE_STRUCT_END)
+                                         return -EBADMSG;
+ 
+-                                c = strndup(p + 1 + 1, l - 2);
+-                                if (!c)
++                                if (free_and_strndup(&m->root_container.signature,
++                                                     p + 1 + 1, l - 2) < 0)
+                                         return -ENOMEM;
+-
+-                                free(m->root_container.signature);
+-                                m->root_container.signature = c;
+                                 break;
+                         }
+ 
+diff --git a/src/test/test-string-util.c b/src/test/test-string-util.c
+index 3e72ce2c0..43a6b14c3 100644
+--- a/src/test/test-string-util.c
++++ b/src/test/test-string-util.c
+@@ -5,6 +5,7 @@
+ #include "macro.h"
+ #include "string-util.h"
+ #include "strv.h"
++#include "tests.h"
+ #include "utf8.h"
+ 
+ static void test_string_erase(void) {
+@@ -30,6 +31,64 @@ static void test_string_erase(void) {
+         assert_se(x[9] == '\0');
+ }
+ 
++static void test_free_and_strndup_one(char **t, const char *src, size_t l, const char *expected, bool change) {
++        int r;
++
++        log_debug("%s: \"%s\", \"%s\", %zd (expect \"%s\", %s)",
++                  __func__, strnull(*t), strnull(src), l, strnull(expected), yes_no(change));
++
++        r = free_and_strndup(t, src, l);
++        assert_se(streq_ptr(*t, expected));
++        assert_se(r == change); /* check that change occurs only when necessary */
++}
++
++static void test_free_and_strndup(void) {
++        static const struct test_case {
++                const char *src;
++                size_t len;
++                const char *expected;
++        } cases[] = {
++                     {"abc", 0, ""},
++                     {"abc", 0, ""},
++                     {"abc", 1, "a"},
++                     {"abc", 2, "ab"},
++                     {"abc", 3, "abc"},
++                     {"abc", 4, "abc"},
++                     {"abc", 5, "abc"},
++                     {"abc", 5, "abc"},
++                     {"abc", 4, "abc"},
++                     {"abc", 3, "abc"},
++                     {"abc", 2, "ab"},
++                     {"abc", 1, "a"},
++                     {"abc", 0, ""},
++
++                     {"", 0, ""},
++                     {"", 1, ""},
++                     {"", 2, ""},
++                     {"", 0, ""},
++                     {"", 1, ""},
++                     {"", 2, ""},
++                     {"", 2, ""},
++                     {"", 1, ""},
++                     {"", 0, ""},
++
++                     {NULL, 0, NULL},
++
++                     {"foo", 3, "foo"},
++                     {"foobar", 6, "foobar"},
++        };
++
++        _cleanup_free_ char *t = NULL;
++        const char *prev_expected = t;
++
++        for (unsigned i = 0; i < ELEMENTSOF(cases); i++) {
++                test_free_and_strndup_one(&t,
++                                          cases[i].src, cases[i].len, cases[i].expected,
++                                          !streq_ptr(cases[i].expected, prev_expected));
++                prev_expected = t;
++        }
++}
++
+ static void test_ascii_strcasecmp_n(void) {
+ 
+         assert_se(ascii_strcasecmp_n("", "", 0) == 0);
+@@ -497,7 +556,10 @@ static void test_memory_startswith(void) {
+ }
+ 
+ int main(int argc, char *argv[]) {
++        test_setup_logging(LOG_DEBUG);
++
+         test_string_erase();
++        test_free_and_strndup();
+         test_ascii_strcasecmp_n();
+         test_ascii_strcasecmp_nn();
+         test_cellescape();
+diff --git a/test/fuzz/fuzz-bus-message/crash-b88ad9ecf4aacf4a0caca5b5543953265367f084 b/test/fuzz/fuzz-bus-message/crash-b88ad9ecf4aacf4a0caca5b5543953265367f084
+new file mode 100644
+index 0000000000000000000000000000000000000000..52469650b5498a45d5d95bd9d933c989cfb47ca7
+GIT binary patch
+literal 32
+ccmd1#|DTBg0(2Mzp)7_%AVVXuuuM|`09r!?!~g&Q
+
+literal 0
+HcmV?d00001
+

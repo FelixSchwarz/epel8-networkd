@@ -1,0 +1,29 @@
+From ebdb96247433d920b391672e019da9402aabd351 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Wed, 10 Oct 2018 13:56:54 +0200
+Subject: [PATCH] journal-file: avoid calling ftruncate with invalid fd
+
+This can happen if journal_file_close is called from the failure
+handling code of journal_file_open before f->fd was established.
+
+(cherry picked from commit c52368509f48e556be5a4c7a171361b656a25e02)
+
+Resolves: #1602706
+---
+ src/journal/journal-file.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
+index 62e7f68a1..efc3ee052 100644
+--- a/src/journal/journal-file.c
++++ b/src/journal/journal-file.c
+@@ -1846,6 +1846,9 @@ static int journal_file_append_entry_internal(
+ void journal_file_post_change(JournalFile *f) {
+         assert(f);
+ 
++        if (f->fd < 0)
++                return;
++
+         /* inotify() does not receive IN_MODIFY events from file
+          * accesses done via mmap(). After each access we hence
+          * trigger IN_MODIFY by truncating the journal file to its

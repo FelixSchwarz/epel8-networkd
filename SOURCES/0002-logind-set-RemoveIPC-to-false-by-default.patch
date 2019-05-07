@@ -1,0 +1,50 @@
+From 0b3833d6c3b751c6dfb40eeb2ef852984c58f546 Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Wed, 1 Aug 2018 10:58:28 +0200
+Subject: [PATCH] logind: set RemoveIPC to false by default
+
+Resolves: #1523233
+---
+ man/logind.conf.xml      | 2 +-
+ src/login/logind-core.c  | 2 +-
+ src/login/logind.conf.in | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/man/logind.conf.xml b/man/logind.conf.xml
+index 9e88764c6..7d7e869a2 100644
+--- a/man/logind.conf.xml
++++ b/man/logind.conf.xml
+@@ -319,7 +319,7 @@
+         user fully logs out. Takes a boolean argument. If enabled, the user may not consume IPC resources after the
+         last of the user's sessions terminated. This covers System V semaphores, shared memory and message queues, as
+         well as POSIX shared memory and message queues. Note that IPC objects of the root user and other system users
+-        are excluded from the effect of this setting. Defaults to <literal>yes</literal>.</para></listitem>
++        are excluded from the effect of this setting. Defaults to <literal>no</literal>.</para></listitem>
+       </varlistentry>
+ 
+     </variablelist>
+diff --git a/src/login/logind-core.c b/src/login/logind-core.c
+index dbae4bf5a..511e3acf8 100644
+--- a/src/login/logind-core.c
++++ b/src/login/logind-core.c
+@@ -25,7 +25,7 @@ void manager_reset_config(Manager *m) {
+ 
+         m->n_autovts = 6;
+         m->reserve_vt = 6;
+-        m->remove_ipc = true;
++        m->remove_ipc = false;
+         m->inhibit_delay_max = 5 * USEC_PER_SEC;
+         m->handle_power_key = HANDLE_POWEROFF;
+         m->handle_suspend_key = HANDLE_SUSPEND;
+diff --git a/src/login/logind.conf.in b/src/login/logind.conf.in
+index 1029e29bc..c7346f981 100644
+--- a/src/login/logind.conf.in
++++ b/src/login/logind.conf.in
+@@ -32,6 +32,6 @@
+ #IdleAction=ignore
+ #IdleActionSec=30min
+ #RuntimeDirectorySize=10%
+-#RemoveIPC=yes
++#RemoveIPC=no
+ #InhibitorsMax=8192
+ #SessionsMax=8192

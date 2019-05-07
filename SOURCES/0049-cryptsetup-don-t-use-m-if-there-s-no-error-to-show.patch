@@ -1,0 +1,33 @@
+From 95bfd1d2f52698604e44c17dba2082f61b5f8eab Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Fri, 5 Oct 2018 22:37:37 +0200
+Subject: [PATCH] cryptsetup: don't use %m if there's no error to show
+
+We are not the ones receiving an error here, but the ones generating it,
+hence we shouldn't show it with %m, that's just confusing, as it
+suggests we received an error from some other call.
+
+(cherry-picked from commit 2abe64666e544be6499f870618185f8819b4c152)
+
+Related: #1656869
+---
+ src/cryptsetup/cryptsetup-generator.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/cryptsetup/cryptsetup-generator.c b/src/cryptsetup/cryptsetup-generator.c
+index 8c7a76e78..52391bd18 100644
+--- a/src/cryptsetup/cryptsetup-generator.c
++++ b/src/cryptsetup/cryptsetup-generator.c
+@@ -152,8 +152,10 @@ static int create_disk(
+                         return log_oom();
+         }
+ 
+-        if (keydev && !password)
+-                return log_error_errno(-EINVAL, "Keydev is specified, but path to the password file is missing: %m");
++        if (keydev && !password) {
++                log_error("Key device is specified, but path to the password file is missing.");
++                return -EINVAL;
++        }
+ 
+         r = generator_open_unit_file(arg_dest, NULL, n, &f);
+         if (r < 0)

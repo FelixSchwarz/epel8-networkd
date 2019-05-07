@@ -1,0 +1,54 @@
+From 7c52627446e32df64ad4cd3ac56ad515d0233cea Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Fri, 14 Dec 2018 15:17:27 +0100
+Subject: [PATCH] journald: correctly attribute log messages also with
+ cgroupsv1
+
+With cgroupsv1 a zombie process is migrated to root cgroup in all
+hierarchies. This was changed for unified hierarchy and /proc/PID/cgroup
+reports cgroup to which process belonged before it exited.
+
+Be more suspicious about cgroup path reported by the kernel and use
+unit_id provided by the log client if the kernel reports that process is
+running in the root cgroup.
+
+Users tend to care the most about 'log->unit_id' mapping so systemctl
+status can correctly report last log lines. Also we wouldn't be able to
+infer anything useful from "/" path anyway.
+
+See: https://github.com/torvalds/linux/commit/2e91fa7f6d451e3ea9fec999065d2fd199691f9d
+
+(cherry picked from commit 672773b63a4ebf95242b27e63071b93073ebc1f5)
+
+Resolves: #1658115
+---
+ src/journal/journald-context.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/journal/journald-context.c b/src/journal/journald-context.c
+index 51f79fd80..dba3525ed 100644
+--- a/src/journal/journald-context.c
++++ b/src/journal/journald-context.c
+@@ -13,6 +13,8 @@
+ #include "io-util.h"
+ #include "journal-util.h"
+ #include "journald-context.h"
++#include "parse-util.h"
++#include "path-util.h"
+ #include "process-util.h"
+ #include "procfs-util.h"
+ #include "string-util.h"
+@@ -281,9 +283,11 @@ static int client_context_read_cgroup(Server *s, ClientContext *c, const char *u
+ 
+         /* Try to acquire the current cgroup path */
+         r = cg_pid_get_path_shifted(c->pid, s->cgroup_root, &t);
+-        if (r < 0) {
++        if (r < 0 || empty_or_root(t)) {
+ 
+-                /* If that didn't work, we use the unit ID passed in as fallback, if we have nothing cached yet */
++                /* We use the unit ID passed in as fallback if we have nothing cached yet and cg_pid_get_path_shifted()
++                 * failed or process is running in a root cgroup. Zombie processes are automatically migrated to root cgroup
++                 * on cgroupsv1 and we want to be able to map log messages from them too. */
+                 if (unit_id && !c->unit) {
+                         c->unit = strdup(unit_id);
+                         if (c->unit)

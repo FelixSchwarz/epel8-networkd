@@ -1,0 +1,36 @@
+From fbe394e9166ddfe847dcac0eab0fcbd3c225dc33 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Wed, 10 Oct 2018 09:33:28 +0200
+Subject: [PATCH] firewall-util: add an assert that we're not overwriting a
+ buffer
+
+... like commit f28501279d2c28fdbb31d8273b723e9bf71d3b98 does for
+out_interface.
+
+(cherry picked from commit 0b777d20e9a3868b12372ffce8040d1be063cec7)
+
+Resolves: #1602706
+---
+ src/shared/firewall-util.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/src/shared/firewall-util.c b/src/shared/firewall-util.c
+index eb4f5ff61..cba52fb41 100644
+--- a/src/shared/firewall-util.c
++++ b/src/shared/firewall-util.c
+@@ -50,8 +50,14 @@ static int entry_fill_basics(
+         entry->ip.proto = protocol;
+ 
+         if (in_interface) {
++                size_t l;
++
++                l = strlen(in_interface);
++                assert(l < sizeof entry->ip.iniface);
++                assert(l < sizeof entry->ip.iniface_mask);
++
+                 strcpy(entry->ip.iniface, in_interface);
+-                memset(entry->ip.iniface_mask, 0xFF, strlen(in_interface)+1);
++                memset(entry->ip.iniface_mask, 0xFF, l + 1);
+         }
+         if (source) {
+                 entry->ip.src = source->in;

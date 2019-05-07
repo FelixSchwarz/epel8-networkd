@@ -1,0 +1,38 @@
+From 81df5f597257bd2579246de6182c4949b27396eb Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Tue, 4 Sep 2018 19:51:14 +0200
+Subject: [PATCH] cryptsetup-generator: don't return error if target directory
+ already exists
+
+(cherry-picked from commit 579875bc4a59b917fa32519e3d96d56dc591ad1e)
+
+Related: #1656869
+---
+ src/cryptsetup/cryptsetup-generator.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/cryptsetup/cryptsetup-generator.c b/src/cryptsetup/cryptsetup-generator.c
+index 52391bd18..03c513c26 100644
+--- a/src/cryptsetup/cryptsetup-generator.c
++++ b/src/cryptsetup/cryptsetup-generator.c
+@@ -53,16 +53,16 @@ static int generate_keydev_mount(const char *name, const char *keydev, char **un
+                 return r;
+ 
+         r = mkdir("/run/systemd/cryptsetup", 0700);
+-        if (r < 0)
+-                return r;
++        if (r < 0 && errno != EEXIST)
++                return -errno;
+ 
+         where = strjoin("/run/systemd/cryptsetup/keydev-", name);
+         if (!where)
+                 return -ENOMEM;
+ 
+         r = mkdir(where, 0700);
+-        if (r < 0)
+-                return r;
++        if (r < 0 && errno != EEXIST)
++                return -errno;
+ 
+         r = unit_name_from_path(where, ".mount", &u);
+         if (r < 0)

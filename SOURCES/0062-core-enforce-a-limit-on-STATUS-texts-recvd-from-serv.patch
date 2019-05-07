@@ -1,0 +1,44 @@
+From 6abfec31acae53943896b309db4a09a1cecac9a3 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 17 Oct 2018 18:37:48 +0200
+Subject: [PATCH] core: enforce a limit on STATUS= texts recvd from services
+
+Let's better be safe than sorry, and put a limit on what we receive.
+
+(cherry picked from commit 3eac1bcae9284fb8b18f4b82156c0e85ddb004e5)
+
+Related: CVE-2018-15686
+---
+ src/core/service.c | 8 ++++++--
+ src/core/service.h | 2 ++
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/service.c b/src/core/service.c
+index db1356c41..db1722188 100644
+--- a/src/core/service.c
++++ b/src/core/service.c
+@@ -3549,8 +3549,12 @@ static void service_notify_message(
+                 _cleanup_free_ char *t = NULL;
+ 
+                 if (!isempty(e)) {
+-                        if (!utf8_is_valid(e))
+-                                log_unit_warning(u, "Status message in notification message is not UTF-8 clean.");
++                        /* Note that this size limit check is mostly paranoia: since the datagram size we are willing
++                         * to process is already limited to NOTIFY_BUFFER_MAX, this limit here should never be hit. */
++                        if (strlen(e) > STATUS_TEXT_MAX)
++                                log_unit_warning(u, "Status message overly long (%zu > %u), ignoring.", strlen(e), STATUS_TEXT_MAX);
++                        else if (!utf8_is_valid(e))
++                                log_unit_warning(u, "Status message in notification message is not UTF-8 clean, ignoring.");
+                         else {
+                                 t = strdup(e);
+                                 if (!t)
+diff --git a/src/core/service.h b/src/core/service.h
+index 9c06e9188..a142b09f0 100644
+--- a/src/core/service.h
++++ b/src/core/service.h
+@@ -202,3 +202,5 @@ const char* service_result_to_string(ServiceResult i) _const_;
+ ServiceResult service_result_from_string(const char *s) _pure_;
+ 
+ DEFINE_CAST(SERVICE, Service);
++
++#define STATUS_TEXT_MAX (16U*1024U)

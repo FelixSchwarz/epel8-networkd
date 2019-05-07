@@ -1,0 +1,34 @@
+From ab6a1bdf3519d4344dee4e0225c74fc1198c8a60 Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Mon, 15 Oct 2018 10:54:11 +0000
+Subject: [PATCH] tests: backport test_setup_logging()
+
+Related: #1635428
+---
+ src/shared/tests.c | 6 ++++++
+ src/shared/tests.h | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/src/shared/tests.c b/src/shared/tests.c
+index 6b3df0aa0..b10343650 100644
+--- a/src/shared/tests.c
++++ b/src/shared/tests.c
+@@ -54,3 +54,9 @@ const char* get_testdata_dir(const char *suffix) {
+         strncpy(testdir + strlen(testdir), suffix, sizeof(testdir) - strlen(testdir) - 1);
+         return testdir;
+ }
++
++void test_setup_logging(int level) {
++        log_set_max_level(level);
++        log_parse_environment();
++        log_open();
++}
+diff --git a/src/shared/tests.h b/src/shared/tests.h
+index b88135ed9..cad21169f 100644
+--- a/src/shared/tests.h
++++ b/src/shared/tests.h
+@@ -3,3 +3,4 @@
+ 
+ char* setup_fake_runtime_dir(void);
+ const char* get_testdata_dir(const char *suffix);
++void test_setup_logging(int level);

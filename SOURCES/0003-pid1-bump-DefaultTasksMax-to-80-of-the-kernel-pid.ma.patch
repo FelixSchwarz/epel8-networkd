@@ -1,0 +1,53 @@
+From b924c79720cc2bf2edf75fa3ff43bb4954fccf1f Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Wed, 1 Aug 2018 13:19:39 +0200
+Subject: [PATCH] pid1: bump DefaultTasksMax to 80% of the kernel pid.max value
+
+This should be hopefully high enough even for the very big deployments.
+
+Resolves: #1523236
+---
+ man/systemd-system.conf.xml | 2 +-
+ src/basic/cgroup-util.h     | 2 +-
+ src/core/system.conf.in     | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/man/systemd-system.conf.xml b/man/systemd-system.conf.xml
+index a914ef252..085086200 100644
+--- a/man/systemd-system.conf.xml
++++ b/man/systemd-system.conf.xml
+@@ -339,7 +339,7 @@
+         <listitem><para>Configure the default value for the per-unit <varname>TasksMax=</varname> setting. See
+         <citerefentry><refentrytitle>systemd.resource-control</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+         for details. This setting applies to all unit types that support resource control settings, with the exception
+-        of slice units. Defaults to 15%, which equals 4915 with the kernel's defaults on the host, but might be smaller
++        of slice units. Defaults to 80%, which equals 26214 with the kernel's defaults on the host, but might be smaller
+         in OS containers.</para></listitem>
+       </varlistentry>
+ 
+diff --git a/src/basic/cgroup-util.h b/src/basic/cgroup-util.h
+index 1a28a8163..f10c26ad5 100644
+--- a/src/basic/cgroup-util.h
++++ b/src/basic/cgroup-util.h
+@@ -100,7 +100,7 @@ static inline bool CGROUP_BLKIO_WEIGHT_IS_OK(uint64_t x) {
+ }
+ 
+ /* Default resource limits */
+-#define DEFAULT_TASKS_MAX_PERCENTAGE            15U /* 15% of PIDs, 4915 on default settings */
++#define DEFAULT_TASKS_MAX_PERCENTAGE            80U /* 80% of PIDs, 26214 on default settings */
+ #define DEFAULT_USER_TASKS_MAX_PERCENTAGE       33U /* 33% of PIDs, 10813 on default settings */
+ 
+ typedef enum CGroupUnified {
+diff --git a/src/core/system.conf.in b/src/core/system.conf.in
+index f0a59a79a..653ec6b8c 100644
+--- a/src/core/system.conf.in
++++ b/src/core/system.conf.in
+@@ -45,7 +45,7 @@
+ #DefaultBlockIOAccounting=no
+ #DefaultMemoryAccounting=@MEMORY_ACCOUNTING_DEFAULT@
+ #DefaultTasksAccounting=yes
+-#DefaultTasksMax=15%
++#DefaultTasksMax=80%
+ #DefaultLimitCPU=
+ #DefaultLimitFSIZE=
+ #DefaultLimitDATA=

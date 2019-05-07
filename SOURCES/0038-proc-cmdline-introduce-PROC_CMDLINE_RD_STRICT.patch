@@ -1,0 +1,45 @@
+From 84b15a8a493424efa8c9eaa9a44a23c3c59742bd Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Thu, 25 Oct 2018 16:21:26 +0200
+Subject: [PATCH] proc-cmdline: introduce PROC_CMDLINE_RD_STRICT
+
+Our current set of flags allows an option to be either
+use just in initrd or both in initrd and normal system.
+This new flag is intended to be used in the case where
+you want apply some settings just in initrd or just
+in normal system.
+
+(cherry picked from commit ed58820d7669971762dd887dc117d922c23f2543)
+
+Related: #1643429
+---
+ src/basic/proc-cmdline.c | 3 ++-
+ src/basic/proc-cmdline.h | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/basic/proc-cmdline.c b/src/basic/proc-cmdline.c
+index add481c2a..530ac3746 100644
+--- a/src/basic/proc-cmdline.c
++++ b/src/basic/proc-cmdline.c
+@@ -72,7 +72,8 @@ int proc_cmdline_parse(proc_cmdline_parse_t parse_item, void *data, unsigned fla
+ 
+                         if (flags & PROC_CMDLINE_STRIP_RD_PREFIX)
+                                 key = q;
+-                }
++                } else if (in_initrd() && flags & PROC_CMDLINE_RD_STRICT)
++                        continue;
+ 
+                 value = strchr(key, '=');
+                 if (value)
+diff --git a/src/basic/proc-cmdline.h b/src/basic/proc-cmdline.h
+index 4a9e6e0f6..140200dbf 100644
+--- a/src/basic/proc-cmdline.h
++++ b/src/basic/proc-cmdline.h
+@@ -8,6 +8,7 @@
+ enum {
+         PROC_CMDLINE_STRIP_RD_PREFIX = 1,
+         PROC_CMDLINE_VALUE_OPTIONAL = 2,
++        PROC_CMDLINE_RD_STRICT = 4
+ };
+ 
+ typedef int (*proc_cmdline_parse_t)(const char *key, const char *value, void *data);

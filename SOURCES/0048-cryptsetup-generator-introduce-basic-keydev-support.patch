@@ -1,0 +1,240 @@
+From 0977e6b34fb5f28fc94f1df32261742881fa9bbe Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Thu, 30 Aug 2018 08:45:11 +0000
+Subject: [PATCH] cryptsetup-generator: introduce basic keydev support
+
+Dracut has a support for unlocking encrypted drives with keyfile stored
+on the external drive. This support is included in the generated initrd
+only if systemd module is not included.
+
+When systemd is used in initrd then attachment of encrypted drives is
+handled by systemd-cryptsetup tools. Our generator has support for
+keyfile, however, it didn't support keyfile on the external block
+device (keydev).
+
+This commit introduces basic keydev support. Keydev can be specified per
+luks.uuid on the kernel command line. Keydev is automatically mounted
+during boot and we look for keyfile in the keydev
+mountpoint (i.e. keyfile path is prefixed with the keydev mount point
+path). After crypt device is attached we automatically unmount
+where keyfile resides.
+
+Example:
+        rd.luks.key=70bc876b-f627-4038-9049-3080d79d2165=/key:LABEL=KEYDEV
+
+(cherry-picked from commit 70f5f48eb891b12e969577b464de61e15a2593da)
+
+Resolves: #1656869
+---
+ man/systemd-cryptsetup-generator.xml  |  14 ++++
+ src/cryptsetup/cryptsetup-generator.c | 105 +++++++++++++++++++++++++-
+ 2 files changed, 115 insertions(+), 4 deletions(-)
+
+diff --git a/man/systemd-cryptsetup-generator.xml b/man/systemd-cryptsetup-generator.xml
+index c37ee76b8..e30d69bfe 100644
+--- a/man/systemd-cryptsetup-generator.xml
++++ b/man/systemd-cryptsetup-generator.xml
+@@ -144,6 +144,20 @@
+         to the one specified by <varname>rd.luks.key=</varname> or
+         <varname>luks.key=</varname> of the corresponding UUID, or the
+         password file that was specified without a UUID.</para>
++
++        <para>It is also possible to specify an external device which
++        should be mounted before we attempt to unlock the LUKS device.
++        systemd-cryptsetup will use password file stored on that
++        device. Device containing password file is specified by
++        appending colon and a device identifier to the password file
++        path. For example,
++        <varname>rd.luks.uuid=</varname>b40f1abf-2a53-400a-889a-2eccc27eaa40
++        <varname>rd.luks.key=</varname>b40f1abf-2a53-400a-889a-2eccc27eaa40=/keyfile:LABEL=keydev.
++        Hence, in this case, we will attempt to mount file system
++        residing on the block device with label <literal>keydev</literal>.
++        This syntax is for now only supported on a per-device basis,
++        i.e. you have to specify LUKS device UUID.</para>
++
+         <para><varname>rd.luks.key=</varname>
+         is honored only by initial RAM disk
+         (initrd) while
+diff --git a/src/cryptsetup/cryptsetup-generator.c b/src/cryptsetup/cryptsetup-generator.c
+index f5a81829b..8c7a76e78 100644
+--- a/src/cryptsetup/cryptsetup-generator.c
++++ b/src/cryptsetup/cryptsetup-generator.c
+@@ -24,6 +24,7 @@
+ typedef struct crypto_device {
+         char *uuid;
+         char *keyfile;
++        char *keydev;
+         char *name;
+         char *options;
+         bool create;
+@@ -37,14 +38,71 @@ static Hashmap *arg_disks = NULL;
+ static char *arg_default_options = NULL;
+ static char *arg_default_keyfile = NULL;
+ 
++static int generate_keydev_mount(const char *name, const char *keydev, char **unit, char **mount) {
++        _cleanup_free_ char *u = NULL, *what = NULL, *where = NULL;
++        _cleanup_fclose_ FILE *f = NULL;
++        int r;
++
++        assert(name);
++        assert(keydev);
++        assert(unit);
++        assert(mount);
++
++        r = mkdir_parents("/run/systemd/cryptsetup", 0755);
++        if (r < 0)
++                return r;
++
++        r = mkdir("/run/systemd/cryptsetup", 0700);
++        if (r < 0)
++                return r;
++
++        where = strjoin("/run/systemd/cryptsetup/keydev-", name);
++        if (!where)
++                return -ENOMEM;
++
++        r = mkdir(where, 0700);
++        if (r < 0)
++                return r;
++
++        r = unit_name_from_path(where, ".mount", &u);
++        if (r < 0)
++                return r;
++
++        r = generator_open_unit_file(arg_dest, NULL, u, &f);
++        if (r < 0)
++                return r;
++
++        what = fstab_node_to_udev_node(keydev);
++        if (!what)
++                return -ENOMEM;
++
++        fprintf(f,
++                "[Unit]\n"
++                "DefaultDependencies=no\n\n"
++                "[Mount]\n"
++                "What=%s\n"
++                "Where=%s\n"
++                "Options=ro\n", what, where);
++
++        r = fflush_and_check(f);
++        if (r < 0)
++                return r;
++
++        *unit = TAKE_PTR(u);
++        *mount = TAKE_PTR(where);
++
++        return 0;
++}
++
+ static int create_disk(
+                 const char *name,
+                 const char *device,
++                const char *keydev,
+                 const char *password,
+                 const char *options) {
+ 
+         _cleanup_free_ char *n = NULL, *d = NULL, *u = NULL, *e = NULL,
+-                *filtered = NULL, *u_escaped = NULL, *password_escaped = NULL, *filtered_escaped = NULL, *name_escaped = NULL;
++                *filtered = NULL, *u_escaped = NULL, *password_escaped = NULL, *filtered_escaped = NULL, *name_escaped = NULL, *keydev_mount = NULL;
+         _cleanup_fclose_ FILE *f = NULL;
+         const char *dmname;
+         bool noauto, nofail, tmp, swap, netdev;
+@@ -94,6 +152,9 @@ static int create_disk(
+                         return log_oom();
+         }
+ 
++        if (keydev && !password)
++                return log_error_errno(-EINVAL, "Keydev is specified, but path to the password file is missing: %m");
++
+         r = generator_open_unit_file(arg_dest, NULL, n, &f);
+         if (r < 0)
+                 return r;
+@@ -109,6 +170,20 @@ static int create_disk(
+                 "After=%s\n",
+                 netdev ? "remote-fs-pre.target" : "cryptsetup-pre.target");
+ 
++        if (keydev) {
++                _cleanup_free_ char *unit = NULL, *p = NULL;
++
++                r = generate_keydev_mount(name, keydev, &unit, &keydev_mount);
++                if (r < 0)
++                        return log_error_errno(r, "Failed to generate keydev mount unit: %m");
++
++                p = prefix_root(keydev_mount, password_escaped);
++                if (!p)
++                        return log_oom();
++
++                free_and_replace(password_escaped, p);
++        }
++
+         if (!nofail)
+                 fprintf(f,
+                         "Before=%s\n",
+@@ -186,6 +261,11 @@ static int create_disk(
+                         "ExecStartPost=/sbin/mkswap '/dev/mapper/%s'\n",
+                         name_escaped);
+ 
++        if (keydev)
++                fprintf(f,
++                        "ExecStartPost=" UMOUNT_PATH " %s\n\n",
++                        keydev_mount);
++
+         r = fflush_and_check(f);
+         if (r < 0)
+                 return log_error_errno(r, "Failed to write unit file %s: %m", n);
+@@ -221,6 +301,7 @@ static int create_disk(
+ static void crypt_device_free(crypto_device *d) {
+         free(d->uuid);
+         free(d->keyfile);
++        free(d->keydev);
+         free(d->name);
+         free(d->options);
+         free(d);
+@@ -309,11 +390,27 @@ static int parse_proc_cmdline_item(const char *key, const char *value, void *dat
+ 
+                 r = sscanf(value, "%m[0-9a-fA-F-]=%ms", &uuid, &uuid_value);
+                 if (r == 2) {
++                        char *c;
++                        _cleanup_free_ char *keyfile = NULL, *keydev = NULL;
++
+                         d = get_crypto_device(uuid);
+                         if (!d)
+                                 return log_oom();
+ 
+-                        free_and_replace(d->keyfile, uuid_value);
++                        c = strrchr(uuid_value, ':');
++                        if (!c)
++                                /* No keydev specified */
++                                return free_and_replace(d->keyfile, uuid_value);
++
++                        *c = '\0';
++                        keyfile = strdup(uuid_value);
++                        keydev = strdup(++c);
++
++                        if (!keyfile || !keydev)
++                                return log_oom();
++
++                        free_and_replace(d->keyfile, keyfile);
++                        free_and_replace(d->keydev, keydev);
+                 } else if (free_and_strdup(&arg_default_keyfile, value) < 0)
+                         return log_oom();
+ 
+@@ -394,7 +491,7 @@ static int add_crypttab_devices(void) {
+                         continue;
+                 }
+ 
+-                r = create_disk(name, device, keyfile, (d && d->options) ? d->options : options);
++                r = create_disk(name, device, NULL, keyfile, (d && d->options) ? d->options : options);
+                 if (r < 0)
+                         return r;
+ 
+@@ -434,7 +531,7 @@ static int add_proc_cmdline_devices(void) {
+                 else
+                         options = "timeout=0";
+ 
+-                r = create_disk(d->name, device, d->keyfile ?: arg_default_keyfile, options);
++                r = create_disk(d->name, device, d->keydev, d->keyfile ?: arg_default_keyfile, options);
+                 if (r < 0)
+                         return r;
+         }

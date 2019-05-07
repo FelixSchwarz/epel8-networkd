@@ -1,0 +1,54 @@
+From 9f53d3cded6cf7eccb40c810dfb8fd6e101c7a3b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Wed, 5 Dec 2018 22:45:02 +0100
+Subject: [PATCH] journald: set a limit on the number of fields (1k)
+
+We allocate a iovec entry for each field, so with many short entries,
+our memory usage and processing time can be large, even with a relatively
+small message size. Let's refuse overly long entries.
+
+CVE-2018-16865
+https://bugzilla.redhat.com/show_bug.cgi?id=1653861
+
+What from I can see, the problem is not from an alloca, despite what the CVE
+description says, but from the attack multiplication that comes from creating
+many very small iovecs: (void* + size_t) for each three bytes of input message.
+
+(cherry-picked from commit 052c57f132f04a3cf4148f87561618da1a6908b4)
+
+Resolves: #1664977
+---
+ src/journal/journal-file.h    | 3 +++
+ src/journal/journald-native.c | 5 +++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/src/journal/journal-file.h b/src/journal/journal-file.h
+index c8114ee2d..cd8a48a36 100644
+--- a/src/journal/journal-file.h
++++ b/src/journal/journal-file.h
+@@ -165,6 +165,9 @@ int journal_file_open_reliably(
+  * files without adding too many zeros. */
+ #define OFSfmt "%06"PRIx64
+ 
++/* The maximum number of fields in an entry */
++#define ENTRY_FIELD_COUNT_MAX 1024
++
+ static inline bool VALID_REALTIME(uint64_t u) {
+         /* This considers timestamps until the year 3112 valid. That should be plenty room... */
+         return u > 0 && u < (1ULL << 55);
+diff --git a/src/journal/journald-native.c b/src/journal/journald-native.c
+index 5ff22a10a..951d09205 100644
+--- a/src/journal/journald-native.c
++++ b/src/journal/journald-native.c
+@@ -140,6 +140,11 @@ static int server_process_entry(
+                 }
+ 
+                 /* A property follows */
++                if (n > ENTRY_FIELD_COUNT_MAX) {
++                        log_debug("Received an entry that has more than " STRINGIFY(ENTRY_FIELD_COUNT_MAX) " fields, ignoring entry.");
++                        r = 1;
++                        goto finish;
++                }
+ 
+                 /* n existing properties, 1 new, +1 for _TRANSPORT */
+                 if (!GREEDY_REALLOC(iovec, m,
