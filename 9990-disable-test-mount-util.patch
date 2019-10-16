@@ -1,0 +1,28 @@
+From bcc3111bafc2947f888513975fb13457f3dc254d Mon Sep 17 00:00:00 2001
+From: Felix Schwarz <felix.schwarz@oss.schwarz.eu>
+Date: Wed, 16 Oct 2019 22:28:02 +0200
+Subject: [PATCH] disable "test-mount-util" so test suite can run in
+ unprivileged container
+
+---
+ src/test/meson.build | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/src/test/meson.build b/src/test/meson.build
+index 7da7e3a..bd2c3cd 100644
+--- a/src/test/meson.build
++++ b/src/test/meson.build
+@@ -188,10 +188,6 @@ tests += [
+          [],
+          []],
+ 
+-        [['src/test/test-mount-util.c'],
+-         [],
+-         []],
+-
+         [['src/test/test-exec-util.c'],
+          [],
+          []],
+-- 
+2.23.0
+

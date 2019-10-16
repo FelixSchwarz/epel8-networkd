@@ -146,6 +146,8 @@ Patch0092: 0092-Refuse-dbus-message-paths-longer-than-BUS_PATH_SIZE_.patch
 Patch0093: 0093-Allocate-temporary-strings-to-hold-dbus-paths-on-the.patch
 Patch0094: 0094-sd-bus-if-we-receive-an-invalid-dbus-message-ignore-.patch
 Patch0095: 0095-Revert-core-one-step-back-again-for-nspawn-we-actual.patch
+# disable test to enable building with "systemd-nspawn" (+ COPR)
+Patch9990: 9990-disable-test-mount-util.patch
 
 
 %ifarch %{ix86} x86_64 aarch64
