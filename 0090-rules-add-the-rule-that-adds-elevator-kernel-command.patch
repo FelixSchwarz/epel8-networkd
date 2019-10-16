@@ -1,0 +1,24 @@
+From 09ed23dd20cc4ecb45a50081d3bce1ef830e90b7 Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Tue, 26 Feb 2019 15:22:38 +0100
+Subject: [PATCH] rules: add the rule that adds elevator= kernel command line
+ parameter
+
+rhel-only
+Resolves: #1670126
+---
+ rules/meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rules/meson.build b/rules/meson.build
+index e04a18aca..b6aae596b 100644
+--- a/rules/meson.build
++++ b/rules/meson.build
+@@ -2,6 +2,7 @@
+ 
+ rules = files('''
+         40-redhat.rules
++        40-elevator.rules
+         60-block.rules
+         60-cdrom_id.rules
+         60-drm.rules

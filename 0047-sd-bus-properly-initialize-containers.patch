@@ -1,0 +1,27 @@
+From 220a60a61a91153fd8e49e58884b9b0b904888f6 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Wed, 31 Oct 2018 12:50:19 +0100
+Subject: [PATCH] sd-bus: properly initialize containers
+
+Fixes a SIGSEGV introduced by commit 38a5315a3a6fab745d8c86ff9e486faaf50b28d1.
+The same problem doesn't exist upstream, as the container structure
+there is initialized using a compound literal, which is zeroed out by
+default.
+
+Related: #1635435
+---
+ src/libsystemd/sd-bus/bus-message.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index d55cb1484..780c8c618 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -2004,6 +2004,7 @@ _public_ int sd_bus_message_open_container(
+         w = m->containers + m->n_containers++;
+         w->enclosing = type;
+         w->signature = TAKE_PTR(signature);
++        w->peeked_signature = NULL;
+         w->index = 0;
+         w->array_size = array_size;
+         w->before = before;

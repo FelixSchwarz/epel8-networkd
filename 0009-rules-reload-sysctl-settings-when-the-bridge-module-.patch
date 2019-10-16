@@ -1,0 +1,22 @@
+From 4a7602e27a50828ac8a0eb6b83a1c2c722af652d Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Wed, 13 May 2015 17:11:48 +0200
+Subject: [PATCH] rules: reload sysctl settings when the bridge module is
+ loaded
+
+Related: #1523227
+---
+ rules/40-redhat.rules | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 8231caae9..556a3a3a9 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -5,3 +5,6 @@ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}
+ 
+ # Memory hotadd request
+ SUBSYSTEM=="memory", ACTION=="add", ATTR{state}=="offline", ATTR{state}="online"
++
++# reload sysctl.conf / sysctl.conf.d settings when the bridge module is loaded
++ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/systemd-sysctl --prefix=/proc/sys/net/bridge"

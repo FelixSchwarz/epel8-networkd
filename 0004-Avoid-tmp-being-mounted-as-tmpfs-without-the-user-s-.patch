@@ -1,0 +1,51 @@
+From f58c5ced373c2532b5cc44ba2e0c3a28b41472f2 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Tue, 15 May 2018 09:24:20 +0200
+Subject: [PATCH] Avoid /tmp being mounted as tmpfs without the user's will
+
+Ensure PrivateTmp doesn't require tmpfs through tmp.mount, but rather
+adds an After relationship.
+
+rhel-only
+
+Resolves: #1578772
+---
+ src/core/unit.c    | 12 ++++++------
+ units/basic.target |  3 ++-
+ 2 files changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/src/core/unit.c b/src/core/unit.c
+index 113205bf2..c9f756c9c 100644
+--- a/src/core/unit.c
++++ b/src/core/unit.c
+@@ -982,13 +982,13 @@ int unit_add_exec_dependencies(Unit *u, ExecContext *c) {
+                 return 0;
+ 
+         if (c->private_tmp) {
+-                const char *p;
++                r = unit_add_dependency_by_name(u, UNIT_AFTER, "tmp.mount", NULL, true, UNIT_DEPENDENCY_FILE);
++                if (r < 0)
++                        return r;
+ 
+-                FOREACH_STRING(p, "/tmp", "/var/tmp") {
+-                        r = unit_require_mounts_for(u, p, UNIT_DEPENDENCY_FILE);
+-                        if (r < 0)
+-                                return r;
+-                }
++                r = unit_require_mounts_for(u, "/var/tmp", UNIT_DEPENDENCY_FILE);
++                if (r < 0)
++                        return r;
+ 
+                 r = unit_add_dependency_by_name(u, UNIT_AFTER, SPECIAL_TMPFILES_SETUP_SERVICE, NULL, true, UNIT_DEPENDENCY_FILE);
+                 if (r < 0)
+diff --git a/units/basic.target b/units/basic.target
+index 4f4429224..8fc7c73ef 100644
+--- a/units/basic.target
++++ b/units/basic.target
+@@ -19,4 +19,5 @@ After=sysinit.target sockets.target paths.target slices.target tmp.mount
+ # require /var and /var/tmp, but only add a Wants= type dependency on /tmp, as
+ # we support that unit being masked, and this should not be considered an error.
+ RequiresMountsFor=/var /var/tmp
+-Wants=tmp.mount
++# RHEL-only: Disable /tmp on tmpfs.
++#Wants=tmp.mount

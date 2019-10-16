@@ -1,0 +1,24 @@
+From a0802638f02b964cb9d2d68bad009561b2bcc910 Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Fri, 16 Sep 2016 14:45:01 +0200
+Subject: [PATCH] rules: disable auto-online of hot-plugged memory on IBM z
+ Systems
+
+Related: #1523227
+---
+ rules/40-redhat.rules | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 4c56950da..c3df32023 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -4,7 +4,7 @@
+ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
+ 
+ # Memory hotadd request
+-SUBSYSTEM=="memory", ACTION=="add", PROGRAM="/usr/bin/systemd-detect-virt", RESULT!="zvm", ATTR{state}=="offline", ATTR{state}="online"
++SUBSYSTEM=="memory", ACTION=="add", PROGRAM=="/bin/uname -p", RESULT!="s390*", ATTR{state}=="offline", ATTR{state}="online"
+ 
+ # reload sysctl.conf / sysctl.conf.d settings when the bridge module is loaded
+ ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/systemd-sysctl --prefix=/proc/sys/net/bridge"

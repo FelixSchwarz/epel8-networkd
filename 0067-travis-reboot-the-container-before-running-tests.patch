@@ -1,0 +1,40 @@
+From 63e71bda5a00c04c16f330cfc0e6f91e7dcead59 Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <fsumsal@redhat.com>
+Date: Thu, 17 Jan 2019 12:03:10 +0100
+Subject: [PATCH] travis: reboot the container before running tests
+
+---
+ ci/travis-centos-rhel7.sh | 4 ++++
+ ci/travis-centos-rhel8.sh | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/ci/travis-centos-rhel7.sh b/ci/travis-centos-rhel7.sh
+index b1b3de1cc..73416798e 100755
+--- a/ci/travis-centos-rhel7.sh
++++ b/ci/travis-centos-rhel7.sh
+@@ -52,6 +52,10 @@ for phase in "${PHASES[@]}"; do
+                                      --enable-gtk-doc --enable-compat-libs --disable-sysusers \
+                                      --disable-ldconfig --enable-lz4 --with-sysvinit-path=/etc/rc.d/init.d
+             $DOCKER_EXEC make
++            # Let's install the new systemd and "reboot" the container to avoid
++            # unexpected fails due to incompatibilities with older systemd
++            $DOCKER_EXEC make install
++            docker restart $CONT_NAME
+             if ! $DOCKER_EXEC make check; then
+                 $DOCKER_EXEC cat test-suite.log
+                 exit 1
+diff --git a/ci/travis-centos-rhel8.sh b/ci/travis-centos-rhel8.sh
+index 8eda5e982..1f72d984e 100755
+--- a/ci/travis-centos-rhel8.sh
++++ b/ci/travis-centos-rhel8.sh
+@@ -113,6 +113,10 @@ for phase in "${PHASES[@]}"; do
+             )
+             docker exec -it -e CFLAGS='-g -O0 -ftrapv' $CONT_NAME meson build "${CONFIGURE_OPTS[@]}"
+             $DOCKER_EXEC ninja -v -C build
++            # Let's install the new systemd and "reboot" the container to avoid
++            # unexpected fails due to incompatibilities with older systemd
++            $DOCKER_EXEC ninja -C build install
++            docker restart $CONT_NAME
+             # "Mask" the udev-test.pl, as it requires newer version of systemd-detect-virt
+             # and it's pointless to run it on a VM in a Docker container...
+             echo -ne "#!/usr/bin/perl\nexit(0);\n" > "test/udev-test.pl"

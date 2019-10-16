@@ -1,0 +1,23 @@
+From 80d5f0e2057717e9e5588edcabac95b8c238795c Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Mon, 15 Oct 2018 10:55:50 +0000
+Subject: [PATCH] journal: change support URL shown in the catalog entries
+
+Resolves: #1550548
+---
+ meson_options.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson_options.txt b/meson_options.txt
+index 16c1f2b2f..ab2a65871 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -205,7 +205,7 @@ option('ntp-servers', type : 'string',
+        value : 'time1.google.com time2.google.com time3.google.com time4.google.com')
+ option('support-url', type : 'string',
+        description : 'the support URL to show in catalog entries included in systemd',
+-       value : 'https://lists.freedesktop.org/mailman/listinfo/systemd-devel')
++       value : 'https://access.redhat.com/support')
+ option('www-target', type : 'string',
+        description : 'the address and dir to upload docs too',
+        value : 'www.freedesktop.org:/srv/www.freedesktop.org/www/software/systemd')

@@ -1,0 +1,39 @@
+From 0c5b8096cb23701f8048dba33a38e1b55249cab3 Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Wed, 28 Mar 2018 17:22:30 +0200
+Subject: [PATCH] rules: introduce old-style by-path symlinks for FCP based
+ SCSI devices
+
+Related: #1523227
+---
+ rules/40-redhat.rules | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index c3df32023..8ac96933c 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -15,3 +15,23 @@ SUBSYSTEM=="scsi", ENV{DEVTYPE}=="scsi_target", TEST!="[module/sg]", RUN+="/sbin
+ 
+ # Rule for prandom character device node permissions
+ KERNEL=="prandom", MODE="0644"
++
++# Rules for creating the ID_PATH for SCSI devices based on the CCW bus
++# using the form: ccw-<BUS_ID>-zfcp-<WWPN>:<LUN>
++#
++ACTION=="remove", GOTO="zfcp_scsi_device_end"
++
++#
++# Set environment variable "ID_ZFCP_BUS" to "1" if the devices
++# (both disk and partition) are SCSI devices based on FCP devices
++#
++KERNEL=="sd*", SUBSYSTEMS=="ccw", DRIVERS=="zfcp", ENV{.ID_ZFCP_BUS}="1"
++
++# For SCSI disks
++KERNEL=="sd*[!0-9]", SUBSYSTEMS=="scsi", ENV{.ID_ZFCP_BUS}=="1", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-path/ccw-$attr{hba_id}-zfcp-$attr{wwpn}:$attr{fcp_lun}"
++
++
++# For partitions on a SCSI disk
++KERNEL=="sd*[0-9]", SUBSYSTEMS=="scsi", ENV{.ID_ZFCP_BUS}=="1", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-path/ccw-$attr{hba_id}-zfcp-$attr{wwpn}:$attr{fcp_lun}-part%n"
++
++LABEL="zfcp_scsi_device_end"

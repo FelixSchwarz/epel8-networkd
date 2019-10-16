@@ -1,0 +1,84 @@
+From 886e5b028953404f2d924b561c0689d3e50dbbf4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Thu, 13 Sep 2018 09:24:36 +0200
+Subject: [PATCH] detect-virt: do not try to read all of /proc/cpuinfo
+
+Quoting https://github.com/systemd/systemd/issues/10074:
+> detect_vm_uml() reads /proc/cpuinfo with read_full_file()
+> read_full_file() has a file max limit size of READ_FULL_BYTES_MAX=(4U*1024U*1024U)
+> Unfortunately, the size of my /proc/cpuinfo is bigger, approximately:
+> echo $(( 4* $(cat /proc/cpuinfo | wc -c)))
+> 9918072
+> This causes read_full_file() to fail and the Condition test fallout.
+
+Let's just read line by line until we find an intersting line. This also
+helps if not running under UML, because we avoid reading as much data.
+
+(cherry picked from commit 6058516a14ada1748313af6783f5b4e7e3006654)
+
+Resolves: #1631532
+---
+ src/basic/virt.c | 38 ++++++++++++++++++++++++++++----------
+ 1 file changed, 28 insertions(+), 10 deletions(-)
+
+diff --git a/src/basic/virt.c b/src/basic/virt.c
+index d347732bb..e05b3e6d9 100644
+--- a/src/basic/virt.c
++++ b/src/basic/virt.c
+@@ -11,6 +11,7 @@
+ 
+ #include "alloc-util.h"
+ #include "dirent-util.h"
++#include "def.h"
+ #include "env-util.h"
+ #include "fd-util.h"
+ #include "fileio.h"
+@@ -259,21 +260,38 @@ static int detect_vm_hypervisor(void) {
+ }
+ 
+ static int detect_vm_uml(void) {
+-        _cleanup_free_ char *cpuinfo_contents = NULL;
++        _cleanup_fclose_ FILE *f = NULL;
+         int r;
+ 
+         /* Detect User-Mode Linux by reading /proc/cpuinfo */
+-        r = read_full_file("/proc/cpuinfo", &cpuinfo_contents, NULL);
+-        if (r == -ENOENT) {
+-                log_debug("/proc/cpuinfo not found, assuming no UML virtualization.");
+-                return VIRTUALIZATION_NONE;
++        f = fopen("/proc/cpuinfo", "re");
++        if (!f) {
++                if (errno == ENOENT) {
++                        log_debug("/proc/cpuinfo not found, assuming no UML virtualization.");
++                        return VIRTUALIZATION_NONE;
++                }
++                return -errno;
+         }
+-        if (r < 0)
+-                return r;
+ 
+-        if (strstr(cpuinfo_contents, "\nvendor_id\t: User Mode Linux\n")) {
+-                log_debug("UML virtualization found in /proc/cpuinfo");
+-                return VIRTUALIZATION_UML;
++        for (;;) {
++                _cleanup_free_ char *line = NULL;
++                const char *t;
++
++                r = read_line(f, LONG_LINE_MAX, &line);
++                if (r < 0)
++                        return r;
++                if (r == 0)
++                        break;
++
++                t = startswith(line, "vendor_id\t: ");
++                if (t) {
++                        if (startswith(t, "User Mode Linux")) {
++                                log_debug("UML virtualization found in /proc/cpuinfo");
++                                return VIRTUALIZATION_UML;
++                        }
++
++                        break;
++                }
+         }
+ 
+         log_debug("UML virtualization not found in /proc/cpuinfo.");

@@ -1,0 +1,26 @@
+From 47b256d63ac092137fe44e27560a14ee4aa5b7c8 Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Fri, 8 Feb 2019 10:54:34 +0100
+Subject: [PATCH] Revert "sysctl.d: switch net.ipv4.conf.all.rp_filter from 1
+ to 2"
+
+This reverts commit 75c9af80cf3529c76988451e63f98010c86f48f1.
+
+Resolves: #1653824
+---
+ sysctl.d/50-default.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysctl.d/50-default.conf b/sysctl.d/50-default.conf
+index b0645f33e..e263cf062 100644
+--- a/sysctl.d/50-default.conf
++++ b/sysctl.d/50-default.conf
+@@ -22,7 +22,7 @@ kernel.sysrq = 16
+ kernel.core_uses_pid = 1
+ 
+ # Source route verification
+-net.ipv4.conf.all.rp_filter = 2
++net.ipv4.conf.all.rp_filter = 1
+ 
+ # Do not accept source routing
+ net.ipv4.conf.all.accept_source_route = 0

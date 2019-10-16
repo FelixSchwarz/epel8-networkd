@@ -1,0 +1,133 @@
+From 35a23324975ac6ee0bbd3408394f992007b7a439 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 13 Nov 2018 11:59:06 +0100
+Subject: [PATCH] =?UTF-8?q?core:=20rename=20queued=5Fmessage=20=E2=86=92?=
+ =?UTF-8?q?=20pending=5Freload=5Fmessage?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This field is only used for pending Reload() replies, hence let's rename
+it to be more descriptive and precise.
+
+No change in behaviour.
+
+(cherry picked from commit 209de5256b7ba8600c3e73a85a43b86708998d65)
+
+Resolves: #1647359
+---
+ src/core/dbus-manager.c |  4 ++--
+ src/core/dbus.c         | 12 ++++++------
+ src/core/dbus.h         |  2 +-
+ src/core/manager.c      |  6 +++---
+ src/core/manager.h      |  2 +-
+ 5 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/src/core/dbus-manager.c b/src/core/dbus-manager.c
+index 4ed68af1e..d39c9b28c 100644
+--- a/src/core/dbus-manager.c
++++ b/src/core/dbus-manager.c
+@@ -1329,8 +1329,8 @@ static int method_reload(sd_bus_message *message, void *userdata, sd_bus_error *
+          * is finished. That way the caller knows when the reload
+          * finished. */
+ 
+-        assert(!m->queued_message);
+-        r = sd_bus_message_new_method_return(message, &m->queued_message);
++        assert(!m->pending_reload_message);
++        r = sd_bus_message_new_method_return(message, &m->pending_reload_message);
+         if (r < 0)
+                 return r;
+ 
+diff --git a/src/core/dbus.c b/src/core/dbus.c
+index bf5917696..256a41021 100644
+--- a/src/core/dbus.c
++++ b/src/core/dbus.c
+@@ -47,23 +47,23 @@
+ 
+ static void destroy_bus(Manager *m, sd_bus **bus);
+ 
+-int bus_send_queued_message(Manager *m) {
++int bus_send_pending_reload_message(Manager *m) {
+         int r;
+ 
+         assert(m);
+ 
+-        if (!m->queued_message)
++        if (!m->pending_reload_message)
+                 return 0;
+ 
+         /* If we cannot get rid of this message we won't dispatch any
+          * D-Bus messages, so that we won't end up wanting to queue
+          * another message. */
+ 
+-        r = sd_bus_send(NULL, m->queued_message, NULL);
++        r = sd_bus_send(NULL, m->pending_reload_message, NULL);
+         if (r < 0)
+                 log_warning_errno(r, "Failed to send queued message: %m");
+ 
+-        m->queued_message = sd_bus_message_unref(m->queued_message);
++        m->pending_reload_message = sd_bus_message_unref(m->pending_reload_message);
+ 
+         return 0;
+ }
+@@ -1079,8 +1079,8 @@ static void destroy_bus(Manager *m, sd_bus **bus) {
+                         u->bus_track = sd_bus_track_unref(u->bus_track);
+ 
+         /* Get rid of queued message on this bus */
+-        if (m->queued_message && sd_bus_message_get_bus(m->queued_message) == *bus)
+-                m->queued_message = sd_bus_message_unref(m->queued_message);
++        if (m->pending_reload_message && sd_bus_message_get_bus(m->pending_reload_message) == *bus)
++                m->pending_reload_message = sd_bus_message_unref(m->pending_reload_message);
+ 
+         /* Possibly flush unwritten data, but only if we are
+          * unprivileged, since we don't want to sync here */
+diff --git a/src/core/dbus.h b/src/core/dbus.h
+index 382a96da7..f1c0fa86c 100644
+--- a/src/core/dbus.h
++++ b/src/core/dbus.h
+@@ -5,7 +5,7 @@
+ 
+ #include "manager.h"
+ 
+-int bus_send_queued_message(Manager *m);
++int bus_send_pending_reload_message(Manager *m);
+ 
+ int bus_init_private(Manager *m);
+ int bus_init_api(Manager *m);
+diff --git a/src/core/manager.c b/src/core/manager.c
+index 930df4e23..a24bfcacd 100644
+--- a/src/core/manager.c
++++ b/src/core/manager.c
+@@ -2078,7 +2078,7 @@ static unsigned manager_dispatch_dbus_queue(Manager *m) {
+                 return 0;
+ 
+         /* Anything to do at all? */
+-        if (!m->dbus_unit_queue && !m->dbus_job_queue && !m->send_reloading_done && !m->queued_message)
++        if (!m->dbus_unit_queue && !m->dbus_job_queue && !m->send_reloading_done && !m->pending_reload_message)
+                 return 0;
+ 
+         /* Do we have overly many messages queued at the moment? If so, let's not enqueue more on top, let's sit this
+@@ -2123,8 +2123,8 @@ static unsigned manager_dispatch_dbus_queue(Manager *m) {
+                 n++, budget--;
+         }
+ 
+-        if (budget > 0 && m->queued_message) {
+-                bus_send_queued_message(m);
++        if (budget > 0 && m->pending_reload_message) {
++                bus_send_pending_reload_message(m);
+                 n++;
+         }
+ 
+diff --git a/src/core/manager.h b/src/core/manager.h
+index ea5d42503..c7f4d66ec 100644
+--- a/src/core/manager.h
++++ b/src/core/manager.h
+@@ -215,7 +215,7 @@ struct Manager {
+ 
+         /* This is used during reloading: before the reload we queue
+          * the reply message here, and afterwards we send it */
+-        sd_bus_message *queued_message;
++        sd_bus_message *pending_reload_message;
+ 
+         Hashmap *watch_bus;  /* D-Bus names => Unit object n:1 */
+ 

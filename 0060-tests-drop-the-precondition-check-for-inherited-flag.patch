@@ -1,0 +1,42 @@
+From 1d43806017a0df257fef8ed6f79e12ee69c5bc20 Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <frantisek@sumsal.cz>
+Date: Thu, 8 Nov 2018 09:40:13 +0100
+Subject: [PATCH] tests: drop the precondition check for inherited flag
+
+Docker's default capability set has the inherited flag already
+set - that breaks tests which expect otherwise. Let's just
+drop the check and run the test anyway.
+
+Fixes #10663
+
+Cherry-picked from: c446b8486d9ed18d1bc780948ae9ee8a53fa4c3f
+---
+ src/test/test-capability.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/src/test/test-capability.c b/src/test/test-capability.c
+index af6d808b6..72975cef9 100644
+--- a/src/test/test-capability.c
++++ b/src/test/test-capability.c
+@@ -180,8 +180,6 @@ static void test_update_inherited_set(void) {
+ 
+         caps = cap_get_proc();
+         assert_se(caps);
+-        assert_se(!cap_get_flag(caps, CAP_CHOWN, CAP_INHERITABLE, &fv));
+-        assert(fv == CAP_CLEAR);
+ 
+         set = (UINT64_C(1) << CAP_CHOWN);
+ 
+@@ -197,12 +195,6 @@ static void test_set_ambient_caps(void) {
+         uint64_t set = 0;
+         cap_flag_value_t fv;
+ 
+-        caps = cap_get_proc();
+-        assert_se(caps);
+-        assert_se(!cap_get_flag(caps, CAP_CHOWN, CAP_INHERITABLE, &fv));
+-        assert(fv == CAP_CLEAR);
+-        cap_free(caps);
+-
+         assert_se(prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_CHOWN, 0, 0) == 0);
+ 
+         set = (UINT64_C(1) << CAP_CHOWN);

@@ -1,0 +1,60 @@
+From 8fdca31b41a6470ceda8e0a84f90a1e5ca28aa5c Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Tue, 9 Oct 2018 17:26:19 +0200
+Subject: [PATCH] login: avoid leak of name returned by uid_to_name()
+
+(cherry picked from commit e99742ef3e9d847da04e71fec0eb426063b25068)
+
+Resolves: #1602706
+---
+ src/login/logind-dbus.c | 4 +++-
+ src/login/logind-utmp.c | 6 +++---
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/src/login/logind-dbus.c b/src/login/logind-dbus.c
+index 13298cc85..dca7f4a30 100644
+--- a/src/login/logind-dbus.c
++++ b/src/login/logind-dbus.c
+@@ -2155,6 +2155,7 @@ static int method_cancel_scheduled_shutdown(sd_bus_message *message, void *userd
+ 
+         if (cancelled && m->enable_wall_messages) {
+                 _cleanup_(sd_bus_creds_unrefp) sd_bus_creds *creds = NULL;
++                _cleanup_free_ char *username = NULL;
+                 const char *tty = NULL;
+                 uid_t uid = 0;
+                 int r;
+@@ -2165,8 +2166,9 @@ static int method_cancel_scheduled_shutdown(sd_bus_message *message, void *userd
+                         (void) sd_bus_creds_get_tty(creds, &tty);
+                 }
+ 
++                username = uid_to_name(uid);
+                 utmp_wall("The system shutdown has been cancelled",
+-                          uid_to_name(uid), tty, logind_wall_tty_filter, m);
++                          username, tty, logind_wall_tty_filter, m);
+         }
+ 
+         return sd_bus_reply_method_return(message, "b", cancelled);
+diff --git a/src/login/logind-utmp.c b/src/login/logind-utmp.c
+index 71ebdfcfb..8bdd4ab6b 100644
+--- a/src/login/logind-utmp.c
++++ b/src/login/logind-utmp.c
+@@ -61,7 +61,7 @@ bool logind_wall_tty_filter(const char *tty, void *userdata) {
+ 
+ static int warn_wall(Manager *m, usec_t n) {
+         char date[FORMAT_TIMESTAMP_MAX] = {};
+-        _cleanup_free_ char *l = NULL;
++        _cleanup_free_ char *l = NULL, *username = NULL;
+         usec_t left;
+         int r;
+ 
+@@ -83,8 +83,8 @@ static int warn_wall(Manager *m, usec_t n) {
+                 return 0;
+         }
+ 
+-        utmp_wall(l, uid_to_name(m->scheduled_shutdown_uid),
+-                  m->scheduled_shutdown_tty, logind_wall_tty_filter, m);
++        username = uid_to_name(m->scheduled_shutdown_uid);
++        utmp_wall(l, username, m->scheduled_shutdown_tty, logind_wall_tty_filter, m);
+ 
+         return 1;
+ }

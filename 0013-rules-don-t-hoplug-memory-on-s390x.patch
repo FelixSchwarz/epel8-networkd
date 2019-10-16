@@ -1,0 +1,23 @@
+From fd091394e52cd652ff5163735b2a91a8c0efe415 Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Tue, 13 Sep 2016 13:18:38 +0200
+Subject: [PATCH] rules: don't hoplug memory on s390x
+
+Related: #1523227
+---
+ rules/40-redhat.rules | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 3335fe507..4c56950da 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -4,7 +4,7 @@
+ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
+ 
+ # Memory hotadd request
+-SUBSYSTEM=="memory", ACTION=="add", ATTR{state}=="offline", ATTR{state}="online"
++SUBSYSTEM=="memory", ACTION=="add", PROGRAM="/usr/bin/systemd-detect-virt", RESULT!="zvm", ATTR{state}=="offline", ATTR{state}="online"
+ 
+ # reload sysctl.conf / sysctl.conf.d settings when the bridge module is loaded
+ ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/systemd-sysctl --prefix=/proc/sys/net/bridge"

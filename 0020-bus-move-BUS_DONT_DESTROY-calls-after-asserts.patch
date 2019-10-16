@@ -1,0 +1,117 @@
+From c6903d1b42d1773fda4df6676618489ad760a2a1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Wed, 18 Jul 2018 12:16:33 +0200
+Subject: [PATCH] bus: move BUS_DONT_DESTROY calls after asserts
+
+It's not useful to bump the reference count before checking if the object is
+NULL. Thanks to d40f5cc498 we can do this ;).
+
+Related to https://bugzilla.redhat.com/show_bug.cgi?id=1576084,
+https://bugzilla.redhat.com/show_bug.cgi?id=1575340,
+https://bugzilla.redhat.com/show_bug.cgi?id=1575350. I'm not sure why those two
+people hit this code path, while most people don't. At least we won't abort.
+
+(cherry picked from commit 7ae8edcd03f74da123298330b76c3fc5425042ef)
+
+Resolves: #1610397
+---
+ src/libsystemd/sd-bus/bus-objects.c | 15 ++++++++-------
+ src/libsystemd/sd-bus/sd-bus.c      |  3 ++-
+ 2 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-objects.c b/src/libsystemd/sd-bus/bus-objects.c
+index 9609834fa..a18ff88b0 100644
+--- a/src/libsystemd/sd-bus/bus-objects.c
++++ b/src/libsystemd/sd-bus/bus-objects.c
+@@ -2090,7 +2090,6 @@ _public_ int sd_bus_emit_properties_changed_strv(
+                 const char *interface,
+                 char **names) {
+ 
+-        BUS_DONT_DESTROY(bus);
+         bool found_interface = false;
+         char *prefix;
+         int r;
+@@ -2111,6 +2110,8 @@ _public_ int sd_bus_emit_properties_changed_strv(
+         if (names && names[0] == NULL)
+                 return 0;
+ 
++        BUS_DONT_DESTROY(bus);
++
+         do {
+                 bus->nodes_modified = false;
+ 
+@@ -2310,8 +2311,6 @@ static int object_added_append_all(sd_bus *bus, sd_bus_message *m, const char *p
+ }
+ 
+ _public_ int sd_bus_emit_object_added(sd_bus *bus, const char *path) {
+-        BUS_DONT_DESTROY(bus);
+-
+         _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
+         struct node *object_manager;
+         int r;
+@@ -2341,6 +2340,8 @@ _public_ int sd_bus_emit_object_added(sd_bus *bus, const char *path) {
+         if (r == 0)
+                 return -ESRCH;
+ 
++        BUS_DONT_DESTROY(bus);
++
+         do {
+                 bus->nodes_modified = false;
+                 m = sd_bus_message_unref(m);
+@@ -2481,8 +2482,6 @@ static int object_removed_append_all(sd_bus *bus, sd_bus_message *m, const char
+ }
+ 
+ _public_ int sd_bus_emit_object_removed(sd_bus *bus, const char *path) {
+-        BUS_DONT_DESTROY(bus);
+-
+         _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
+         struct node *object_manager;
+         int r;
+@@ -2512,6 +2511,8 @@ _public_ int sd_bus_emit_object_removed(sd_bus *bus, const char *path) {
+         if (r == 0)
+                 return -ESRCH;
+ 
++        BUS_DONT_DESTROY(bus);
++
+         do {
+                 bus->nodes_modified = false;
+                 m = sd_bus_message_unref(m);
+@@ -2645,8 +2646,6 @@ static int interfaces_added_append_one(
+ }
+ 
+ _public_ int sd_bus_emit_interfaces_added_strv(sd_bus *bus, const char *path, char **interfaces) {
+-        BUS_DONT_DESTROY(bus);
+-
+         _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
+         struct node *object_manager;
+         char **i;
+@@ -2669,6 +2668,8 @@ _public_ int sd_bus_emit_interfaces_added_strv(sd_bus *bus, const char *path, ch
+         if (r == 0)
+                 return -ESRCH;
+ 
++        BUS_DONT_DESTROY(bus);
++
+         do {
+                 bus->nodes_modified = false;
+                 m = sd_bus_message_unref(m);
+diff --git a/src/libsystemd/sd-bus/sd-bus.c b/src/libsystemd/sd-bus/sd-bus.c
+index 089b51a6d..7f03528b8 100644
+--- a/src/libsystemd/sd-bus/sd-bus.c
++++ b/src/libsystemd/sd-bus/sd-bus.c
+@@ -2883,7 +2883,6 @@ finish:
+ }
+ 
+ static int bus_process_internal(sd_bus *bus, bool hint_priority, int64_t priority, sd_bus_message **ret) {
+-        BUS_DONT_DESTROY(bus);
+         int r;
+ 
+         /* Returns 0 when we didn't do anything. This should cause the
+@@ -2899,6 +2898,8 @@ static int bus_process_internal(sd_bus *bus, bool hint_priority, int64_t priorit
+         assert_return(!bus->current_message, -EBUSY);
+         assert(!bus->current_slot);
+ 
++        BUS_DONT_DESTROY(bus);
++
+         switch (bus->state) {
+ 
+         case BUS_UNSET:

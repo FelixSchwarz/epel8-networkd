@@ -1,0 +1,112 @@
+From e143339ac712f745727951973417ce93b5d06d78 Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Fri, 12 Oct 2018 14:50:09 +0000
+Subject: [PATCH] units: don't enable per-service IP firewall by default
+
+Resolves: #1630219
+---
+ units/systemd-coredump@.service.in | 1 -
+ units/systemd-hostnamed.service.in | 1 -
+ units/systemd-journald.service.in  | 1 -
+ units/systemd-localed.service.in   | 1 -
+ units/systemd-logind.service.in    | 1 -
+ units/systemd-machined.service.in  | 1 -
+ units/systemd-portabled.service.in | 1 -
+ units/systemd-timedated.service.in | 1 -
+ units/systemd-udevd.service.in     | 1 -
+ 9 files changed, 9 deletions(-)
+
+diff --git a/units/systemd-coredump@.service.in b/units/systemd-coredump@.service.in
+index 215696ecd..68a68a505 100644
+--- a/units/systemd-coredump@.service.in
++++ b/units/systemd-coredump@.service.in
+@@ -37,5 +37,4 @@ SystemCallFilter=@system-service
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ StateDirectory=systemd/coredump
+diff --git a/units/systemd-hostnamed.service.in b/units/systemd-hostnamed.service.in
+index da74b4fe8..4e5470dd2 100644
+--- a/units/systemd-hostnamed.service.in
++++ b/units/systemd-hostnamed.service.in
+@@ -33,5 +33,4 @@ SystemCallFilter=@system-service sethostname
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ ReadWritePaths=/etc
+diff --git a/units/systemd-journald.service.in b/units/systemd-journald.service.in
+index 8f5021d0d..2d5fd0120 100644
+--- a/units/systemd-journald.service.in
++++ b/units/systemd-journald.service.in
+@@ -33,7 +33,6 @@ SystemCallFilter=@system-service
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ 
+ # Increase the default a bit in order to allow many simultaneous
+ # services being run since we keep one fd open per service. Also, when
+diff --git a/units/systemd-localed.service.in b/units/systemd-localed.service.in
+index a24e61a0c..ce043db15 100644
+--- a/units/systemd-localed.service.in
++++ b/units/systemd-localed.service.in
+@@ -33,5 +33,4 @@ SystemCallFilter=@system-service
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ ReadWritePaths=/etc
+diff --git a/units/systemd-logind.service.in b/units/systemd-logind.service.in
+index 5e090bcf2..6953fac55 100644
+--- a/units/systemd-logind.service.in
++++ b/units/systemd-logind.service.in
+@@ -34,7 +34,6 @@ SystemCallFilter=@system-service
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ FileDescriptorStoreMax=512
+ 
+ # Increase the default a bit in order to allow many simultaneous
+diff --git a/units/systemd-machined.service.in b/units/systemd-machined.service.in
+index 1200a90a6..dec2c4b0d 100644
+--- a/units/systemd-machined.service.in
++++ b/units/systemd-machined.service.in
+@@ -27,7 +27,6 @@ SystemCallFilter=@system-service @mount
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ 
+ # Note that machined cannot be placed in a mount namespace, since it
+ # needs access to the host's mount namespace in order to implement the
+diff --git a/units/systemd-portabled.service.in b/units/systemd-portabled.service.in
+index a868f61db..64f14071e 100644
+--- a/units/systemd-portabled.service.in
++++ b/units/systemd-portabled.service.in
+@@ -23,4 +23,3 @@ RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+ SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module @obsolete @raw-io @reboot @swap
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+diff --git a/units/systemd-timedated.service.in b/units/systemd-timedated.service.in
+index 906bb4326..662b39557 100644
+--- a/units/systemd-timedated.service.in
++++ b/units/systemd-timedated.service.in
+@@ -31,5 +31,4 @@ SystemCallFilter=@system-service @clock
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any
+ ReadWritePaths=/etc
+diff --git a/units/systemd-udevd.service.in b/units/systemd-udevd.service.in
+index 6a3814e5d..fd9ead3bb 100644
+--- a/units/systemd-udevd.service.in
++++ b/units/systemd-udevd.service.in
+@@ -33,4 +33,3 @@ SystemCallFilter=@system-service @module @raw-io
+ SystemCallErrorNumber=EPERM
+ SystemCallArchitectures=native
+ LockPersonality=yes
+-IPAddressDeny=any

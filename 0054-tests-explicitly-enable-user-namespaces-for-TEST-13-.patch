@@ -1,0 +1,36 @@
+From e8ead61e1c0a919a97df64b14dbd572ef7c830d2 Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <frantisek@sumsal.cz>
+Date: Sat, 15 Dec 2018 20:22:31 +0100
+Subject: [PATCH] tests: explicitly enable user namespaces for
+ TEST-13-NSPAWN-SMOKE
+
+Cherry-picked from: 67f5c0c776ce9449ad21e9854665573a05141fd4
+---
+ test/TEST-13-NSPAWN-SMOKE/test.sh | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/test/TEST-13-NSPAWN-SMOKE/test.sh b/test/TEST-13-NSPAWN-SMOKE/test.sh
+index 6a0cb42ea..c0789b5d2 100755
+--- a/test/TEST-13-NSPAWN-SMOKE/test.sh
++++ b/test/TEST-13-NSPAWN-SMOKE/test.sh
+@@ -18,7 +18,7 @@ test_setup() {
+         eval $(udevadm info --export --query=env --name=${LOOPDEV}p2)
+ 
+         setup_basic_environment
+-        dracut_install busybox chmod rmdir unshare ip
++        dracut_install busybox chmod rmdir unshare ip sysctl
+ 
+         cp create-busybox-container $initdir/
+ 
+@@ -63,6 +63,11 @@ if [[ -f /proc/1/ns/cgroup ]]; then
+ fi
+ 
+ is_user_ns_supported=no
++# On some systems (e.g. CentOS 7) the default limit for user namespaces
++# is set to 0, which causes the following unshare syscall to fail, even
++# with enabled user namespaces support. By setting this value explicitly
++# we can ensure the user namespaces support to be detected correctly.
++sysctl -w user.max_user_namespaces=10000
+ if unshare -U sh -c :; then
+     is_user_ns_supported=yes
+ fi

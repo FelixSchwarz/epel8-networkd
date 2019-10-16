@@ -1,0 +1,73 @@
+From 8618ef2fb30b4139c9bec4e45fb499cd8192a87f Mon Sep 17 00:00:00 2001
+From: Michal Sekletar <msekleta@redhat.com>
+Date: Thu, 9 Aug 2018 23:23:00 +0200
+Subject: [PATCH] journal: remove journal audit socket
+
+Resolves: #1614554
+---
+ units/meson.build                   |  2 --
+ units/systemd-journald-audit.socket | 22 ----------------------
+ units/systemd-journald.service.in   |  4 ++--
+ 3 files changed, 2 insertions(+), 26 deletions(-)
+ delete mode 100644 units/systemd-journald-audit.socket
+
+diff --git a/units/meson.build b/units/meson.build
+index e4ac6ced6..e54a84ccb 100644
+--- a/units/meson.build
++++ b/units/meson.build
+@@ -89,8 +89,6 @@ units = [
+          'sockets.target.wants/'],
+         ['systemd-journal-gatewayd.socket',     'ENABLE_REMOTE HAVE_MICROHTTPD'],
+         ['systemd-journal-remote.socket',       'ENABLE_REMOTE HAVE_MICROHTTPD'],
+-        ['systemd-journald-audit.socket',       '',
+-         'sockets.target.wants/'],
+         ['systemd-journald-dev-log.socket',     '',
+          'sockets.target.wants/'],
+         ['systemd-journald.socket',             '',
+diff --git a/units/systemd-journald-audit.socket b/units/systemd-journald-audit.socket
+deleted file mode 100644
+index cb8b77496..000000000
+--- a/units/systemd-journald-audit.socket
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#  SPDX-License-Identifier: LGPL-2.1+
+-#
+-#  This file is part of systemd.
+-#
+-#  systemd is free software; you can redistribute it and/or modify it
+-#  under the terms of the GNU Lesser General Public License as published by
+-#  the Free Software Foundation; either version 2.1 of the License, or
+-#  (at your option) any later version.
+-
+-[Unit]
+-Description=Journal Audit Socket
+-Documentation=man:systemd-journald.service(8) man:journald.conf(5)
+-DefaultDependencies=no
+-Before=sockets.target
+-ConditionSecurity=audit
+-ConditionCapability=CAP_AUDIT_READ
+-
+-[Socket]
+-Service=systemd-journald.service
+-ReceiveBuffer=128M
+-ListenNetlink=audit 1
+-PassCredentials=yes
+diff --git a/units/systemd-journald.service.in b/units/systemd-journald.service.in
+index 52939e682..8f5021d0d 100644
+--- a/units/systemd-journald.service.in
++++ b/units/systemd-journald.service.in
+@@ -12,12 +12,12 @@ Description=Journal Service
+ Documentation=man:systemd-journald.service(8) man:journald.conf(5)
+ DefaultDependencies=no
+ Requires=systemd-journald.socket
+-After=systemd-journald.socket systemd-journald-dev-log.socket systemd-journald-audit.socket syslog.socket
++After=systemd-journald.socket systemd-journald-dev-log.socket syslog.socket
+ Before=sysinit.target
+ 
+ [Service]
+ Type=notify
+-Sockets=systemd-journald.socket systemd-journald-dev-log.socket systemd-journald-audit.socket
++Sockets=systemd-journald.socket systemd-journald-dev-log.socket
+ ExecStart=@rootlibexecdir@/systemd-journald
+ Restart=always
+ RestartSec=0

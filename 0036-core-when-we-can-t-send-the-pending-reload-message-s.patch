@@ -1,0 +1,36 @@
+From 52a474cf15bf2b0edb449750eb63eb8cdb9a3780 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 13 Nov 2018 12:00:42 +0100
+Subject: [PATCH] core: when we can't send the pending reload message, say we
+ ignore it in the warning we log
+
+No change in behaviour, just better wording.
+
+(cherry picked from commit 4b66bccab004221b903b43b4c224442bfa3e9ac7)
+
+Resolves: #1647359
+---
+ src/core/dbus.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/src/core/dbus.c b/src/core/dbus.c
+index 256a41021..346a440c5 100644
+--- a/src/core/dbus.c
++++ b/src/core/dbus.c
+@@ -55,13 +55,12 @@ int bus_send_pending_reload_message(Manager *m) {
+         if (!m->pending_reload_message)
+                 return 0;
+ 
+-        /* If we cannot get rid of this message we won't dispatch any
+-         * D-Bus messages, so that we won't end up wanting to queue
+-         * another message. */
++        /* If we cannot get rid of this message we won't dispatch any D-Bus messages, so that we won't end up wanting
++         * to queue another message. */
+ 
+         r = sd_bus_send(NULL, m->pending_reload_message, NULL);
+         if (r < 0)
+-                log_warning_errno(r, "Failed to send queued message: %m");
++                log_warning_errno(r, "Failed to send queued message, ignoring: %m");
+ 
+         m->pending_reload_message = sd_bus_message_unref(m->pending_reload_message);
+ 

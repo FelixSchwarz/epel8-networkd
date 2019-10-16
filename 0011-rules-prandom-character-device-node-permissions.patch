@@ -1,0 +1,21 @@
+From 21c96c3781f473cdbfe7acdb1affba75b50081f1 Mon Sep 17 00:00:00 2001
+From: Lukas Nykryn <lnykryn@redhat.com>
+Date: Tue, 22 Sep 2015 12:28:28 +0200
+Subject: [PATCH] rules: prandom character device node permissions
+
+Related: #1523227
+---
+ rules/40-redhat.rules | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 305e75228..9a48adde1 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -11,3 +11,6 @@ ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/sys
+ 
+ # load SCSI generic (sg) driver
+ SUBSYSTEM=="scsi", ENV{DEVTYPE}=="scsi_device", TEST!="[module/sg]", RUN+="/sbin/modprobe -bv sg"
++
++# Rule for prandom character device node permissions
++KERNEL=="prandom", MODE="0644"

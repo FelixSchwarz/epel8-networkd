@@ -1,0 +1,119 @@
+From a046230cfb7e02938e3ad2ac85515636b319651e Mon Sep 17 00:00:00 2001
+From: Dimitri John Ledkov <xnox@ubuntu.com>
+Date: Wed, 29 Aug 2018 15:38:09 +0100
+Subject: [PATCH] cryptsetup: add support for sector-size= option (#9936)
+
+Bug-Ubuntu: https://launchpad.net/bugs/1776626
+
+Closes #8881.
+
+(cherry picked from commit a9fc640671ef60ac949f1ace6fa687ff242fc233)
+
+Resolves: #1572563
+---
+ man/crypttab.xml            |  9 +++++++++
+ meson.build                 |  6 ++++++
+ src/cryptsetup/cryptsetup.c | 30 ++++++++++++++++++++++++++++++
+ 3 files changed, 45 insertions(+)
+
+diff --git a/man/crypttab.xml b/man/crypttab.xml
+index dcaf03d2c..3574ce00d 100644
+--- a/man/crypttab.xml
++++ b/man/crypttab.xml
+@@ -250,6 +250,15 @@
+         option.</para></listitem>
+       </varlistentry>
+ 
++      <varlistentry>
++        <term><option>sector-size=</option></term>
++
++        <listitem><para>Specifies the sector size in bytes. See
++        <citerefentry project='die-net'><refentrytitle>cryptsetup</refentrytitle><manvolnum>8</manvolnum></citerefentry>
++        for possible values and the default value of this
++        option.</para></listitem>
++      </varlistentry>
++
+       <varlistentry>
+         <term><option>swap</option></term>
+ 
+diff --git a/meson.build b/meson.build
+index a0e724070..f308db263 100644
+--- a/meson.build
++++ b/meson.build
+@@ -927,11 +927,17 @@ if want_libcryptsetup != 'false' and not fuzzer_build
+                                    version : '>= 1.6.0',
+                                    required : want_libcryptsetup == 'true')
+         have = libcryptsetup.found()
++        have_sector = cc.has_member(
++                    'struct crypt_params_plain',
++                    'sector_size',
++                    prefix : '#include <libcryptsetup.h>')
+ else
+         have = false
++        have_sector = false
+         libcryptsetup = []
+ endif
+ conf.set10('HAVE_LIBCRYPTSETUP', have)
++conf.set10('HAVE_LIBCRYPTSETUP_SECTOR_SIZE', have_sector)
+ 
+ want_libcurl = get_option('libcurl')
+ if want_libcurl != 'false' and not fuzzer_build
+diff --git a/src/cryptsetup/cryptsetup.c b/src/cryptsetup/cryptsetup.c
+index 832168184..87008cb96 100644
+--- a/src/cryptsetup/cryptsetup.c
++++ b/src/cryptsetup/cryptsetup.c
+@@ -23,10 +23,14 @@
+ 
+ /* internal helper */
+ #define ANY_LUKS "LUKS"
++/* as in src/cryptsetup.h */
++#define CRYPT_SECTOR_SIZE 512
++#define CRYPT_MAX_SECTOR_SIZE 4096
+ 
+ static const char *arg_type = NULL; /* ANY_LUKS, CRYPT_LUKS1, CRYPT_LUKS2, CRYPT_TCRYPT or CRYPT_PLAIN */
+ static char *arg_cipher = NULL;
+ static unsigned arg_key_size = 0;
++static unsigned arg_sector_size = CRYPT_SECTOR_SIZE;
+ static int arg_key_slot = CRYPT_ANY_SLOT;
+ static unsigned arg_keyfile_size = 0;
+ static uint64_t arg_keyfile_offset = 0;
+@@ -86,6 +90,29 @@ static int parse_one_option(const char *option) {
+ 
+                 arg_key_size /= 8;
+ 
++        } else if ((val = startswith(option, "sector-size="))) {
++
++#if HAVE_LIBCRYPTSETUP_SECTOR_SIZE
++                r = safe_atou(val, &arg_sector_size);
++                if (r < 0) {
++                        log_error_errno(r, "Failed to parse %s, ignoring: %m", option);
++                        return 0;
++                }
++
++                if (arg_sector_size % 2) {
++                        log_error("sector-size= not a multiple of 2, ignoring.");
++                        return 0;
++                }
++
++                if (arg_sector_size < CRYPT_SECTOR_SIZE || arg_sector_size > CRYPT_MAX_SECTOR_SIZE) {
++                        log_error("sector-size= is outside of %u and %u, ignoring.", CRYPT_SECTOR_SIZE, CRYPT_MAX_SECTOR_SIZE);
++                        return 0;
++                }
++#else
++                log_error("sector-size= is not supported, compiled with old libcryptsetup.");
++                return 0;
++#endif
++
+         } else if ((val = startswith(option, "key-slot="))) {
+ 
+                 arg_type = ANY_LUKS;
+@@ -471,6 +498,9 @@ static int attach_luks_or_plain(struct crypt_device *cd,
+                 struct crypt_params_plain params = {
+                         .offset = arg_offset,
+                         .skip = arg_skip,
++#if HAVE_LIBCRYPTSETUP_SECTOR_SIZE
++                        .sector_size = arg_sector_size,
++#endif
+                 };
+                 const char *cipher, *cipher_mode;
+                 _cleanup_free_ char *truncated_cipher = NULL;

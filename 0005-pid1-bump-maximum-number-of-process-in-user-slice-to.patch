@@ -1,0 +1,35 @@
+From c7f77dfd2bfa593bfbbdf82eea8b600ca1b46f4c Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Wed, 1 Aug 2018 17:17:07 +0200
+Subject: [PATCH] pid1: bump maximum number of process in user slice to 80% of
+ pid_max
+
+Related: #1523236
+---
+ src/basic/cgroup-util.h              | 2 +-
+ units/user-.slice.d/10-defaults.conf | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/basic/cgroup-util.h b/src/basic/cgroup-util.h
+index f10c26ad5..26e3ae040 100644
+--- a/src/basic/cgroup-util.h
++++ b/src/basic/cgroup-util.h
+@@ -101,7 +101,7 @@ static inline bool CGROUP_BLKIO_WEIGHT_IS_OK(uint64_t x) {
+ 
+ /* Default resource limits */
+ #define DEFAULT_TASKS_MAX_PERCENTAGE            80U /* 80% of PIDs, 26214 on default settings */
+-#define DEFAULT_USER_TASKS_MAX_PERCENTAGE       33U /* 33% of PIDs, 10813 on default settings */
++#define DEFAULT_USER_TASKS_MAX_PERCENTAGE       80U /* 80% of PIDs, 26214 on default settings */
+ 
+ typedef enum CGroupUnified {
+         CGROUP_UNIFIED_UNKNOWN = -1,
+diff --git a/units/user-.slice.d/10-defaults.conf b/units/user-.slice.d/10-defaults.conf
+index 95ab11b30..efc9d37c8 100644
+--- a/units/user-.slice.d/10-defaults.conf
++++ b/units/user-.slice.d/10-defaults.conf
+@@ -12,4 +12,4 @@ Description=User Slice of UID %j
+ After=systemd-user-sessions.service
+ 
+ [Slice]
+-TasksMax=33%
++TasksMax=80%

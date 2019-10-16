@@ -1,0 +1,122 @@
+From 2115fcc1e673079fe76e949ac0904267075c25a4 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 31 Oct 2018 13:04:20 +0100
+Subject: [PATCH] nspawn: beef up netns checking a bit, for compat with old
+ kernels
+
+Fixes: #10544
+
+Cherry-picked from: 6619ad889da260cf83079cc74a85d571acd1df5a
+---
+ src/basic/stat-util.c     | 40 +++++++++++++++++++++++++++++++++++----
+ src/nspawn/nspawn.c       |  8 +++++---
+ src/test/test-stat-util.c | 15 +++++++++++++++
+ 3 files changed, 56 insertions(+), 7 deletions(-)
+
+diff --git a/src/basic/stat-util.c b/src/basic/stat-util.c
+index 07154e25b..26aee9bad 100644
+--- a/src/basic/stat-util.c
++++ b/src/basic/stat-util.c
+@@ -204,15 +204,47 @@ int fd_is_network_fs(int fd) {
+ }
+ 
+ int fd_is_network_ns(int fd) {
++        struct statfs s;
+         int r;
+ 
+-        r = fd_is_fs_type(fd, NSFS_MAGIC);
+-        if (r <= 0)
+-                return r;
++        /* Checks whether the specified file descriptor refers to a network namespace. On old kernels there's no nice
++         * way to detect that, hence on those we'll return a recognizable error (EUCLEAN), so that callers can handle
++         * this somewhat nicely.
++         *
++         * This function returns > 0 if the fd definitely refers to a network namespace, 0 if it definitely does not
++         * refer to a network namespace, -EUCLEAN if we can't determine, and other negative error codes on error. */
++
++        if (fstatfs(fd, &s) < 0)
++                return -errno;
++
++        if (!is_fs_type(&s, NSFS_MAGIC)) {
++                /* On really old kernels, there was no "nsfs", and network namespace sockets belonged to procfs
++                 * instead. Handle that in a somewhat smart way. */
++
++                if (is_fs_type(&s, PROC_SUPER_MAGIC)) {
++                        struct statfs t;
++
++                        /* OK, so it is procfs. Let's see if our own network namespace is procfs, too. If so, then the
++                         * passed fd might refer to a network namespace, but we can't know for sure. In that case,
++                         * return a recognizable error. */
++
++                        if (statfs("/proc/self/ns/net", &t) < 0)
++                                return -errno;
++
++                        if (s.f_type == t.f_type)
++                                return -EUCLEAN; /* It's possible, we simply don't know */
++                }
++
++                return 0; /* No! */
++        }
+ 
+         r = ioctl(fd, NS_GET_NSTYPE);
+-        if (r < 0)
++        if (r < 0) {
++                if (errno == ENOTTY) /* Old kernels didn't know this ioctl, let's also return a recognizable error in that case */
++                        return -EUCLEAN;
++
+                 return -errno;
++        }
+ 
+         return r == CLONE_NEWNET;
+ }
+diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
+index 56877bd93..8aec893a6 100644
+--- a/src/nspawn/nspawn.c
++++ b/src/nspawn/nspawn.c
+@@ -3701,10 +3701,12 @@ static int run(int master,
+                         return log_error_errno(errno, "Cannot open file %s: %m", arg_network_namespace_path);
+ 
+                 r = fd_is_network_ns(netns_fd);
+-                if (r < 0 && r != -ENOTTY)
++                if (r == -EUCLEAN)
++                        log_debug_errno(r, "Cannot determine if passed network namespace path '%s' really refers to a network namespace, assuming it does.", arg_network_namespace_path);
++                else if (r < 0)
+                         return log_error_errno(r, "Failed to check %s fs type: %m", arg_network_namespace_path);
+-                if (r == 0) {
+-                        log_error("Path %s doesn't refer to a network namespace", arg_network_namespace_path);
++                else if (r == 0) {
++                        log_error("Path %s doesn't refer to a network namespace, refusing.", arg_network_namespace_path);
+                         return -EINVAL;
+                 }
+         }
+diff --git a/src/test/test-stat-util.c b/src/test/test-stat-util.c
+index 43f56a6c2..2b0564d8a 100644
+--- a/src/test/test-stat-util.c
++++ b/src/test/test-stat-util.c
+@@ -67,11 +67,26 @@ static void test_path_is_temporary_fs(void) {
+         assert_se(path_is_temporary_fs("/i-dont-exist") == -ENOENT);
+ }
+ 
++static void test_fd_is_network_ns(void) {
++        _cleanup_close_ int fd = -1;
++        assert_se(fd_is_network_ns(STDIN_FILENO) == 0);
++        assert_se(fd_is_network_ns(STDERR_FILENO) == 0);
++        assert_se(fd_is_network_ns(STDOUT_FILENO) == 0);
++
++        assert_se((fd = open("/proc/self/ns/mnt", O_CLOEXEC|O_RDONLY)) >= 0);
++        assert_se(IN_SET(fd_is_network_ns(fd), 0, -EUCLEAN));
++        fd = safe_close(fd);
++
++        assert_se((fd = open("/proc/self/ns/net", O_CLOEXEC|O_RDONLY)) >= 0);
++        assert_se(IN_SET(fd_is_network_ns(fd), 1, -EUCLEAN));
++}
++
+ int main(int argc, char *argv[]) {
+         test_files_same();
+         test_is_symlink();
+         test_path_is_fs_type();
+         test_path_is_temporary_fs();
++        test_fd_is_network_ns();
+ 
+         return 0;
+ }

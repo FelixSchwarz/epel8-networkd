@@ -1,0 +1,27 @@
+From e615b80f3fda82ac7fe628800a9ff2103788bd05 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Tue, 9 Oct 2018 13:50:55 +0200
+Subject: [PATCH] dissect-image: use right comparison function
+
+fstype can be NULL here.
+
+(cherry picked from commit 4db1879acdc0b853e1a7e6e650b6feb917175fac)
+
+Resolves: #1602706
+---
+ src/shared/dissect-image.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/shared/dissect-image.c b/src/shared/dissect-image.c
+index fa1cf26ee..e076c8e7d 100644
+--- a/src/shared/dissect-image.c
++++ b/src/shared/dissect-image.c
+@@ -230,7 +230,7 @@ int dissect_image(
+                                 .node = TAKE_PTR(n),
+                         };
+ 
+-                        m->encrypted = streq(fstype, "crypto_LUKS");
++                        m->encrypted = streq_ptr(fstype, "crypto_LUKS");
+ 
+                         *ret = TAKE_PTR(m);
+ 

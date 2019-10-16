@@ -1,0 +1,37 @@
+From 2d674d48e9ca48e3bb126f20b59334100d926a23 Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <fsumsal@redhat.com>
+Date: Tue, 15 Jan 2019 11:03:45 +0100
+Subject: [PATCH] travis: drop the SELinux Fedora workaround
+
+(cherry picked from commit 90399c456fe8cf726fc04fb7be9e2a01f9ca0eae)
+---
+ ci/travis-centos-rhel7.sh | 2 +-
+ ci/travis-centos-rhel8.sh | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ci/travis-centos-rhel7.sh b/ci/travis-centos-rhel7.sh
+index 60bbdf14c..b1b3de1cc 100755
+--- a/ci/travis-centos-rhel7.sh
++++ b/ci/travis-centos-rhel7.sh
+@@ -40,7 +40,7 @@ for phase in "${PHASES[@]}"; do
+             sleep 1
+             $DOCKER_EXEC yum makecache
+             # Install necessary build/test requirements
+-            $DOCKER_EXEC yum -y --exclude selinux-policy\* upgrade
++            $DOCKER_EXEC yum -y upgrade
+             $DOCKER_EXEC yum -y install "${ADDITIONAL_DEPS[@]}"
+             $DOCKER_EXEC yum-builddep -y systemd
+             ;;
+diff --git a/ci/travis-centos-rhel8.sh b/ci/travis-centos-rhel8.sh
+index 968603f94..8eda5e982 100755
+--- a/ci/travis-centos-rhel8.sh
++++ b/ci/travis-centos-rhel8.sh
+@@ -45,7 +45,7 @@ for phase in "${PHASES[@]}"; do
+             $DOCKER_EXEC curl "$COPR_REPO" -o "$COPR_REPO_PATH"
+             $DOCKER_EXEC yum -q -y install epel-release yum-utils
+             $DOCKER_EXEC yum-config-manager -q --enable epel
+-            $DOCKER_EXEC yum -y --exclude selinux-policy\* upgrade
++            $DOCKER_EXEC yum -y upgrade
+             # Install necessary build/test requirements
+             $DOCKER_EXEC yum -y install "${ADDITIONAL_DEPS[@]}"
+             $DOCKER_EXEC python3.6 -m ensurepip
