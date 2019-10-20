@@ -13,7 +13,7 @@
 Name:           systemd-networkd
 Url:            http://www.freedesktop.org/wiki/Software/systemd
 Version:        239
-Release:        13%{?dist}_0.5.1
+Release:        13%{?dist}_0.5.2
 # For a breakdown of the licensing, see README
 License:        LGPLv2+ and MIT and GPLv2+
 Summary:        System daemon that manages network configurations
