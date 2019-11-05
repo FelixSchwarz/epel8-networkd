@@ -1,0 +1,25 @@
+From f18db51fffbcecc2d7a30b2317c8a7a43b613757 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Thu, 8 Nov 2018 21:16:23 +0100
+Subject: [PATCH] format-table: when duplicating a cell, also copy the color
+
+(cherry picked from commit 13b0d4d7bdb674d0e51a6d595abd1e7bf2691bf9)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index 94e796d1ca..3429d9a071 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -414,6 +414,8 @@ static int table_dedup_cell(Table *t, TableCell *cell) {
+         if (!nd)
+                 return -ENOMEM;
+ 
++        nd->color = od->color;
++
+         table_data_unref(od);
+         t->data[i] = nd;
+ 

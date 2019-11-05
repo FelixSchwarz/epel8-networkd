@@ -10,7 +10,7 @@ from rpm script
  1 file changed, 1 deletion(-)
 
 diff --git a/units/systemd-resolved.service.in b/units/systemd-resolved.service.in
-index 9982ecebf..aaed406ab 100644
+index 9982ecebff..aaed406ab2 100644
 --- a/units/systemd-resolved.service.in
 +++ b/units/systemd-resolved.service.in
 @@ -26,7 +26,6 @@ RestartSec=0

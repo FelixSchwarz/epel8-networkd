@@ -1,0 +1,21 @@
+From dbb6c3db4a9e38dd13525b073b2de1b5eac0ef7d Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Sat, 8 Dec 2018 20:51:56 +0900
+Subject: [PATCH] lgtm: use python3
+
+(cherry picked from commit fc1c09e1dfd2073fb49c4e7bb87102c88a551876)
+---
+ .lgtm.yml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.lgtm.yml b/.lgtm.yml
+index 37f9c4335c..5948d8c2bc 100644
+--- a/.lgtm.yml
++++ b/.lgtm.yml
+@@ -8,3 +8,6 @@ extraction:
+     after_prepare:
+       - pip3 install meson
+       - export PATH="$HOME/.local/bin/:$PATH"
++  python:
++    python_setup:
++      version: 3

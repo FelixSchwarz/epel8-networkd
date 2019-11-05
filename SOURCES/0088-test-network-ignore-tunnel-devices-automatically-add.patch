@@ -12,7 +12,7 @@ Fixes #10934.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/test/test-execute/exec-privatenetwork-yes.service b/test/test-execute/exec-privatenetwork-yes.service
-index a38d24912..8f5cbadf0 100644
+index a38d24912f..8f5cbadf04 100644
 --- a/test/test-execute/exec-privatenetwork-yes.service
 +++ b/test/test-execute/exec-privatenetwork-yes.service
 @@ -2,6 +2,6 @@

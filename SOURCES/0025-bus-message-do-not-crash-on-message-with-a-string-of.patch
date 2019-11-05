@@ -17,7 +17,7 @@ Resolves: #1635439
  create mode 100644 test/fuzz/fuzz-bus-message/crash-29ed3c202e0ffade3cad42c8bbeb6cc68a21eb8e
 
 diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
-index 8d92bc200..381034f5f 100644
+index 8d92bc2002..381034f5f8 100644
 --- a/src/libsystemd/sd-bus/bus-message.c
 +++ b/src/libsystemd/sd-bus/bus-message.c
 @@ -3312,6 +3312,12 @@ _public_ int sd_bus_message_read_basic(sd_bus_message *m, char type, void *p) {

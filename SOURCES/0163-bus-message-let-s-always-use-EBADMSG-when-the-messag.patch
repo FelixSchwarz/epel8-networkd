@@ -1,0 +1,41 @@
+From 3924b6cf7e42e624a4bcf10f4f0cac3f717ecb5f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Mon, 9 Jul 2018 11:12:33 +0200
+Subject: [PATCH] bus-message: let's always use -EBADMSG when the message is
+ bad
+
+-EINVAL means the arguments were somehow wrong, so translate the code we get
+internally into -EBADMSG when returning.
+
+(cherry picked from commit 69bd42ca072dfb2f7603b1f82053063293ab54b5)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c                |   2 ++
+ .../crash-c1b37b4729b42c0c05b23cba4eed5d8102498a1e | Bin 0 -> 93 bytes
+ 2 files changed, 2 insertions(+)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-c1b37b4729b42c0c05b23cba4eed5d8102498a1e
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 1d06fcb80e..83f17436a1 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -5414,6 +5414,8 @@ int bus_message_parse_fields(sd_bus_message *m) {
+                                 &m->root_container.item_size,
+                                 &m->root_container.offsets,
+                                 &m->root_container.n_offsets);
++                if (r == -EINVAL)
++                        return -EBADMSG;
+                 if (r < 0)
+                         return r;
+         }
+diff --git a/test/fuzz/fuzz-bus-message/crash-c1b37b4729b42c0c05b23cba4eed5d8102498a1e b/test/fuzz/fuzz-bus-message/crash-c1b37b4729b42c0c05b23cba4eed5d8102498a1e
+new file mode 100644
+index 0000000000000000000000000000000000000000..2ae1a8715a12c65fba27d8e60216112a99b0ace7
+GIT binary patch
+literal 93
+wcmd1FDP>|PH8L_f3B<@i03SeB2xg~!`?q0o*WZ8t85<aYpp}6^gHcle07aS;y#N3J
+
+literal 0
+HcmV?d00001
+

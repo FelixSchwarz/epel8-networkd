@@ -46,7 +46,7 @@ https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=fd70af45528d59a00eb3190ef
  3 files changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index 04331dd41..a0e724070 100644
+index 04331dd41a..a0e7240708 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -425,6 +425,7 @@ decl_headers = '''
@@ -69,7 +69,7 @@ index 04331dd41..a0e724070 100644
                  ['IN6_ADDR_GEN_MODE_STABLE_PRIVACY', 'linux/if_link.h'],
                  ['IFLA_VRF_TABLE',                   'linux/if_link.h'],
 diff --git a/src/basic/missing.h b/src/basic/missing.h
-index 71a07d057..14ad3d491 100644
+index 71a07d0574..14ad3d4914 100644
 --- a/src/basic/missing.h
 +++ b/src/basic/missing.h
 @@ -15,7 +15,6 @@
@@ -92,7 +92,7 @@ index 71a07d057..14ad3d491 100644
  #include <libaudit.h>
  #endif
 diff --git a/src/basic/xattr-util.c b/src/basic/xattr-util.c
-index c5c55ea84..0ee097983 100644
+index c5c55ea846..0ee0979837 100644
 --- a/src/basic/xattr-util.c
 +++ b/src/basic/xattr-util.c
 @@ -2,7 +2,6 @@

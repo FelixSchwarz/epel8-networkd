@@ -1,0 +1,98 @@
+From aec984020cd22ac8a199bcd067047fba50850889 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Wed, 26 Sep 2018 15:04:26 +0000
+Subject: [PATCH] tests: add a fuzzer for sd-ndisc
+
+(cherry picked from commit 0f0a1dad7d69802a7e6c7fc9aba350f0e87c1952)
+
+Resolves: #1696224
+---
+ src/fuzz/fuzz-ndisc-rs.c | 57 ++++++++++++++++++++++++++++++++++++++++
+ src/fuzz/meson.build     | 10 +++++++
+ 2 files changed, 67 insertions(+)
+ create mode 100644 src/fuzz/fuzz-ndisc-rs.c
+
+diff --git a/src/fuzz/fuzz-ndisc-rs.c b/src/fuzz/fuzz-ndisc-rs.c
+new file mode 100644
+index 0000000000..7f2d8f8649
+--- /dev/null
++++ b/src/fuzz/fuzz-ndisc-rs.c
+@@ -0,0 +1,57 @@
++/* SPDX-License-Identifier: LGPL-2.1+ */
++
++#include <netinet/icmp6.h>
++#include <arpa/inet.h>
++
++#include "alloc-util.h"
++#include "icmp6-util.h"
++#include "fuzz.h"
++#include "sd-ndisc.h"
++#include "socket-util.h"
++#include "ndisc-internal.h"
++
++static int test_fd[2];
++
++int icmp6_bind_router_solicitation(int index) {
++        assert_se(socketpair(AF_UNIX, SOCK_DGRAM, 0, test_fd) >= 0);
++        return test_fd[0];
++}
++
++int icmp6_bind_router_advertisement(int index) {
++        return -ENOSYS;
++}
++
++int icmp6_receive(int fd, void *iov_base, size_t iov_len,
++                  struct in6_addr *dst, triple_timestamp *timestamp) {
++        assert_se(read(fd, iov_base, iov_len) == (ssize_t) iov_len);
++
++        if (timestamp)
++                triple_timestamp_get(timestamp);
++
++        return 0;
++}
++
++int icmp6_send_router_solicitation(int s, const struct ether_addr *ether_addr) {
++        return 0;
++}
++
++int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
++        struct ether_addr mac_addr = {
++                .ether_addr_octet = {'A', 'B', 'C', '1', '2', '3'}
++        };
++        _cleanup_(sd_event_unrefp) sd_event *e = NULL;
++        _cleanup_(sd_ndisc_unrefp) sd_ndisc *nd = NULL;
++
++        assert_se(sd_event_new(&e) >= 0);
++        assert_se(sd_ndisc_new(&nd) >= 0);
++        assert_se(sd_ndisc_attach_event(nd, e, 0) >= 0);
++        assert_se(sd_ndisc_set_ifindex(nd, 42) >= 0);
++        assert_se(sd_ndisc_set_mac(nd, &mac_addr) >= 0);
++        assert_se(sd_ndisc_start(nd) >= 0);
++        assert_se(write(test_fd[1], data, size) == (ssize_t) size);
++        (void) sd_event_run(e, (uint64_t) -1);
++        assert_se(sd_ndisc_stop(nd) >= 0);
++        close(test_fd[1]);
++
++        return 0;
++}
+diff --git a/src/fuzz/meson.build b/src/fuzz/meson.build
+index 5a97ef5091..5c81ac0c5b 100644
+--- a/src/fuzz/meson.build
++++ b/src/fuzz/meson.build
+@@ -14,6 +14,16 @@ fuzzers += [
+           libshared],
+          []],
+ 
++        [['src/fuzz/fuzz-ndisc-rs.c',
++          'src/libsystemd-network/dhcp-identifier.h',
++          'src/libsystemd-network/dhcp-identifier.c',
++          'src/libsystemd-network/icmp6-util.h',
++          'src/systemd/sd-dhcp6-client.h',
++          'src/systemd/sd-ndisc.h'],
++         [libshared,
++          libsystemd_network],
++         []],
++
+         [['src/fuzz/fuzz-unit-file.c'],
+          [libcore,
+           libshared],

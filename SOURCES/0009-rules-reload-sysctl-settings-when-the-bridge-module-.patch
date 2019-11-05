@@ -10,7 +10,7 @@ Related: #1523227
  1 file changed, 3 insertions(+)
 
 diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
-index 8231caae9..556a3a3a9 100644
+index 8231caae98..556a3a3a90 100644
 --- a/rules/40-redhat.rules
 +++ b/rules/40-redhat.rules
 @@ -5,3 +5,6 @@ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}

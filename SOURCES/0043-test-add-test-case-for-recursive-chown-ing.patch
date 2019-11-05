@@ -15,7 +15,7 @@ Related: #1643368
  create mode 100644 src/test/test-chown-rec.c
 
 diff --git a/src/test/meson.build b/src/test/meson.build
-index 7da7e3a22..b982251b1 100644
+index 7da7e3a22c..b982251b1f 100644
 --- a/src/test/meson.build
 +++ b/src/test/meson.build
 @@ -60,6 +60,11 @@ tests += [
@@ -32,7 +32,7 @@ index 7da7e3a22..b982251b1 100644
            libshared],
 diff --git a/src/test/test-chown-rec.c b/src/test/test-chown-rec.c
 new file mode 100644
-index 000000000..f16d4d4ba
+index 0000000000..f16d4d4ba2
 --- /dev/null
 +++ b/src/test/test-chown-rec.c
 @@ -0,0 +1,162 @@

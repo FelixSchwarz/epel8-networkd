@@ -9,7 +9,7 @@ Related: #1523227
  1 file changed, 1 insertion(+)
 
 diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
-index 9a48adde1..3335fe507 100644
+index 9a48adde19..3335fe5075 100644
 --- a/rules/40-redhat.rules
 +++ b/rules/40-redhat.rules
 @@ -11,6 +11,7 @@ ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/sys

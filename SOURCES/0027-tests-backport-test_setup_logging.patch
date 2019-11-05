@@ -10,7 +10,7 @@ Related: #1635428
  2 files changed, 7 insertions(+)
 
 diff --git a/src/shared/tests.c b/src/shared/tests.c
-index 6b3df0aa0..b10343650 100644
+index 6b3df0aa07..b10343650f 100644
 --- a/src/shared/tests.c
 +++ b/src/shared/tests.c
 @@ -54,3 +54,9 @@ const char* get_testdata_dir(const char *suffix) {
@@ -24,7 +24,7 @@ index 6b3df0aa0..b10343650 100644
 +        log_open();
 +}
 diff --git a/src/shared/tests.h b/src/shared/tests.h
-index b88135ed9..cad21169f 100644
+index b88135ed93..cad21169f8 100644
 --- a/src/shared/tests.h
 +++ b/src/shared/tests.h
 @@ -3,3 +3,4 @@

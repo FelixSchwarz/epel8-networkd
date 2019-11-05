@@ -14,7 +14,7 @@ Cherry-picked from: 6619ad889da260cf83079cc74a85d571acd1df5a
  3 files changed, 56 insertions(+), 7 deletions(-)
 
 diff --git a/src/basic/stat-util.c b/src/basic/stat-util.c
-index 07154e25b..26aee9bad 100644
+index 07154e25bb..26aee9bad6 100644
 --- a/src/basic/stat-util.c
 +++ b/src/basic/stat-util.c
 @@ -204,15 +204,47 @@ int fd_is_network_fs(int fd) {
@@ -70,7 +70,7 @@ index 07154e25b..26aee9bad 100644
          return r == CLONE_NEWNET;
  }
 diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
-index 56877bd93..8aec893a6 100644
+index 56877bd932..8aec893a69 100644
 --- a/src/nspawn/nspawn.c
 +++ b/src/nspawn/nspawn.c
 @@ -3701,10 +3701,12 @@ static int run(int master,
@@ -90,7 +90,7 @@ index 56877bd93..8aec893a6 100644
                  }
          }
 diff --git a/src/test/test-stat-util.c b/src/test/test-stat-util.c
-index 43f56a6c2..2b0564d8a 100644
+index 43f56a6c20..2b0564d8a0 100644
 --- a/src/test/test-stat-util.c
 +++ b/src/test/test-stat-util.c
 @@ -67,11 +67,26 @@ static void test_path_is_temporary_fs(void) {

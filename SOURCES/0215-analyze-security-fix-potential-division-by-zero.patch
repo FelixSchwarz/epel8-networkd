@@ -1,0 +1,25 @@
+From ebe93460ef5ae3744c4b627361f4dc5815cffc13 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Wed, 31 Jul 2019 09:13:41 +0200
+Subject: [PATCH] analyze-security: fix potential division by zero
+
+Upstream PR: https://github.com/systemd/systemd/pull/13238
+
+Resolves: #1734400
+---
+ src/analyze/analyze-security.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/analyze/analyze-security.c b/src/analyze/analyze-security.c
+index 541fc0d97a..eec040d5c3 100644
+--- a/src/analyze/analyze-security.c
++++ b/src/analyze/analyze-security.c
+@@ -1494,6 +1494,8 @@ static int assess(const struct security_info *info, Table *overview_table, Analy
+                 }
+         }
+ 
++        assert(weight_sum > 0);
++
+         if (details_table) {
+                 size_t row;
+ 

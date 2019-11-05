@@ -1,0 +1,60 @@
+From 6bb1d52f0554f687ef27de46c0b9daac9d256d60 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 10 Oct 2018 11:34:30 +0200
+Subject: [PATCH] tree-wide: various ubsan zero size memory fixes
+
+Fixes: #10346
+(cherry picked from commit 65f95765d05ddcd9e5849b68c379afa7e87d1248)
+
+Resolves: #1683319
+---
+ src/basic/bitmap.c        | 2 +-
+ src/basic/util.h          | 8 +++++++-
+ src/test/test-hexdecoct.c | 2 +-
+ 3 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/src/basic/bitmap.c b/src/basic/bitmap.c
+index c17c6a7a02..a4cd6451b0 100644
+--- a/src/basic/bitmap.c
++++ b/src/basic/bitmap.c
+@@ -206,7 +206,7 @@ bool bitmap_equal(Bitmap *a, Bitmap *b) {
+                 return true;
+ 
+         common_n_bitmaps = MIN(a->n_bitmaps, b->n_bitmaps);
+-        if (memcmp(a->bitmaps, b->bitmaps, sizeof(uint64_t) * common_n_bitmaps) != 0)
++        if (memcmp_safe(a->bitmaps, b->bitmaps, sizeof(uint64_t) * common_n_bitmaps) != 0)
+                 return false;
+ 
+         c = a->n_bitmaps > b->n_bitmaps ? a : b;
+diff --git a/src/basic/util.h b/src/basic/util.h
+index b68ef25ed8..4659a21b06 100644
+--- a/src/basic/util.h
++++ b/src/basic/util.h
+@@ -134,7 +134,13 @@ static inline int memcmp_safe(const void *s1, const void *s2, size_t n) {
+ 
+ int on_ac_power(void);
+ 
+-#define memzero(x,l) (memset((x), 0, (l)))
++#define memzero(x,l)                                            \
++        ({                                                      \
++                size_t _l_ = (l);                               \
++                void *_x_ = (x);                                \
++                _l_ == 0 ? _x_ : memset(_x_, 0, _l_);           \
++        })
++
+ #define zero(x) (memzero(&(x), sizeof(x)))
+ 
+ static inline void *mempset(void *s, int c, size_t n) {
+diff --git a/src/test/test-hexdecoct.c b/src/test/test-hexdecoct.c
+index da9f3008bb..a972ddcef7 100644
+--- a/src/test/test-hexdecoct.c
++++ b/src/test/test-hexdecoct.c
+@@ -84,7 +84,7 @@ static void test_unhexmem_one(const char *s, size_t l, int retval) {
+                         l = strlen(s);
+ 
+                 assert_se(hex = hexmem(mem, len));
+-                answer = strndupa(s, l);
++                answer = strndupa(s ?: "", l);
+                 assert_se(streq(delete_chars(answer, WHITESPACE), hex));
+         }
+ }

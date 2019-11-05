@@ -16,7 +16,7 @@ Related: #1656869
  1 file changed, 43 insertions(+), 21 deletions(-)
 
 diff --git a/src/cryptsetup/cryptsetup-generator.c b/src/cryptsetup/cryptsetup-generator.c
-index 03c513c26..52c126272 100644
+index 03c513c26e..52c1262728 100644
 --- a/src/cryptsetup/cryptsetup-generator.c
 +++ b/src/cryptsetup/cryptsetup-generator.c
 @@ -5,11 +5,13 @@

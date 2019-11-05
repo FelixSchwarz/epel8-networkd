@@ -1,0 +1,57 @@
+From b234013c618e3a346fd831d65e08662844fc9f81 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Fri, 12 Oct 2018 12:17:04 +0000
+Subject: [PATCH] sd-journal: escape binary data in match_make_string()
+
+Fixes: #10383
+(cherry picked from commit 9e8b1ec08e8eb0b4611b7caf6adb8828feb32312)
+
+Resolves: #1683319
+---
+ src/journal/sd-journal.c         | 3 ++-
+ src/journal/test-journal-match.c | 4 +++-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/journal/sd-journal.c b/src/journal/sd-journal.c
+index 83abd82d1c..323300baec 100644
+--- a/src/journal/sd-journal.c
++++ b/src/journal/sd-journal.c
+@@ -16,6 +16,7 @@
+ #include "catalog.h"
+ #include "compress.h"
+ #include "dirent-util.h"
++#include "escape.h"
+ #include "fd-util.h"
+ #include "fileio.h"
+ #include "format-util.h"
+@@ -381,7 +382,7 @@ static char *match_make_string(Match *m) {
+                 return strdup("none");
+ 
+         if (m->type == MATCH_DISCRETE)
+-                return strndup(m->data, m->size);
++                return cescape_length(m->data, m->size);
+ 
+         LIST_FOREACH(matches, i, m->matches) {
+                 char *t, *k;
+diff --git a/src/journal/test-journal-match.c b/src/journal/test-journal-match.c
+index 4e5ad1791a..d2a52b9145 100644
+--- a/src/journal/test-journal-match.c
++++ b/src/journal/test-journal-match.c
+@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
+         assert_se(sd_journal_add_match(j, "", 0) < 0);
+         assert_se(sd_journal_add_match(j, "=", 0) < 0);
+         assert_se(sd_journal_add_match(j, "=xxxxx", 0) < 0);
++        assert_se(sd_journal_add_match(j, (uint8_t[4]){'A', '=', '\1', '\2'}, 4) >= 0);
++        assert_se(sd_journal_add_match(j, (uint8_t[5]){'B', '=', 'C', '\0', 'D'}, 5) >= 0);
+         assert_se(sd_journal_add_match(j, "HALLO=WALDO", 0) >= 0);
+         assert_se(sd_journal_add_match(j, "QUUX=mmmm", 0) >= 0);
+         assert_se(sd_journal_add_match(j, "QUUX=xxxxx", 0) >= 0);
+@@ -53,7 +55,7 @@ int main(int argc, char *argv[]) {
+ 
+         printf("resulting match expression is: %s\n", t);
+ 
+-        assert_se(streq(t, "(((L3=ok OR L3=yes) OR ((L4_2=ok OR L4_2=yes) AND (L4_1=ok OR L4_1=yes))) AND ((TWO=two AND (ONE=two OR ONE=one)) OR (PIFF=paff AND (QUUX=yyyyy OR QUUX=xxxxx OR QUUX=mmmm) AND (HALLO= OR HALLO=WALDO))))"));
++        assert_se(streq(t, "(((L3=ok OR L3=yes) OR ((L4_2=ok OR L4_2=yes) AND (L4_1=ok OR L4_1=yes))) AND ((TWO=two AND (ONE=two OR ONE=one)) OR (PIFF=paff AND (QUUX=yyyyy OR QUUX=xxxxx OR QUUX=mmmm) AND (HALLO= OR HALLO=WALDO) AND B=C\\000D AND A=\\001\\002)))"));
+ 
+         return 0;
+ }

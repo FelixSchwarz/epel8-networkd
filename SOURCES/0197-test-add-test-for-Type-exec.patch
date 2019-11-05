@@ -1,0 +1,109 @@
+From afb82e108fe45d8481f2be50c74c4c6f307f8d60 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 17 Jul 2018 12:35:12 +0200
+Subject: [PATCH] test: add test for Type=exec
+
+(cherry picked from commit 0e1f17561f5f6061ec5503de044298372ed7ca37)
+
+Resolves: #1683334
+---
+ test/TEST-23-TYPE-EXEC/Makefile     |  4 +++
+ test/TEST-23-TYPE-EXEC/test.sh      | 42 +++++++++++++++++++++++++++++
+ test/TEST-23-TYPE-EXEC/testsuite.sh | 28 +++++++++++++++++++
+ 3 files changed, 74 insertions(+)
+ create mode 100644 test/TEST-23-TYPE-EXEC/Makefile
+ create mode 100755 test/TEST-23-TYPE-EXEC/test.sh
+ create mode 100755 test/TEST-23-TYPE-EXEC/testsuite.sh
+
+diff --git a/test/TEST-23-TYPE-EXEC/Makefile b/test/TEST-23-TYPE-EXEC/Makefile
+new file mode 100644
+index 0000000000..34d7cc6cdf
+--- /dev/null
++++ b/test/TEST-23-TYPE-EXEC/Makefile
+@@ -0,0 +1,4 @@
++BUILD_DIR=$(shell ../../tools/find-build-dir.sh)
++
++all setup clean run:
++	@basedir=../.. TEST_BASE_DIR=../ BUILD_DIR=$(BUILD_DIR) ./test.sh --$@
+diff --git a/test/TEST-23-TYPE-EXEC/test.sh b/test/TEST-23-TYPE-EXEC/test.sh
+new file mode 100755
+index 0000000000..bdcea239a7
+--- /dev/null
++++ b/test/TEST-23-TYPE-EXEC/test.sh
+@@ -0,0 +1,42 @@
++#!/bin/bash
++# -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
++# ex: ts=8 sw=4 sts=4 et filetype=sh
++set -e
++TEST_DESCRIPTION="test Type=exec"
++
++. $TEST_BASE_DIR/test-functions
++
++test_setup() {
++    create_empty_image
++    mkdir -p $TESTDIR/root
++    mount ${LOOPDEV}p1 $TESTDIR/root
++
++    (
++        LOG_LEVEL=5
++        eval $(udevadm info --export --query=env --name=${LOOPDEV}p2)
++
++        setup_basic_environment
++
++        # setup the testsuite service
++        cat >$initdir/etc/systemd/system/testsuite.service <<EOF
++[Unit]
++Description=Testsuite service
++
++[Service]
++ExecStart=/testsuite.sh
++Type=oneshot
++StandardOutput=tty
++StandardError=tty
++NotifyAccess=all
++EOF
++        cp testsuite.sh $initdir/
++
++        setup_testsuite
++    ) || return 1
++    setup_nspawn_root
++
++    ddebug "umount $TESTDIR/root"
++    umount $TESTDIR/root
++}
++
++do_test "$@"
+diff --git a/test/TEST-23-TYPE-EXEC/testsuite.sh b/test/TEST-23-TYPE-EXEC/testsuite.sh
+new file mode 100755
+index 0000000000..80734bbbdc
+--- /dev/null
++++ b/test/TEST-23-TYPE-EXEC/testsuite.sh
+@@ -0,0 +1,28 @@
++#!/bin/bash
++# -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
++# ex: ts=8 sw=4 sts=4 et filetype=sh
++set -ex
++set -o pipefail
++
++systemd-analyze set-log-level debug
++systemd-analyze set-log-target console
++
++# Create a binary for which execve() will fail
++touch /tmp/brokenbinary
++chmod +x /tmp/brokenbinary
++
++# These three commands should succeed.
++systemd-run --unit=one -p Type=simple /bin/sleep infinity
++systemd-run --unit=two -p Type=simple -p User=idontexist /bin/sleep infinity
++systemd-run --unit=three -p Type=simple /tmp/brokenbinary
++
++# And now, do the same with Type=exec, where the latter two should fail
++systemd-run --unit=four -p Type=exec /bin/sleep infinity
++! systemd-run --unit=five -p Type=exec -p User=idontexist /bin/sleep infinity
++! systemd-run --unit=six -p Type=exec /tmp/brokenbinary
++
++systemd-analyze set-log-level info
++
++echo OK > /testok
++
++exit 0

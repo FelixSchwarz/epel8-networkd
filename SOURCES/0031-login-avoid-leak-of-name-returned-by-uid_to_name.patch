@@ -12,7 +12,7 @@ Resolves: #1602706
  2 files changed, 6 insertions(+), 4 deletions(-)
 
 diff --git a/src/login/logind-dbus.c b/src/login/logind-dbus.c
-index 13298cc85..dca7f4a30 100644
+index 13298cc855..dca7f4a30f 100644
 --- a/src/login/logind-dbus.c
 +++ b/src/login/logind-dbus.c
 @@ -2155,6 +2155,7 @@ static int method_cancel_scheduled_shutdown(sd_bus_message *message, void *userd
@@ -35,7 +35,7 @@ index 13298cc85..dca7f4a30 100644
  
          return sd_bus_reply_method_return(message, "b", cancelled);
 diff --git a/src/login/logind-utmp.c b/src/login/logind-utmp.c
-index 71ebdfcfb..8bdd4ab6b 100644
+index 71ebdfcfb1..8bdd4ab6bf 100644
 --- a/src/login/logind-utmp.c
 +++ b/src/login/logind-utmp.c
 @@ -61,7 +61,7 @@ bool logind_wall_tty_filter(const char *tty, void *userdata) {

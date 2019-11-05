@@ -1,0 +1,77 @@
+From 75130d739d206715a09619c7b7bf62613dab1d2b Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 7 Nov 2018 17:41:32 +0100
+Subject: [PATCH] format-table: optionally allow reversing the sort order for a
+ column
+
+(cherry picked from commit a2c73e2d3823e878de7a7ee193631108c5fc5be0)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 22 +++++++++++++++++++++-
+ src/basic/format-table.h |  1 +
+ 2 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index 64b9eb4108..a3ff527e91 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -107,6 +107,8 @@ struct Table {
+ 
+         size_t *sort_map;     /* The columns to order rows by, in order of preference. */
+         size_t n_sort_map;
++
++        bool *reverse_map;
+ };
+ 
+ Table *table_new_raw(size_t n_columns) {
+@@ -215,6 +217,7 @@ Table *table_unref(Table *t) {
+         free(t->data);
+         free(t->display_map);
+         free(t->sort_map);
++        free(t->reverse_map);
+ 
+         return mfree(t);
+ }
+@@ -836,7 +839,7 @@ static int table_data_compare(const void *x, const void *y, void *userdata) {
+ 
+                 r = cell_data_compare(d, *a, dd, *b);
+                 if (r != 0)
+-                        return r;
++                        return t->reverse_map && t->reverse_map[t->sort_map[i]] ? -r : r;
+         }
+ 
+         /* Order identical lines by the order there were originally added in */
+@@ -1356,3 +1359,20 @@ size_t table_get_columns(Table *t) {
+         assert(t->n_columns > 0);
+         return t->n_columns;
+ }
++
++int table_set_reverse(Table *t, size_t column, bool b) {
++        assert(t);
++        assert(column < t->n_columns);
++
++        if (!t->reverse_map) {
++                if (!b)
++                        return 0;
++
++                t->reverse_map = new0(bool, t->n_columns);
++                if (!t->reverse_map)
++                        return -ENOMEM;
++        }
++
++        t->reverse_map[column] = b;
++        return 0;
++}
+diff --git a/src/basic/format-table.h b/src/basic/format-table.h
+index 2db2084062..07cb2351cb 100644
+--- a/src/basic/format-table.h
++++ b/src/basic/format-table.h
+@@ -53,6 +53,7 @@ void table_set_header(Table *table, bool b);
+ void table_set_width(Table *t, size_t width);
+ int table_set_display(Table *t, size_t first_column, ...);
+ int table_set_sort(Table *t, size_t first_column, ...);
++int table_set_reverse(Table *t, size_t column, bool b);
+ 
+ int table_print(Table *t, FILE *f);
+ int table_format(Table *t, char **ret);

@@ -1,0 +1,240 @@
+From 338519bd5d676d3f7bb5d58f4dac9fb6814afa78 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 7 Jul 2018 18:09:21 +0200
+Subject: [PATCH] fuzz: unify the "fuzz-regressions" directory with the main
+ corpus
+
+There isn't really much need to keep them separate. Anything which is a good
+corpus entry can be used as a smoke test, and anything which which is a
+regression test can just as well be inserted into the corpus.
+
+The only functional difference from this patch (apart from different paths in
+output) is that the regression tests are now zipped together with the rest of
+the corpus.
+
+$ meson configure build -Dslow-tests=true && ninja -C build test
+...
+307/325 fuzz-dns-packet:issue-7888:address      OK       0.06 s
+308/325 fuzz-dns-packet:oss-fuzz-5465:address   OK       0.04 s
+309/325 fuzz-journal-remote:crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76:address  OK       0.07 s
+310/325 fuzz-journal-remote:crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45:address  OK       0.05 s
+311/325 fuzz-journal-remote:oss-fuzz-8659:address  OK       0.05 s
+312/325 fuzz-journal-remote:oss-fuzz-8686:address  OK       0.07 s
+313/325 fuzz-unit-file:oss-fuzz-6884:address    OK       0.06 s
+314/325 fuzz-unit-file:oss-fuzz-6885:address    OK       0.05 s
+315/325 fuzz-unit-file:oss-fuzz-6886:address    OK       0.05 s
+316/325 fuzz-unit-file:oss-fuzz-6892:address    OK       0.05 s
+317/325 fuzz-unit-file:oss-fuzz-6897:address    OK       0.05 s
+318/325 fuzz-unit-file:oss-fuzz-6897-evverx:address  OK       0.06 s
+319/325 fuzz-unit-file:oss-fuzz-6908:address    OK       0.07 s
+320/325 fuzz-unit-file:oss-fuzz-6917:address    OK       0.07 s
+321/325 fuzz-unit-file:oss-fuzz-6977:address    OK       0.13 s
+322/325 fuzz-unit-file:oss-fuzz-6977-unminimized:address  OK       0.12 s
+323/325 fuzz-unit-file:oss-fuzz-7004:address    OK       0.05 s
+324/325 fuzz-unit-file:oss-fuzz-8064:address    OK       0.05 s
+325/325 fuzz-unit-file:oss-fuzz-8827:address    OK       0.52 s
+
+(cherry picked from commit c74a3f973e3e0bac13d66a28728a47f10046b71f)
+
+Resolves: #1696224
+---
+ meson.build                                         |   4 +---
+ test/fuzz-regressions/.gitattributes                |   1 -
+ .../fuzz-dns-packet/issue-7888                      | Bin
+ .../fuzz-dns-packet/oss-fuzz-5465                   | Bin
+ .../crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76  | Bin
+ .../crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45  | Bin
+ .../fuzz-journal-remote/oss-fuzz-8659               |   0
+ .../fuzz-journal-remote/oss-fuzz-8686               |   0
+ .../fuzz-journald-syslog/github-9795                |   0
+ .../fuzz-journald-syslog/github-9820                |   0
+ .../fuzz-journald-syslog/github-9827                |   0
+ .../fuzz-journald-syslog/github-9829                |   0
+ ...timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1 | Bin
+ ...timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b | Bin
+ .../fuzz-unit-file/oss-fuzz-10007                   |   0
+ .../fuzz-unit-file/oss-fuzz-6884                    |   0
+ .../fuzz-unit-file/oss-fuzz-6885                    |   0
+ .../fuzz-unit-file/oss-fuzz-6886                    |   0
+ .../fuzz-unit-file/oss-fuzz-6892                    |   0
+ .../fuzz-unit-file/oss-fuzz-6897                    |   0
+ .../fuzz-unit-file/oss-fuzz-6897-evverx             |   0
+ .../fuzz-unit-file/oss-fuzz-6908                    |   0
+ .../fuzz-unit-file/oss-fuzz-6917                    |   0
+ .../fuzz-unit-file/oss-fuzz-6977                    |   0
+ .../fuzz-unit-file/oss-fuzz-6977-unminimized        |   0
+ .../fuzz-unit-file/oss-fuzz-7004                    |   0
+ .../fuzz-unit-file/oss-fuzz-8064                    |   0
+ .../fuzz-unit-file/oss-fuzz-8827                    |   0
+ test/{fuzz-regressions => fuzz}/meson.build         |   0
+ test/meson.build                                    |   2 +-
+ 30 files changed, 2 insertions(+), 5 deletions(-)
+ delete mode 100644 test/fuzz-regressions/.gitattributes
+ rename test/{fuzz-regressions => fuzz}/fuzz-dns-packet/issue-7888 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-dns-packet/oss-fuzz-5465 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journal-remote/oss-fuzz-8659 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journal-remote/oss-fuzz-8686 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journald-syslog/github-9795 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journald-syslog/github-9820 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journald-syslog/github-9827 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-journald-syslog/github-9829 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-10007 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6884 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6885 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6886 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6892 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6897 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6897-evverx (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6908 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6917 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6977 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-6977-unminimized (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-7004 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-8064 (100%)
+ rename test/{fuzz-regressions => fuzz}/fuzz-unit-file/oss-fuzz-8827 (100%)
+ rename test/{fuzz-regressions => fuzz}/meson.build (100%)
+
+diff --git a/meson.build b/meson.build
+index f2d67b7e02..709597e5c4 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2777,9 +2777,7 @@ foreach tuple : sanitizers
+                                 test('@0@:@1@:@2@'.format(b, c, sanitizer),
+                                      env,
+                                      args : [exe.full_path(),
+-                                             join_paths(meson.source_root(),
+-                                                        'test/fuzz-regressions',
+-                                                        p)])
++                                             join_paths(meson.source_root(), 'test/fuzz', p)])
+                         endif
+                 endforeach
+         endif
+diff --git a/test/fuzz-regressions/.gitattributes b/test/fuzz-regressions/.gitattributes
+deleted file mode 100644
+index 7b1b3e1835..0000000000
+--- a/test/fuzz-regressions/.gitattributes
++++ /dev/null
+@@ -1 +0,0 @@
+-/*/*       -whitespace
+diff --git a/test/fuzz-regressions/fuzz-dns-packet/issue-7888 b/test/fuzz/fuzz-dns-packet/issue-7888
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-dns-packet/issue-7888
+rename to test/fuzz/fuzz-dns-packet/issue-7888
+diff --git a/test/fuzz-regressions/fuzz-dns-packet/oss-fuzz-5465 b/test/fuzz/fuzz-dns-packet/oss-fuzz-5465
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-dns-packet/oss-fuzz-5465
+rename to test/fuzz/fuzz-dns-packet/oss-fuzz-5465
+diff --git a/test/fuzz-regressions/fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76 b/test/fuzz/fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76
+rename to test/fuzz/fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76
+diff --git a/test/fuzz-regressions/fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45 b/test/fuzz/fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45
+rename to test/fuzz/fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45
+diff --git a/test/fuzz-regressions/fuzz-journal-remote/oss-fuzz-8659 b/test/fuzz/fuzz-journal-remote/oss-fuzz-8659
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journal-remote/oss-fuzz-8659
+rename to test/fuzz/fuzz-journal-remote/oss-fuzz-8659
+diff --git a/test/fuzz-regressions/fuzz-journal-remote/oss-fuzz-8686 b/test/fuzz/fuzz-journal-remote/oss-fuzz-8686
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journal-remote/oss-fuzz-8686
+rename to test/fuzz/fuzz-journal-remote/oss-fuzz-8686
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9795 b/test/fuzz/fuzz-journald-syslog/github-9795
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journald-syslog/github-9795
+rename to test/fuzz/fuzz-journald-syslog/github-9795
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9820 b/test/fuzz/fuzz-journald-syslog/github-9820
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journald-syslog/github-9820
+rename to test/fuzz/fuzz-journald-syslog/github-9820
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9827 b/test/fuzz/fuzz-journald-syslog/github-9827
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journald-syslog/github-9827
+rename to test/fuzz/fuzz-journald-syslog/github-9827
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9829 b/test/fuzz/fuzz-journald-syslog/github-9829
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-journald-syslog/github-9829
+rename to test/fuzz/fuzz-journald-syslog/github-9829
+diff --git a/test/fuzz-regressions/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1 b/test/fuzz/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+rename to test/fuzz/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+diff --git a/test/fuzz-regressions/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b b/test/fuzz/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+rename to test/fuzz/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-10007 b/test/fuzz/fuzz-unit-file/oss-fuzz-10007
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-10007
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-10007
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6884 b/test/fuzz/fuzz-unit-file/oss-fuzz-6884
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6884
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6884
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6885 b/test/fuzz/fuzz-unit-file/oss-fuzz-6885
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6885
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6885
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6886 b/test/fuzz/fuzz-unit-file/oss-fuzz-6886
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6886
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6886
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6892 b/test/fuzz/fuzz-unit-file/oss-fuzz-6892
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6892
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6892
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6897 b/test/fuzz/fuzz-unit-file/oss-fuzz-6897
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6897
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6897
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6897-evverx b/test/fuzz/fuzz-unit-file/oss-fuzz-6897-evverx
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6897-evverx
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6897-evverx
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6908 b/test/fuzz/fuzz-unit-file/oss-fuzz-6908
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6908
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6908
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6917 b/test/fuzz/fuzz-unit-file/oss-fuzz-6917
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6917
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6917
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6977 b/test/fuzz/fuzz-unit-file/oss-fuzz-6977
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6977
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6977
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6977-unminimized b/test/fuzz/fuzz-unit-file/oss-fuzz-6977-unminimized
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-6977-unminimized
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-6977-unminimized
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-7004 b/test/fuzz/fuzz-unit-file/oss-fuzz-7004
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-7004
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-7004
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-8064 b/test/fuzz/fuzz-unit-file/oss-fuzz-8064
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-8064
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-8064
+diff --git a/test/fuzz-regressions/fuzz-unit-file/oss-fuzz-8827 b/test/fuzz/fuzz-unit-file/oss-fuzz-8827
+similarity index 100%
+rename from test/fuzz-regressions/fuzz-unit-file/oss-fuzz-8827
+rename to test/fuzz/fuzz-unit-file/oss-fuzz-8827
+diff --git a/test/fuzz-regressions/meson.build b/test/fuzz/meson.build
+similarity index 100%
+rename from test/fuzz-regressions/meson.build
+rename to test/fuzz/meson.build
+diff --git a/test/meson.build b/test/meson.build
+index 826e684e59..fb9f2cdb9b 100644
+--- a/test/meson.build
++++ b/test/meson.build
+@@ -244,4 +244,4 @@ if conf.get('ENABLE_HWDB') == 1
+              timeout : 90)
+ endif
+ 
+-subdir('fuzz-regressions')
++subdir('fuzz')

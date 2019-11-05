@@ -1,0 +1,29 @@
+From d4c1d109a883fbc5695cf10c79e61bedbe788829 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Mon, 3 Dec 2018 20:28:15 +0100
+Subject: [PATCH] format-table: use right field for display
+
+Since .timespan and .timestamp are unionized on top of each other this
+doesn't actually matter, but it is still more correct to address it
+under it's correct name.
+
+(cherry picked from commit c93d372d7ceda0b080487fa35d3638ef3d8507cb)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index 5517adad82..cfb8aadbda 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -928,7 +928,7 @@ static const char *table_data_format(TableData *d) {
+                 if (!p)
+                         return NULL;
+ 
+-                if (!format_timespan(p, FORMAT_TIMESPAN_MAX, d->timestamp, 0))
++                if (!format_timespan(p, FORMAT_TIMESPAN_MAX, d->timespan, 0))
+                         return "n/a";
+ 
+                 d->formatted = TAKE_PTR(p);

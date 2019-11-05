@@ -13,7 +13,7 @@ Related: #1523227
 
 diff --git a/rules/73-idrac.rules b/rules/73-idrac.rules
 new file mode 100644
-index 000000000..d67fc425b
+index 0000000000..d67fc425b1
 --- /dev/null
 +++ b/rules/73-idrac.rules
 @@ -0,0 +1,6 @@
@@ -24,7 +24,7 @@ index 000000000..d67fc425b
 +
 +ACTION=="add", SUBSYSTEM=="net", SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="a102", NAME="idrac"
 diff --git a/rules/meson.build b/rules/meson.build
-index e7e4362c0..e04a18aca 100644
+index e7e4362c0c..e04a18aca6 100644
 --- a/rules/meson.build
 +++ b/rules/meson.build
 @@ -17,6 +17,7 @@ rules = files('''

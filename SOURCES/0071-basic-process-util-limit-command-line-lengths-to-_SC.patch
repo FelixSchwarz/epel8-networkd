@@ -54,7 +54,7 @@ Related: #1664976
  1 file changed, 25 insertions(+), 48 deletions(-)
 
 diff --git a/src/basic/process-util.c b/src/basic/process-util.c
-index 0a4f917cb..a20f1e3cc 100644
+index 0a4f917cbd..a20f1e3ccf 100644
 --- a/src/basic/process-util.c
 +++ b/src/basic/process-util.c
 @@ -128,6 +128,13 @@ int get_process_cmdline(pid_t pid, size_t max_length, bool comm_fallback, char *

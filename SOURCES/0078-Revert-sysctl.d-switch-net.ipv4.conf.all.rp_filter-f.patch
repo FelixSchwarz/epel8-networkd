@@ -12,7 +12,7 @@ Resolves: #1653824
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sysctl.d/50-default.conf b/sysctl.d/50-default.conf
-index b0645f33e..e263cf062 100644
+index b0645f33e7..e263cf0628 100644
 --- a/sysctl.d/50-default.conf
 +++ b/sysctl.d/50-default.conf
 @@ -22,7 +22,7 @@ kernel.sysrq = 16

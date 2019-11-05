@@ -13,7 +13,7 @@ Related: #1643368
  1 file changed, 12 insertions(+), 4 deletions(-)
 
 diff --git a/src/core/chown-recursive.c b/src/core/chown-recursive.c
-index 27c64489b..447b77126 100644
+index 27c64489b5..447b771267 100644
 --- a/src/core/chown-recursive.c
 +++ b/src/core/chown-recursive.c
 @@ -3,6 +3,7 @@

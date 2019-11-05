@@ -20,7 +20,7 @@ Related: #1664976
  1 file changed, 33 insertions(+), 2 deletions(-)
 
 diff --git a/src/journal/journald-context.c b/src/journal/journald-context.c
-index ce07de1bf..0f0dc1de4 100644
+index ce07de1bfb..0f0dc1de4d 100644
 --- a/src/journal/journald-context.c
 +++ b/src/journal/journald-context.c
 @@ -14,6 +14,7 @@

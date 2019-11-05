@@ -21,7 +21,7 @@ Resolves: #1643368
  1 file changed, 70 insertions(+), 76 deletions(-)
 
 diff --git a/src/core/chown-recursive.c b/src/core/chown-recursive.c
-index c4794501c..27c64489b 100644
+index c4794501c2..27c64489b5 100644
 --- a/src/core/chown-recursive.c
 +++ b/src/core/chown-recursive.c
 @@ -1,17 +1,19 @@

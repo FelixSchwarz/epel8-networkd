@@ -20,7 +20,7 @@ Relevant commit: 9b45c2bf02a43e3e1b42de1ab0c3fe29c64dc5f5
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/test/TEST-10-ISSUE-2467/test.sh b/test/TEST-10-ISSUE-2467/test.sh
-index e61f5acd3..0e6123668 100755
+index e61f5acd3c..0e61236686 100755
 --- a/test/TEST-10-ISSUE-2467/test.sh
 +++ b/test/TEST-10-ISSUE-2467/test.sh
 @@ -17,7 +17,7 @@ test_setup() {

@@ -1,4 +1,4 @@
-From 3c1ccdf9a774de405ada5e4d46d3e844e66ea511 Mon Sep 17 00:00:00 2001
+From 9d0046ceca10911361137d6496987cb15ffff132 Mon Sep 17 00:00:00 2001
 From: Lukas Nykryn <lnykryn@redhat.com>
 Date: Thu, 25 Jun 2015 09:20:59 +0200
 Subject: [PATCH] Revert "core: one step back again, for nspawn we actually
@@ -11,13 +11,13 @@ RHEL-only
 https://bugzilla.redhat.com/show_bug.cgi?id=1141137
 https://github.com/systemd/systemd/pull/350
 
-Resolves: #1705379
+Resolves: #1703485
 ---
  src/core/unit.c | 11 +----------
  1 file changed, 1 insertion(+), 10 deletions(-)
 
 diff --git a/src/core/unit.c b/src/core/unit.c
-index cc43ddc4f..d298afb0d 100644
+index cc43ddc4f1..d298afb0d4 100644
 --- a/src/core/unit.c
 +++ b/src/core/unit.c
 @@ -4579,16 +4579,7 @@ int unit_kill_context(

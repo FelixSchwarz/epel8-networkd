@@ -1,0 +1,34 @@
+From 0318890ed2325b916ccfa5a59ede98e6a4b5fe60 Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Fri, 28 Sep 2018 19:28:05 +0900
+Subject: [PATCH] ndisc: fix two infinite loops
+
+(cherry picked from commit f3241c61f12dbd8f0ed37419ae272e291d09461d)
+
+Resolves: #1696224
+---
+ src/libsystemd-network/ndisc-router.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/libsystemd-network/ndisc-router.c b/src/libsystemd-network/ndisc-router.c
+index 25b693a458..3806804435 100644
+--- a/src/libsystemd-network/ndisc-router.c
++++ b/src/libsystemd-network/ndisc-router.c
+@@ -189,7 +189,7 @@ int ndisc_router_parse(sd_ndisc_router *rt) {
+ 
+                         if (has_mtu) {
+                                 log_ndisc("MTU option specified twice, ignoring.");
+-                                continue;
++                                break;
+                         }
+ 
+                         if (length != 8) {
+@@ -230,7 +230,7 @@ int ndisc_router_parse(sd_ndisc_router *rt) {
+ 
+                         if (has_flag_extension) {
+                                 log_ndisc("Flags extension option specified twice, ignoring.");
+-                                continue;
++                                break;
+                         }
+ 
+                         if (length < 1*8) {

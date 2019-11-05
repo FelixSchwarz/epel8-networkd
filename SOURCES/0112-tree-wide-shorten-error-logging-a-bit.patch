@@ -1,0 +1,795 @@
+From 9bf05059882a8bc80d33877a315e2bd66fe9e1b5 Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Tue, 7 Aug 2018 10:14:30 +0900
+Subject: [PATCH] tree-wide: shorten error logging a bit
+
+Continuation of 4027f96aa08c73f109aa46b89842ca0e25c9c0e9.
+
+(cherry picked from commit 4ae25393f37b96b2b753562a349d68947ab1ad3d)
+
+Resolves: #1697893
+---
+ src/analyze/analyze.c                   | 30 ++++------
+ src/core/dbus-manager.c                 |  4 +-
+ src/core/transaction.c                  | 18 ++----
+ src/hostname/hostnamectl.c              |  5 +-
+ src/libsystemd/sd-bus/test-bus-server.c |  6 +-
+ src/locale/localectl.c                  | 14 ++---
+ src/locale/localed.c                    |  5 +-
+ src/login/loginctl.c                    | 75 +++++++++---------------
+ src/login/logind-action.c               |  6 +-
+ src/login/logind-core.c                 |  4 +-
+ src/machine/machinectl.c                | 78 +++++++++----------------
+ src/nspawn/nspawn-register.c            | 16 ++---
+ src/resolve/resolvectl.c                |  6 +-
+ src/run/run.c                           | 18 ++----
+ src/sulogin-shell/sulogin-shell.c       |  4 +-
+ src/timedate/timedatectl.c              | 16 ++---
+ 16 files changed, 112 insertions(+), 193 deletions(-)
+
+diff --git a/src/analyze/analyze.c b/src/analyze/analyze.c
+index de0fe6eba8..dc7d2ab0f6 100644
+--- a/src/analyze/analyze.c
++++ b/src/analyze/analyze.c
+@@ -156,10 +156,8 @@ static int bus_get_uint64_property(sd_bus *bus, const char *path, const char *in
+                         &error,
+                         't', val);
+ 
+-        if (r < 0) {
+-                log_error("Failed to parse reply: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to parse reply: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -181,10 +179,8 @@ static int bus_get_unit_property_strv(sd_bus *bus, const char *path, const char
+                         property,
+                         &error,
+                         strv);
+-        if (r < 0) {
+-                log_error("Failed to get unit property %s: %s", property, bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to get unit property %s: %s", property, bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -368,10 +364,8 @@ static int acquire_time_data(sd_bus *bus, struct unit_times **out) {
+                         "ListUnits",
+                         &error, &reply,
+                         NULL);
+-        if (r < 0) {
+-                log_error("Failed to list units: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to list units: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_enter_container(reply, SD_BUS_TYPE_ARRAY, "(ssssssouso)");
+         if (r < 0)
+@@ -967,10 +961,8 @@ static int list_dependencies(sd_bus *bus, const char *name) {
+                         &error,
+                         &reply,
+                         "s");
+-        if (r < 0) {
+-                log_error("Failed to get ID: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to get ID: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_read(reply, "s", &id);
+         if (r < 0)
+@@ -1229,10 +1221,8 @@ static int dot(int argc, char *argv[], void *userdata) {
+                        &error,
+                        &reply,
+                        "");
+-        if (r < 0) {
+-                log_error("Failed to list units: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                log_error_errno(r, "Failed to list units: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_enter_container(reply, SD_BUS_TYPE_ARRAY, "(ssssssouso)");
+         if (r < 0)
+diff --git a/src/core/dbus-manager.c b/src/core/dbus-manager.c
+index d39c9b28c4..b3c011b0df 100644
+--- a/src/core/dbus-manager.c
++++ b/src/core/dbus-manager.c
+@@ -1298,9 +1298,9 @@ int verify_run_space_and_log(const char *message) {
+ 
+         r = verify_run_space(message, &error);
+         if (r < 0)
+-                log_error_errno(r, "%s", bus_error_message(&error, r));
++                return log_error_errno(r, "%s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int method_reload(sd_bus_message *message, void *userdata, sd_bus_error *error) {
+diff --git a/src/core/transaction.c b/src/core/transaction.c
+index 1c7efb207a..045930838b 100644
+--- a/src/core/transaction.c
++++ b/src/core/transaction.c
+@@ -695,10 +695,8 @@ int transaction_activate(Transaction *tr, Manager *m, JobMode mode, sd_bus_error
+                 if (r >= 0)
+                         break;
+ 
+-                if (r != -EAGAIN) {
+-                        log_warning("Requested transaction contains an unfixable cyclic ordering dependency: %s", bus_error_message(e, r));
+-                        return r;
+-                }
++                if (r != -EAGAIN)
++                        return log_warning_errno(r, "Requested transaction contains an unfixable cyclic ordering dependency: %s", bus_error_message(e, r));
+ 
+                 /* Let's see if the resulting transaction ordering
+                  * graph is still cyclic... */
+@@ -712,10 +710,8 @@ int transaction_activate(Transaction *tr, Manager *m, JobMode mode, sd_bus_error
+                 if (r >= 0)
+                         break;
+ 
+-                if (r != -EAGAIN) {
+-                        log_warning("Requested transaction contains unmergeable jobs: %s", bus_error_message(e, r));
+-                        return r;
+-                }
++                if (r != -EAGAIN)
++                        return log_warning_errno(r, "Requested transaction contains unmergeable jobs: %s", bus_error_message(e, r));
+ 
+                 /* Seventh step: an entry got dropped, let's garbage
+                  * collect its dependencies. */
+@@ -731,10 +727,8 @@ int transaction_activate(Transaction *tr, Manager *m, JobMode mode, sd_bus_error
+ 
+         /* Ninth step: check whether we can actually apply this */
+         r = transaction_is_destructive(tr, mode, e);
+-        if (r < 0) {
+-                log_notice("Requested transaction contradicts existing jobs: %s", bus_error_message(e, r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_notice_errno(r, "Requested transaction contradicts existing jobs: %s", bus_error_message(e, r));
+ 
+         /* Tenth step: apply changes */
+         r = transaction_apply(tr, m, mode);
+diff --git a/src/hostname/hostnamectl.c b/src/hostname/hostnamectl.c
+index 8587f5c59f..fa4292c1fc 100644
+--- a/src/hostname/hostnamectl.c
++++ b/src/hostname/hostnamectl.c
+@@ -227,8 +227,9 @@ static int set_simple_string(sd_bus *bus, const char *method, const char *value)
+                         &error, NULL,
+                         "sb", value, arg_ask_password);
+         if (r < 0)
+-                log_error("Could not set property: %s", bus_error_message(&error, -r));
+-        return r;
++                return log_error_errno(r, "Could not set property: %s", bus_error_message(&error, -r));
++
++        return 0;
+ }
+ 
+ static int set_hostname(int argc, char **argv, void *userdata) {
+diff --git a/src/libsystemd/sd-bus/test-bus-server.c b/src/libsystemd/sd-bus/test-bus-server.c
+index 31b54e252c..f33acda338 100644
+--- a/src/libsystemd/sd-bus/test-bus-server.c
++++ b/src/libsystemd/sd-bus/test-bus-server.c
+@@ -130,10 +130,8 @@ static int client(struct context *c) {
+                 return log_error_errno(r, "Failed to allocate method call: %m");
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to issue method call: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to issue method call: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+diff --git a/src/locale/localectl.c b/src/locale/localectl.c
+index b3ad2820d9..ebc6a8ca8a 100644
+--- a/src/locale/localectl.c
++++ b/src/locale/localectl.c
+@@ -184,10 +184,8 @@ static int set_locale(int argc, char **argv, void *userdata) {
+                 return bus_log_create_error(r);
+ 
+         r = sd_bus_call(bus, m, 0, &error, NULL);
+-        if (r < 0) {
+-                log_error("Failed to issue method call: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to issue method call: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -229,9 +227,9 @@ static int set_vconsole_keymap(int argc, char **argv, void *userdata) {
+                         NULL,
+                         "ssbb", map, toggle_map, arg_convert, arg_ask_password);
+         if (r < 0)
+-                log_error("Failed to set keymap: %s", bus_error_message(&error, -r));
++                return log_error_errno(r, "Failed to set keymap: %s", bus_error_message(&error, -r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int list_vconsole_keymaps(int argc, char **argv, void *userdata) {
+@@ -273,9 +271,9 @@ static int set_x11_keymap(int argc, char **argv, void *userdata) {
+                         "ssssbb", layout, model, variant, options,
+                                   arg_convert, arg_ask_password);
+         if (r < 0)
+-                log_error("Failed to set keymap: %s", bus_error_message(&error, -r));
++                return log_error_errno(r, "Failed to set keymap: %s", bus_error_message(&error, -r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int list_x11_keymaps(int argc, char **argv, void *userdata) {
+diff --git a/src/locale/localed.c b/src/locale/localed.c
+index b8f95b69a6..253973fd49 100644
+--- a/src/locale/localed.c
++++ b/src/locale/localed.c
+@@ -103,8 +103,9 @@ static int vconsole_reload(sd_bus *bus) {
+                         "ss", "systemd-vconsole-setup.service", "replace");
+ 
+         if (r < 0)
+-                log_error("Failed to issue method call: %s", bus_error_message(&error, -r));
+-        return r;
++                return log_error_errno(r, "Failed to issue method call: %s", bus_error_message(&error, -r));
++
++        return 0;
+ }
+ 
+ static int vconsole_convert_to_x11_and_emit(Context *c, sd_bus_message *m) {
+diff --git a/src/login/loginctl.c b/src/login/loginctl.c
+index be55fdbfd8..9b3fed928b 100644
+--- a/src/login/loginctl.c
++++ b/src/login/loginctl.c
+@@ -856,10 +856,9 @@ static int show_session(int argc, char *argv[], void *userdata) {
+                 session = getenv("XDG_SESSION_ID");
+                 if (session) {
+                         r = get_session_path(bus, session, &error, &path);
+-                        if (r < 0) {
+-                                log_error("Failed to get session path: %s", bus_error_message(&error, r));
+-                                return r;
+-                        }
++                        if (r < 0)
++                                return log_error_errno(r, "Failed to get session path: %s", bus_error_message(&error, r));
++
+                         p = path;
+                 }
+ 
+@@ -868,10 +867,8 @@ static int show_session(int argc, char *argv[], void *userdata) {
+ 
+         for (i = 1; i < argc; i++) {
+                 r = get_session_path(bus, argv[i], &error, &path);
+-                if (r < 0) {
+-                        log_error("Failed to get session path: %s", bus_error_message(&error, r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Failed to get session path: %s", bus_error_message(&error, r));
+ 
+                 if (properties)
+                         r = show_properties(bus, path, &new_line);
+@@ -924,10 +921,8 @@ static int show_user(int argc, char *argv[], void *userdata) {
+                                 "GetUser",
+                                 &error, &reply,
+                                 "u", (uint32_t) uid);
+-                if (r < 0) {
+-                        log_error("Failed to get user: %s", bus_error_message(&error, r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Failed to get user: %s", bus_error_message(&error, r));
+ 
+                 r = sd_bus_message_read(reply, "o", &path);
+                 if (r < 0)
+@@ -979,10 +974,8 @@ static int show_seat(int argc, char *argv[], void *userdata) {
+                                 "GetSeat",
+                                 &error, &reply,
+                                 "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Failed to get seat: %s", bus_error_message(&error, r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Failed to get seat: %s", bus_error_message(&error, r));
+ 
+                 r = sd_bus_message_read(reply, "o", &path);
+                 if (r < 0)
+@@ -1036,10 +1029,8 @@ static int activate(int argc, char *argv[], void *userdata) {
+                                                                       "ActivateSession",
+                                 &error, NULL,
+                                 "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Failed to issue method call: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Failed to issue method call: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1068,10 +1059,8 @@ static int kill_session(int argc, char *argv[], void *userdata) {
+                         "KillSession",
+                         &error, NULL,
+                         "ssi", argv[i], arg_kill_who, arg_signal);
+-                if (r < 0) {
+-                        log_error("Could not kill session: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not kill session: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1121,10 +1110,8 @@ static int enable_linger(int argc, char *argv[], void *userdata) {
+                         "SetUserLinger",
+                         &error, NULL,
+                         "ubb", (uint32_t) uid, b, true);
+-                if (r < 0) {
+-                        log_error("Could not enable linger: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not enable linger: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1155,10 +1142,8 @@ static int terminate_user(int argc, char *argv[], void *userdata) {
+                         "TerminateUser",
+                         &error, NULL,
+                         "u", (uint32_t) uid);
+-                if (r < 0) {
+-                        log_error("Could not terminate user: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not terminate user: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1192,10 +1177,8 @@ static int kill_user(int argc, char *argv[], void *userdata) {
+                         "KillUser",
+                         &error, NULL,
+                         "ui", (uint32_t) uid, arg_signal);
+-                if (r < 0) {
+-                        log_error("Could not kill user: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not kill user: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1222,10 +1205,8 @@ static int attach(int argc, char *argv[], void *userdata) {
+                         &error, NULL,
+                         "ssb", argv[1], argv[i], true);
+ 
+-                if (r < 0) {
+-                        log_error("Could not attach device: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not attach device: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1250,9 +1231,9 @@ static int flush_devices(int argc, char *argv[], void *userdata) {
+                         &error, NULL,
+                         "b", true);
+         if (r < 0)
+-                log_error("Could not flush devices: %s", bus_error_message(&error, -r));
++                return log_error_errno(r, "Could not flush devices: %s", bus_error_message(&error, -r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int lock_sessions(int argc, char *argv[], void *userdata) {
+@@ -1274,9 +1255,9 @@ static int lock_sessions(int argc, char *argv[], void *userdata) {
+                         &error, NULL,
+                         NULL);
+         if (r < 0)
+-                log_error("Could not lock sessions: %s", bus_error_message(&error, -r));
++                return log_error_errno(r, "Could not lock sessions: %s", bus_error_message(&error, -r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int terminate_seat(int argc, char *argv[], void *userdata) {
+@@ -1299,10 +1280,8 @@ static int terminate_seat(int argc, char *argv[], void *userdata) {
+                         "TerminateSeat",
+                         &error, NULL,
+                         "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Could not terminate seat: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not terminate seat: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+diff --git a/src/login/logind-action.c b/src/login/logind-action.c
+index 08e41af81a..317e9ef384 100644
+--- a/src/login/logind-action.c
++++ b/src/login/logind-action.c
+@@ -152,10 +152,8 @@ int manager_handle_action(
+         log_info("%s", message_table[handle]);
+ 
+         r = bus_manager_shutdown_or_sleep_now_or_later(m, target, inhibit_operation, &error);
+-        if (r < 0) {
+-                log_error("Failed to execute operation: %s", bus_error_message(&error, r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to execute operation: %s", bus_error_message(&error, r));
+ 
+         return 1;
+ }
+diff --git a/src/login/logind-core.c b/src/login/logind-core.c
+index 511e3acf8f..cff5536ac0 100644
+--- a/src/login/logind-core.c
++++ b/src/login/logind-core.c
+@@ -522,9 +522,9 @@ int manager_spawn_autovt(Manager *m, unsigned int vtnr) {
+                         NULL,
+                         "ss", name, "fail");
+         if (r < 0)
+-                log_error("Failed to start %s: %s", name, bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to start %s: %s", name, bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static bool manager_is_docked(Manager *m) {
+diff --git a/src/machine/machinectl.c b/src/machine/machinectl.c
+index d656681daf..e177841c88 100644
+--- a/src/machine/machinectl.c
++++ b/src/machine/machinectl.c
+@@ -773,10 +773,8 @@ static int show_machine(int argc, char *argv[], void *userdata) {
+                                        &error,
+                                        &reply,
+                                        "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Could not get path to machine: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not get path to machine: %s", bus_error_message(&error, -r));
+ 
+                 r = sd_bus_message_read(reply, "o", &path);
+                 if (r < 0)
+@@ -1118,10 +1116,8 @@ static int show_image(int argc, char *argv[], void *userdata) {
+                                 &error,
+                                 &reply,
+                                 "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Could not get path to image: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not get path to image: %s", bus_error_message(&error, -r));
+ 
+                 r = sd_bus_message_read(reply, "o", &path);
+                 if (r < 0)
+@@ -1158,10 +1154,8 @@ static int kill_machine(int argc, char *argv[], void *userdata) {
+                                 &error,
+                                 NULL,
+                                 "ssi", argv[i], arg_kill_who, arg_signal);
+-                if (r < 0) {
+-                        log_error("Could not kill machine: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not kill machine: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1200,10 +1194,8 @@ static int terminate_machine(int argc, char *argv[], void *userdata) {
+                                 &error,
+                                 NULL,
+                                 "s", argv[i]);
+-                if (r < 0) {
+-                        log_error("Could not terminate machine: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not terminate machine: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+@@ -1285,10 +1277,8 @@ static int bind_mount(int argc, char *argv[], void *userdata) {
+                         argv[3],
+                         arg_read_only,
+                         arg_mkdir);
+-        if (r < 0) {
+-                log_error("Failed to bind mount: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to bind mount: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -1459,10 +1449,8 @@ static int login_machine(int argc, char *argv[], void *userdata) {
+                         &error,
+                         &reply,
+                         "s", machine);
+-        if (r < 0) {
+-                log_error("Failed to get login PTY: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to get login PTY: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_read(reply, "hs", &master, NULL);
+         if (r < 0)
+@@ -1615,10 +1603,8 @@ static int rename_image(int argc, char *argv[], void *userdata) {
+                         &error,
+                         NULL,
+                         "ss", argv[1], argv[2]);
+-        if (r < 0) {
+-                log_error("Could not rename image: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Could not rename image: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -1681,10 +1667,8 @@ static int read_only_image(int argc, char *argv[], void *userdata) {
+                         &error,
+                         NULL,
+                         "sb", argv[1], b);
+-        if (r < 0) {
+-                log_error("Could not mark image read-only: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Could not mark image read-only: %s", bus_error_message(&error, -r));
+ 
+         return 0;
+ }
+@@ -1773,10 +1757,8 @@ static int start_machine(int argc, char *argv[], void *userdata) {
+                                 &error,
+                                 &reply,
+                                 "ss", unit, "fail");
+-                if (r < 0) {
+-                        log_error("Failed to start unit: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Failed to start unit: %s", bus_error_message(&error, -r));
+ 
+                 r = sd_bus_message_read(reply, "o", &object);
+                 if (r < 0)
+@@ -1855,10 +1837,8 @@ static int enable_machine(int argc, char *argv[], void *userdata) {
+                 return bus_log_create_error(r);
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to enable or disable unit: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to enable or disable unit: %s", bus_error_message(&error, -r));
+ 
+         if (streq(argv[0], "enable")) {
+                 r = sd_bus_message_read(reply, "b", NULL);
+@@ -1993,10 +1973,8 @@ static int transfer_image_common(sd_bus *bus, sd_bus_message *m) {
+                 return log_error_errno(r, "Failed to request match: %m");
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to transfer image: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to transfer image: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_read(reply, "uo", &id, NULL);
+         if (r < 0)
+@@ -2430,10 +2408,8 @@ static int list_transfers(int argc, char *argv[], void *userdata) {
+                                &error,
+                                &reply,
+                                NULL);
+-        if (r < 0) {
+-                log_error("Could not get transfers: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Could not get transfers: %s", bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_enter_container(reply, 'a', "(usssdo)");
+         if (r < 0)
+@@ -2528,10 +2504,8 @@ static int cancel_transfer(int argc, char *argv[], void *userdata) {
+                                 &error,
+                                 NULL,
+                                 "u", id);
+-                if (r < 0) {
+-                        log_error("Could not cancel transfer: %s", bus_error_message(&error, -r));
+-                        return r;
+-                }
++                if (r < 0)
++                        return log_error_errno(r, "Could not cancel transfer: %s", bus_error_message(&error, -r));
+         }
+ 
+         return 0;
+diff --git a/src/nspawn/nspawn-register.c b/src/nspawn/nspawn-register.c
+index 93185ecaaa..85f3cf1c01 100644
+--- a/src/nspawn/nspawn-register.c
++++ b/src/nspawn/nspawn-register.c
+@@ -195,10 +195,8 @@ int register_machine(
+                 r = sd_bus_call(bus, m, 0, &error, NULL);
+         }
+ 
+-        if (r < 0) {
+-                log_error("Failed to register machine: %s", bus_error_message(&error, r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to register machine: %s", bus_error_message(&error, r));
+ 
+         return 0;
+ }
+@@ -242,10 +240,8 @@ int terminate_machine(sd_bus *bus, pid_t pid) {
+                         &error,
+                         NULL,
+                         NULL);
+-        if (r < 0) {
++        if (r < 0)
+                 log_debug("Failed to terminate machine: %s", bus_error_message(&error, r));
+-                return 0;
+-        }
+ 
+         return 0;
+ }
+@@ -336,10 +332,8 @@ int allocate_scope(
+                 return bus_log_create_error(r);
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to allocate scope: %s", bus_error_message(&error, r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to allocate scope: %s", bus_error_message(&error, r));
+ 
+         r = sd_bus_message_read(reply, "o", &object);
+         if (r < 0)
+diff --git a/src/resolve/resolvectl.c b/src/resolve/resolvectl.c
+index e96c13fea6..cf1ec323a4 100644
+--- a/src/resolve/resolvectl.c
++++ b/src/resolve/resolvectl.c
+@@ -274,10 +274,8 @@ static int resolve_address(sd_bus *bus, int family, const union in_addr_union *a
+         ts = now(CLOCK_MONOTONIC);
+ 
+         r = sd_bus_call(bus, req, SD_RESOLVED_QUERY_TIMEOUT_USEC, &error, &reply);
+-        if (r < 0) {
+-                log_error("%s: resolve call failed: %s", pretty, bus_error_message(&error, r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "%s: resolve call failed: %s", pretty, bus_error_message(&error, r));
+ 
+         ts = now(CLOCK_MONOTONIC) - ts;
+ 
+diff --git a/src/run/run.c b/src/run/run.c
+index 2910fcb272..9ad44e7b57 100644
+--- a/src/run/run.c
++++ b/src/run/run.c
+@@ -940,10 +940,8 @@ static int start_transient_service(
+                                                &error,
+                                                &pty_reply,
+                                                "s", arg_host);
+-                        if (r < 0) {
+-                                log_error("Failed to get machine PTY: %s", bus_error_message(&error, -r));
+-                                return r;
+-                        }
++                        if (r < 0)
++                                return log_error_errno(r, "Failed to get machine PTY: %s", bus_error_message(&error, -r));
+ 
+                         r = sd_bus_message_read(pty_reply, "hs", &master, &s);
+                         if (r < 0)
+@@ -1219,10 +1217,8 @@ static int start_transient_scope(
+         polkit_agent_open_if_enabled(arg_transport, arg_ask_password);
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to start transient scope unit: %s", bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to start transient scope unit: %s", bus_error_message(&error, -r));
+ 
+         if (arg_nice_set) {
+                 if (setpriority(PRIO_PROCESS, 0, arg_nice) < 0)
+@@ -1437,10 +1433,8 @@ static int start_transient_trigger(
+         polkit_agent_open_if_enabled(arg_transport, arg_ask_password);
+ 
+         r = sd_bus_call(bus, m, 0, &error, &reply);
+-        if (r < 0) {
+-                log_error("Failed to start transient %s unit: %s", suffix + 1, bus_error_message(&error, -r));
+-                return r;
+-        }
++        if (r < 0)
++                return log_error_errno(r, "Failed to start transient %s unit: %s", suffix + 1, bus_error_message(&error, -r));
+ 
+         r = sd_bus_message_read(reply, "o", &object);
+         if (r < 0)
+diff --git a/src/sulogin-shell/sulogin-shell.c b/src/sulogin-shell/sulogin-shell.c
+index d0e5a89f1f..5db3592d6f 100644
+--- a/src/sulogin-shell/sulogin-shell.c
++++ b/src/sulogin-shell/sulogin-shell.c
+@@ -59,9 +59,9 @@ static int start_default_target(sd_bus *bus) {
+                                "ss", "default.target", "isolate");
+ 
+         if (r < 0)
+-                log_error("Failed to start default target: %s", bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to start default target: %s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int fork_wait(const char* const cmdline[]) {
+diff --git a/src/timedate/timedatectl.c b/src/timedate/timedatectl.c
+index befc8cb723..a541b01920 100644
+--- a/src/timedate/timedatectl.c
++++ b/src/timedate/timedatectl.c
+@@ -204,9 +204,9 @@ static int set_time(int argc, char **argv, void *userdata) {
+                                NULL,
+                                "xbb", (int64_t) t, relative, interactive);
+         if (r < 0)
+-                log_error("Failed to set time: %s", bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to set time: %s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int set_timezone(int argc, char **argv, void *userdata) {
+@@ -225,9 +225,9 @@ static int set_timezone(int argc, char **argv, void *userdata) {
+                                NULL,
+                                "sb", argv[1], arg_ask_password);
+         if (r < 0)
+-                log_error("Failed to set time zone: %s", bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to set time zone: %s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int set_local_rtc(int argc, char **argv, void *userdata) {
+@@ -250,9 +250,9 @@ static int set_local_rtc(int argc, char **argv, void *userdata) {
+                                NULL,
+                                "bbb", b, arg_adjust_system_clock, arg_ask_password);
+         if (r < 0)
+-                log_error("Failed to set local RTC: %s", bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to set local RTC: %s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int set_ntp(int argc, char **argv, void *userdata) {
+@@ -275,9 +275,9 @@ static int set_ntp(int argc, char **argv, void *userdata) {
+                                NULL,
+                                "bb", b, arg_ask_password);
+         if (r < 0)
+-                log_error("Failed to set ntp: %s", bus_error_message(&error, r));
++                return log_error_errno(r, "Failed to set ntp: %s", bus_error_message(&error, r));
+ 
+-        return r;
++        return 0;
+ }
+ 
+ static int list_timezones(int argc, char **argv, void *userdata) {

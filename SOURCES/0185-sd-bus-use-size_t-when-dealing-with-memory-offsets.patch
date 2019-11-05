@@ -1,0 +1,25 @@
+From 51747496a38894d76d3e5b4295c54b1654b7eb69 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 10 Oct 2018 11:12:22 +0200
+Subject: [PATCH] sd-bus: use size_t when dealing with memory offsets
+
+(cherry picked from commit 3cae6c21e732fd46ff024d6625243d88ef6377ed)
+
+Resolves: #1683319
+---
+ src/libsystemd/sd-bus/bus-creds.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-creds.c b/src/libsystemd/sd-bus/bus-creds.c
+index b180a033b8..6896bcf246 100644
+--- a/src/libsystemd/sd-bus/bus-creds.c
++++ b/src/libsystemd/sd-bus/bus-creds.c
+@@ -651,7 +651,7 @@ _public_ int sd_bus_creds_get_description(sd_bus_creds *c, const char **ret) {
+         return 0;
+ }
+ 
+-static int has_cap(sd_bus_creds *c, unsigned offset, int capability) {
++static int has_cap(sd_bus_creds *c, size_t offset, int capability) {
+         size_t sz;
+ 
+         assert(c);

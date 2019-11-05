@@ -1,0 +1,47 @@
+From ecc27a3bf5935cebc63aa4e3b650861d1f0ef97f Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Thu, 8 Nov 2018 21:21:09 +0100
+Subject: [PATCH] format-table: add an API for getting the cell at a specific
+ row/column
+
+(cherry picked from commit 9314ead7853a1479fc60eb2ae7e3d0a77b7eba7c)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 15 +++++++++++++++
+ src/basic/format-table.h |  2 ++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index 302642d748..809a4be284 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -1416,3 +1416,18 @@ int table_set_reverse(Table *t, size_t column, bool b) {
+         t->reverse_map[column] = b;
+         return 0;
+ }
++
++TableCell *table_get_cell(Table *t, size_t row, size_t column) {
++        size_t i;
++
++        assert(t);
++
++        if (column >= t->n_columns)
++                return NULL;
++
++        i = row * t->n_columns + column;
++        if (i >= t->n_cells)
++                return NULL;
++
++        return TABLE_INDEX_TO_CELL(i);
++}
+diff --git a/src/basic/format-table.h b/src/basic/format-table.h
+index 4273c8c49b..40fea79f78 100644
+--- a/src/basic/format-table.h
++++ b/src/basic/format-table.h
+@@ -66,3 +66,5 @@ static inline TableCell* TABLE_HEADER_CELL(size_t i) {
+ 
+ size_t table_get_rows(Table *t);
+ size_t table_get_columns(Table *t);
++
++TableCell *table_get_cell(Table *t, size_t row, size_t column);

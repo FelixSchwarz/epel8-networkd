@@ -1,0 +1,25 @@
+From 5d6a8b1b9728cfa54c89441a089ffbb156b59648 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Tue, 24 Jul 2018 21:24:53 +0200
+Subject: [PATCH] bus-message: use define
+
+(cherry picked from commit f22c308aff556bf5c6599ffcb61e637e366ab232)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 7392a43a19..81aaa7f59f 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -227,7 +227,7 @@ static int message_append_field_string(
+         /* dbus1 doesn't allow strings over 32bit, let's enforce this
+          * globally, to not risk convertability */
+         l = strlen(s);
+-        if (l > (size_t) (uint32_t) -1)
++        if (l > UINT32_MAX)
+                 return -EINVAL;
+ 
+         /* Signature "(yv)" where the variant contains "s" */

@@ -1,0 +1,50 @@
+From c95026c6979bb6f8dc52a6392318bc16615ace77 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Wed, 30 Jan 2019 10:36:53 +0100
+Subject: [PATCH] rules: implement new memory hotplug policy
+
+Our new policy is based on following motivations (assumptions),
+  * we want to allow the system to use hotplugged memory
+  * we want memory ballon inflation to work as expected in VMs (going for small
+  to big in terms of memory footprint)
+  * we want to allow memory hotplug and memory hot-unplug on high-end
+  enterprise server (we assume that node0 will have sufficient memory
+  resources and marking all memory as movable shouldn't be a problem)
+
+Policy:
+  * nevert online memory on s390 (on both physical and z/VM)
+  * mark memory as "online_movable" on physical machines
+  * mark memory as "online" in VMs
+
+If you have the feeling that all this is very wrong and we shouldn't
+encode complex policies in udev rules you are absolutely right. However,
+for now, we don't have any better place where to put it. In ideal world
+we would have a user-space daemon that would be able to configure the
+system wrt. to currently present HW and user-defined policy.
+
+Resolves: #1670728
+---
+ rules/40-redhat.rules | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 8ac96933c3..17b33682bd 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -4,7 +4,15 @@
+ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
+ 
+ # Memory hotadd request
+-SUBSYSTEM=="memory", ACTION=="add", PROGRAM=="/bin/uname -p", RESULT!="s390*", ATTR{state}=="offline", ATTR{state}="online"
++SUBSYSTEM!="memory", GOTO="memory_hotplug_end"
++ACTION!="add", GOTO="memory_hotplug_end"
++PROGRAM="/bin/uname -p", RESULT=="s390*", GOTO="memory_hotplug_end"
++
++ENV{.state}="online"
++PROGRAM="/bin/systemd-detect-virt", RESULT=="none", ENV{.state}="online_movable"
++ATTR{state}=="offline", ATTR{state}="$env{.state}"
++
++LABEL="memory_hotplug_end"
+ 
+ # reload sysctl.conf / sysctl.conf.d settings when the bridge module is loaded
+ ACTION=="add", SUBSYSTEM=="module", KERNEL=="bridge", RUN+="/usr/lib/systemd/systemd-sysctl --prefix=/proc/sys/net/bridge"

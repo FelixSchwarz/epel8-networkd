@@ -1,0 +1,36 @@
+From a064e883c7cc28b8d561a7fea56b139d8e7d2286 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Mon, 3 Dec 2018 21:39:39 +0100
+Subject: [PATCH] format-table: never try to reuse cells that have
+ color/url/uppercase set
+
+The table cell reusing code is supposed to be an internal memory
+optimization, and not more. This means behaviour should be the same as
+if we wouldn't reuse cells.
+
+(cherry picked from commit 94a80afed42a8b36d69a229bf44ba690f8f59a78)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index fe2201ee5f..844b92f41c 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -286,6 +286,14 @@ static bool table_data_matches(
+         if (d->ellipsize_percent != ellipsize_percent)
+                 return false;
+ 
++        /* If a color/url/uppercase flag is set, refuse to merge */
++        if (d->color)
++                return false;
++        if (d->url)
++                return false;
++        if (d->uppercase)
++                return false;
++
+         k = table_data_size(type, data);
+         l = table_data_size(d->type, d->data);
+ 

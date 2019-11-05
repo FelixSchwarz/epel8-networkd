@@ -1,0 +1,176 @@
+From a2da2b45ac05ef91074e90097115e8c734ca0f64 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Mon, 9 Jul 2018 10:52:51 +0200
+Subject: [PATCH] bus-message: avoid an infinite loop on empty structures
+
+The alternative would be to treat gvariant and !gvariant messages differently.
+But this is a problem because we check signatures is variuos places before we
+have an actual message, for example in sd_bus_add_object_vtable(). It seems
+better to treat things consistent (i.e. follow the lowest common denominator)
+and disallow empty structures everywhere.
+
+(cherry picked from commit ec6bda56cbca9509b1abde1122645630caca877c)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c               |   3 ++-
+ src/libsystemd/sd-bus/bus-signature.c             |   6 ++++++
+ src/libsystemd/sd-bus/test-bus-gvariant.c         |   6 +++---
+ src/libsystemd/sd-bus/test-bus-marshal.c          |   6 +++---
+ src/libsystemd/sd-bus/test-bus-signature.c        |   8 ++++----
+ ...crash-26bba7182dedc8848939931d9fcefcb7922f2e56 | Bin 0 -> 157 bytes
+ ...meout-08ee8f6446a4064db064e8e0b3d220147f7d0b5b | Bin 0 -> 534 bytes
+ 7 files changed, 18 insertions(+), 11 deletions(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-26bba7182dedc8848939931d9fcefcb7922f2e56
+ create mode 100644 test/fuzz/fuzz-bus-message/timeout-08ee8f6446a4064db064e8e0b3d220147f7d0b5b
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 7f87d018fb..1d06fcb80e 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -4178,6 +4178,7 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+ 
+                         /* signature_element_length does verification internally */
+ 
++                        /* The array element must not be empty */
+                         assert(l >= 1);
+                         if (free_and_strndup(&c->peeked_signature,
+                                              c->signature + c->index + 1, l) < 0)
+@@ -4201,7 +4202,7 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+                         if (r < 0)
+                                 return r;
+ 
+-                        assert(l >= 2);
++                        assert(l >= 3);
+                         if (free_and_strndup(&c->peeked_signature,
+                                              c->signature + c->index + 1, l - 2) < 0)
+                                 return -ENOMEM;
+diff --git a/src/libsystemd/sd-bus/bus-signature.c b/src/libsystemd/sd-bus/bus-signature.c
+index 18c91e8707..1ca37cbb5a 100644
+--- a/src/libsystemd/sd-bus/bus-signature.c
++++ b/src/libsystemd/sd-bus/bus-signature.c
+@@ -58,6 +58,12 @@ static int signature_element_length_internal(
+                         p += t;
+                 }
+ 
++                if (p - s < 2)
++                        /* D-Bus spec: Empty structures are not allowed; there
++                         * must be at least one type code between the parentheses.
++                         */
++                        return -EINVAL;
++
+                 *l = p - s + 1;
+                 return 0;
+         }
+diff --git a/src/libsystemd/sd-bus/test-bus-gvariant.c b/src/libsystemd/sd-bus/test-bus-gvariant.c
+index 75804f3458..e606970a3a 100644
+--- a/src/libsystemd/sd-bus/test-bus-gvariant.c
++++ b/src/libsystemd/sd-bus/test-bus-gvariant.c
+@@ -19,7 +19,7 @@
+ 
+ static void test_bus_gvariant_is_fixed_size(void) {
+         assert_se(bus_gvariant_is_fixed_size("") > 0);
+-        assert_se(bus_gvariant_is_fixed_size("()") > 0);
++        assert_se(bus_gvariant_is_fixed_size("()") == -EINVAL);
+         assert_se(bus_gvariant_is_fixed_size("y") > 0);
+         assert_se(bus_gvariant_is_fixed_size("u") > 0);
+         assert_se(bus_gvariant_is_fixed_size("b") > 0);
+@@ -44,7 +44,7 @@ static void test_bus_gvariant_is_fixed_size(void) {
+ 
+ static void test_bus_gvariant_get_size(void) {
+         assert_se(bus_gvariant_get_size("") == 0);
+-        assert_se(bus_gvariant_get_size("()") == 1);
++        assert_se(bus_gvariant_get_size("()") == -EINVAL);
+         assert_se(bus_gvariant_get_size("y") == 1);
+         assert_se(bus_gvariant_get_size("u") == 4);
+         assert_se(bus_gvariant_get_size("b") == 1);
+@@ -76,7 +76,7 @@ static void test_bus_gvariant_get_size(void) {
+ 
+ static void test_bus_gvariant_get_alignment(void) {
+         assert_se(bus_gvariant_get_alignment("") == 1);
+-        assert_se(bus_gvariant_get_alignment("()") == 1);
++        assert_se(bus_gvariant_get_alignment("()") == -EINVAL);
+         assert_se(bus_gvariant_get_alignment("y") == 1);
+         assert_se(bus_gvariant_get_alignment("b") == 1);
+         assert_se(bus_gvariant_get_alignment("u") == 4);
+diff --git a/src/libsystemd/sd-bus/test-bus-marshal.c b/src/libsystemd/sd-bus/test-bus-marshal.c
+index f007168ca6..1743b1b491 100644
+--- a/src/libsystemd/sd-bus/test-bus-marshal.c
++++ b/src/libsystemd/sd-bus/test-bus-marshal.c
+@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
+         assert_se(r >= 0);
+ 
+         r = sd_bus_message_append(m, "()");
+-        assert_se(r >= 0);
++        assert_se(r == -EINVAL);
+ 
+         r = sd_bus_message_append(m, "ba(ss)", 255, 3, "aaa", "1", "bbb", "2", "ccc", "3");
+         assert_se(r >= 0);
+@@ -293,7 +293,7 @@ int main(int argc, char *argv[]) {
+         assert_se(v == 10);
+ 
+         r = sd_bus_message_read(m, "()");
+-        assert_se(r > 0);
++        assert_se(r < 0);
+ 
+         r = sd_bus_message_read(m, "ba(ss)", &boolean, 3, &x, &y, &a, &b, &c, &d);
+         assert_se(r > 0);
+@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
+ 
+         assert_se(sd_bus_message_verify_type(m, 'a', "{yv}") > 0);
+ 
+-        r = sd_bus_message_skip(m, "a{yv}y(ty)y(yt)y()");
++        r = sd_bus_message_skip(m, "a{yv}y(ty)y(yt)y");
+         assert_se(r >= 0);
+ 
+         assert_se(sd_bus_message_verify_type(m, 'b', NULL) > 0);
+diff --git a/src/libsystemd/sd-bus/test-bus-signature.c b/src/libsystemd/sd-bus/test-bus-signature.c
+index 1ba1909198..a716cd1b35 100644
+--- a/src/libsystemd/sd-bus/test-bus-signature.c
++++ b/src/libsystemd/sd-bus/test-bus-signature.c
+@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
+         assert_se(signature_is_single("v", false));
+         assert_se(signature_is_single("as", false));
+         assert_se(signature_is_single("(ss)", false));
+-        assert_se(signature_is_single("()", false));
+-        assert_se(signature_is_single("(()()()()())", false));
+-        assert_se(signature_is_single("(((())))", false));
++        assert_se(!signature_is_single("()", false));
++        assert_se(!signature_is_single("(()()()()())", false));
++        assert_se(!signature_is_single("(((())))", false));
+         assert_se(signature_is_single("((((s))))", false));
+         assert_se(signature_is_single("{ss}", true));
+         assert_se(signature_is_single("a{ss}", false));
+@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
+         assert_se(signature_is_valid("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaas", false));
+         assert_se(!signature_is_valid("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaau", false));
+ 
+-        assert_se(signature_is_valid("(((((((((((((((((((((((((((((((())))))))))))))))))))))))))))))))", false));
++        assert_se(signature_is_valid("((((((((((((((((((((((((((((((((s))))))))))))))))))))))))))))))))", false));
+         assert_se(!signature_is_valid("((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))", false));
+ 
+         assert_se(namespace_complex_pattern("", ""));
+diff --git a/test/fuzz/fuzz-bus-message/crash-26bba7182dedc8848939931d9fcefcb7922f2e56 b/test/fuzz/fuzz-bus-message/crash-26bba7182dedc8848939931d9fcefcb7922f2e56
+new file mode 100644
+index 0000000000000000000000000000000000000000..f1bf3229effc982c8b129182fe60739efe3c5013
+GIT binary patch
+literal 157
+mcmd1#|DTC5gMmSS0SHWtK_neOii>$FgGM4Akdcw0DF6TjSP;el
+
+literal 0
+HcmV?d00001
+
+diff --git a/test/fuzz/fuzz-bus-message/timeout-08ee8f6446a4064db064e8e0b3d220147f7d0b5b b/test/fuzz/fuzz-bus-message/timeout-08ee8f6446a4064db064e8e0b3d220147f7d0b5b
+new file mode 100644
+index 0000000000000000000000000000000000000000..c975f906eef521a3cfac5627c8b371ee55aa0e6c
+GIT binary patch
+literal 534
+zcmcJL!Ab-%42J(Y?m8o$d;nSS(q4Ae_Yi!A47)oFEOwaGU5e<<_x8`!K@h}~fslMn
+zn)c7Z!M!`6y9Pc0I2S?0hHh3l#W~|szZ;Ct$XAT}7+V?FCpm1RoiBemuU&_Ys%S@7
+zdCkYS>{AZe=OjL~Ie67zrCwgdYud(O^J==RG>!dpXFS^tlZIX@tK0h@{D4MV@hJsW
+zyR)R1zXEs6tHM*H04&I}2-7)y>9oE<hN&+5v>VCxw(Vn{LBxXmJ)=frMcRdZlJ-~v
+b#4gh=OPF@NW^U~wGO=l?@b9nvy<mI-hA2%~
+
+literal 0
+HcmV?d00001
+

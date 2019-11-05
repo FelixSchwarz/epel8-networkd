@@ -17,7 +17,7 @@ Related: #1664976
  2 files changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/src/journal/journald-context.c b/src/journal/journald-context.c
-index 0f0dc1de4..51f79fd80 100644
+index 0f0dc1de4d..51f79fd803 100644
 --- a/src/journal/journald-context.c
 +++ b/src/journal/journald-context.c
 @@ -541,15 +541,39 @@ refresh:
@@ -63,7 +63,7 @@ index 0f0dc1de4..51f79fd80 100644
                  if (!c)
                          break; /* All remaining entries are pinned, give up */
 diff --git a/src/journal/journald-server.h b/src/journal/journald-server.h
-index 983be8bb8..c6c9b1fb1 100644
+index 983be8bb89..c6c9b1fb1d 100644
 --- a/src/journal/journald-server.h
 +++ b/src/journal/journald-server.h
 @@ -163,6 +163,8 @@ struct Server {

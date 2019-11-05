@@ -18,7 +18,7 @@ Related: #1664976
  1 file changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/src/basic/process-util.c b/src/basic/process-util.c
-index a20f1e3cc..aa3eff779 100644
+index a20f1e3ccf..aa3eff779a 100644
 --- a/src/basic/process-util.c
 +++ b/src/basic/process-util.c
 @@ -101,7 +101,8 @@ int get_process_comm(pid_t pid, char **ret) {

@@ -17,7 +17,7 @@ Related: #1664976
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/src/coredump/coredump.c b/src/coredump/coredump.c
-index 20a1cbdd4..d7dd81c1b 100644
+index 20a1cbdd45..d7dd81c1b4 100644
 --- a/src/coredump/coredump.c
 +++ b/src/coredump/coredump.c
 @@ -789,9 +789,10 @@ log:

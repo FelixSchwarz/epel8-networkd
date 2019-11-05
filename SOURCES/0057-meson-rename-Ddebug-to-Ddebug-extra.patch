@@ -15,7 +15,7 @@ Cherry-picked from: 8f6b442a78d0b485f044742ad90b2e8271b4e68e
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/meson.build b/meson.build
-index f308db263..ebc55872c 100644
+index f308db2631..ebc55872c9 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -769,7 +769,7 @@ substs.set('DEBUGTTY', get_option('debug-tty'))
@@ -28,7 +28,7 @@ index f308db263..ebc55872c 100644
                  enable_debug_hashmap = true
          elif name == 'mmap-cache'
 diff --git a/meson_options.txt b/meson_options.txt
-index ab2a65871..5716f45cc 100644
+index ab2a658713..5716f45ccf 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
 @@ -46,7 +46,7 @@ option('debug-shell', type : 'string', value : '/bin/sh',

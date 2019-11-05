@@ -13,7 +13,7 @@ Resolves: #1647359
  1 file changed, 39 insertions(+), 25 deletions(-)
 
 diff --git a/src/core/manager.c b/src/core/manager.c
-index a24bfcacd..3b2fe11e8 100644
+index a24bfcacdf..3b2fe11e87 100644
 --- a/src/core/manager.c
 +++ b/src/core/manager.c
 @@ -2074,56 +2074,70 @@ static unsigned manager_dispatch_dbus_queue(Manager *m) {

@@ -10,7 +10,7 @@ Subject: [PATCH] travis: drop the SELinux Fedora workaround
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/ci/travis-centos-rhel7.sh b/ci/travis-centos-rhel7.sh
-index 60bbdf14c..b1b3de1cc 100755
+index 60bbdf14c2..b1b3de1cc2 100755
 --- a/ci/travis-centos-rhel7.sh
 +++ b/ci/travis-centos-rhel7.sh
 @@ -40,7 +40,7 @@ for phase in "${PHASES[@]}"; do
@@ -23,7 +23,7 @@ index 60bbdf14c..b1b3de1cc 100755
              $DOCKER_EXEC yum-builddep -y systemd
              ;;
 diff --git a/ci/travis-centos-rhel8.sh b/ci/travis-centos-rhel8.sh
-index 968603f94..8eda5e982 100755
+index 968603f949..8eda5e982f 100755
 --- a/ci/travis-centos-rhel8.sh
 +++ b/ci/travis-centos-rhel8.sh
 @@ -45,7 +45,7 @@ for phase in "${PHASES[@]}"; do

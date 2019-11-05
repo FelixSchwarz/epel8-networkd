@@ -1,0 +1,147 @@
+From 85ccda9eabb6b89e644cedd9faafb5dbe97e8341 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 7 Nov 2018 15:25:51 +0100
+Subject: [PATCH] format-table: add option to store/format percent and uint64_t
+ values in cells
+
+(cherry picked from commit a4661181fa702a8bff4644210ba7ea14bea51a4a)
+
+Related: #1689832
+---
+ src/basic/format-table.c | 48 ++++++++++++++++++++++++++++++++++++++++
+ src/basic/format-table.h |  2 ++
+ src/basic/macro.h        |  9 ++++++++
+ 3 files changed, 59 insertions(+)
+
+diff --git a/src/basic/format-table.c b/src/basic/format-table.c
+index 17be7285cd..64b9eb4108 100644
+--- a/src/basic/format-table.c
++++ b/src/basic/format-table.c
+@@ -70,6 +70,8 @@ typedef struct TableData {
+                 uint64_t size;
+                 char string[0];
+                 uint32_t uint32;
++                uint64_t uint64;
++                int percent;        /* we use 'int' as datatype for percent values in order to match the result of parse_percent() */
+                 /* … add more here as we start supporting more cell data types … */
+         };
+ } TableData;
+@@ -235,11 +237,15 @@ static size_t table_data_size(TableDataType type, const void *data) {
+                 return sizeof(usec_t);
+ 
+         case TABLE_SIZE:
++        case TABLE_UINT64:
+                 return sizeof(uint64_t);
+ 
+         case TABLE_UINT32:
+                 return sizeof(uint32_t);
+ 
++        case TABLE_PERCENT:
++                return sizeof(int);
++
+         default:
+                 assert_not_reached("Uh? Unexpected cell type");
+         }
+@@ -599,6 +605,8 @@ int table_add_many_internal(Table *t, TableDataType first_type, ...) {
+                         uint64_t size;
+                         usec_t usec;
+                         uint32_t uint32;
++                        uint64_t uint64;
++                        int percent;
+                         bool b;
+                 } buffer;
+ 
+@@ -633,6 +641,16 @@ int table_add_many_internal(Table *t, TableDataType first_type, ...) {
+                         data = &buffer.uint32;
+                         break;
+ 
++                case TABLE_UINT64:
++                        buffer.uint64 = va_arg(ap, uint64_t);
++                        data = &buffer.uint64;
++                        break;
++
++                case TABLE_PERCENT:
++                        buffer.percent = va_arg(ap, int);
++                        data = &buffer.percent;
++                        break;
++
+                 case _TABLE_DATA_TYPE_MAX:
+                         /* Used as end marker */
+                         va_end(ap);
+@@ -772,6 +790,12 @@ static int cell_data_compare(TableData *a, size_t index_a, TableData *b, size_t
+                                 return 1;
+                         return 0;
+ 
++                case TABLE_UINT64:
++                        return CMP(a->uint64, b->uint64);
++
++                case TABLE_PERCENT:
++                        return CMP(a->percent, b->percent);
++
+                 default:
+                         ;
+                 }
+@@ -894,6 +918,30 @@ static const char *table_data_format(TableData *d) {
+                 break;
+         }
+ 
++        case TABLE_UINT64: {
++                _cleanup_free_ char *p;
++
++                p = new(char, DECIMAL_STR_WIDTH(d->uint64) + 1);
++                if (!p)
++                        return NULL;
++
++                sprintf(p, "%" PRIu64, d->uint64);
++                d->formatted = TAKE_PTR(p);
++                break;
++        }
++
++        case TABLE_PERCENT: {
++                _cleanup_free_ char *p;
++
++                p = new(char, DECIMAL_STR_WIDTH(d->percent) + 2);
++                if (!p)
++                        return NULL;
++
++                sprintf(p, "%i%%" , d->percent);
++                d->formatted = TAKE_PTR(p);
++                break;
++        }
++
+         default:
+                 assert_not_reached("Unexpected type?");
+         }
+diff --git a/src/basic/format-table.h b/src/basic/format-table.h
+index 9978a8baf2..2db2084062 100644
+--- a/src/basic/format-table.h
++++ b/src/basic/format-table.h
+@@ -15,6 +15,8 @@ typedef enum TableDataType {
+         TABLE_TIMESPAN,
+         TABLE_SIZE,
+         TABLE_UINT32,
++        TABLE_UINT64,
++        TABLE_PERCENT,
+         _TABLE_DATA_TYPE_MAX,
+         _TABLE_DATA_TYPE_INVALID = -1,
+ } TableDataType;
+diff --git a/src/basic/macro.h b/src/basic/macro.h
+index d1365f7058..79ab02b27a 100644
+--- a/src/basic/macro.h
++++ b/src/basic/macro.h
+@@ -222,6 +222,15 @@ static inline unsigned long ALIGN_POWER2(unsigned long u) {
+                 UNIQ_T(A,aq) > UNIQ_T(B,bq) ? UNIQ_T(A,aq) - UNIQ_T(B,bq) : 0; \
+         })
+ 
++#define CMP(a, b) __CMP(UNIQ, (a), UNIQ, (b))
++#define __CMP(aq, a, bq, b)                             \
++        ({                                              \
++                const typeof(a) UNIQ_T(A, aq) = (a);    \
++                const typeof(b) UNIQ_T(B, bq) = (b);    \
++                UNIQ_T(A, aq) < UNIQ_T(B, bq) ? -1 :    \
++                UNIQ_T(A, aq) > UNIQ_T(B, bq) ? 1 : 0;  \
++        })
++
+ #undef CLAMP
+ #define CLAMP(x, low, high) __CLAMP(UNIQ, (x), UNIQ, (low), UNIQ, (high))
+ #define __CLAMP(xq, x, lowq, low, highq, high)                          \

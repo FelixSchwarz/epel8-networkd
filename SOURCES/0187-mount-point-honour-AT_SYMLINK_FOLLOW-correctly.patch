@@ -1,0 +1,26 @@
+From 24e6a5d1deac8aae11a6a3a22fb9b71cb77fdb33 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Sat, 8 Dec 2018 20:21:43 +0100
+Subject: [PATCH] mount-point: honour AT_SYMLINK_FOLLOW correctly
+
+Fixes: #11092
+(cherry picked from commit be24321f3dae91a166166b239954032727439942)
+
+Resolves: #1683319
+---
+ src/basic/mount-util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/basic/mount-util.c b/src/basic/mount-util.c
+index ebe41a4c6c..3670b7f591 100644
+--- a/src/basic/mount-util.c
++++ b/src/basic/mount-util.c
+@@ -109,7 +109,7 @@ static int fd_fdinfo_mnt_id(int fd, const char *filename, int flags, int *mnt_id
+         if ((flags & AT_EMPTY_PATH) && isempty(filename))
+                 xsprintf(path, "/proc/self/fdinfo/%i", fd);
+         else {
+-                subfd = openat(fd, filename, O_CLOEXEC|O_PATH);
++                subfd = openat(fd, filename, O_CLOEXEC|O_PATH|(flags & AT_SYMLINK_FOLLOW ? 0 : O_NOFOLLOW));
+                 if (subfd < 0)
+                         return -errno;
+ 

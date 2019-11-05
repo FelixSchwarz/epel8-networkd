@@ -13,7 +13,7 @@ Related: #1664976
  3 files changed, 27 insertions(+), 11 deletions(-)
 
 diff --git a/src/basic/prioq.c b/src/basic/prioq.c
-index ef28a086d..0bf58c1f1 100644
+index ef28a086d1..0bf58c1f16 100644
 --- a/src/basic/prioq.c
 +++ b/src/basic/prioq.c
 @@ -259,15 +259,14 @@ int prioq_reshuffle(Prioq *q, void *data, unsigned *idx) {
@@ -36,7 +36,7 @@ index ef28a086d..0bf58c1f1 100644
  
  void *prioq_pop(Prioq *q) {
 diff --git a/src/basic/prioq.h b/src/basic/prioq.h
-index e03617526..c38152352 100644
+index e036175260..c381523525 100644
 --- a/src/basic/prioq.h
 +++ b/src/basic/prioq.h
 @@ -18,8 +18,14 @@ int prioq_put(Prioq *q, void *data, unsigned *idx);
@@ -56,7 +56,7 @@ index e03617526..c38152352 100644
  unsigned prioq_size(Prioq *q) _pure_;
  bool prioq_isempty(Prioq *q) _pure_;
 diff --git a/src/test/test-prioq.c b/src/test/test-prioq.c
-index 89c41d8ce..ece13808e 100644
+index 89c41d8ce7..ece13808ed 100644
 --- a/src/test/test-prioq.c
 +++ b/src/test/test-prioq.c
 @@ -87,6 +87,7 @@ static void test_struct(void) {

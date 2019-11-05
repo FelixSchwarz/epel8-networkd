@@ -28,7 +28,7 @@ Resolves: #1635428
  create mode 100644 test/fuzz/fuzz-bus-message/crash-b88ad9ecf4aacf4a0caca5b5543953265367f084
 
 diff --git a/src/basic/string-util.c b/src/basic/string-util.c
-index 0a4068349..dfa739996 100644
+index 0a40683493..dfa739996f 100644
 --- a/src/basic/string-util.c
 +++ b/src/basic/string-util.c
 @@ -1004,7 +1004,7 @@ int free_and_strdup(char **p, const char *s) {
@@ -74,7 +74,7 @@ index 0a4068349..dfa739996 100644
  /*
   * Pointer to memset is volatile so that compiler must de-reference
 diff --git a/src/basic/string-util.h b/src/basic/string-util.h
-index c0cc4e78d..96a9260f9 100644
+index c0cc4e78d7..96a9260f93 100644
 --- a/src/basic/string-util.h
 +++ b/src/basic/string-util.h
 @@ -176,6 +176,7 @@ char *strrep(const char *s, unsigned n);
@@ -86,7 +86,7 @@ index c0cc4e78d..96a9260f9 100644
  /* Normal memmem() requires haystack to be nonnull, which is annoying for zero-length buffers */
  static inline void *memmem_safe(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen) {
 diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
-index 381034f5f..7c8bad2bd 100644
+index 381034f5f8..7c8bad2bdd 100644
 --- a/src/libsystemd/sd-bus/bus-message.c
 +++ b/src/libsystemd/sd-bus/bus-message.c
 @@ -4175,20 +4175,19 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
@@ -180,7 +180,7 @@ index 381034f5f..7c8bad2bd 100644
                          }
  
 diff --git a/src/test/test-string-util.c b/src/test/test-string-util.c
-index 3e72ce2c0..43a6b14c3 100644
+index 3e72ce2c0a..43a6b14c34 100644
 --- a/src/test/test-string-util.c
 +++ b/src/test/test-string-util.c
 @@ -5,6 +5,7 @@

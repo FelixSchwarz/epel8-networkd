@@ -1,0 +1,24 @@
+From b7786387a6cdc447b874f36a8d9831b1acd2eb13 Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Sat, 8 Dec 2018 19:33:37 +0900
+Subject: [PATCH] tools: drop unused variable
+
+(cherry picked from commit 2f6c9b6f3fb0128cee7f74985c143b4850feff6d)
+
+Resolves: #1705971
+---
+ tools/gdb-sd_dump_hashmaps.py | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/tools/gdb-sd_dump_hashmaps.py b/tools/gdb-sd_dump_hashmaps.py
+index ea15160107..0701d139e2 100644
+--- a/tools/gdb-sd_dump_hashmaps.py
++++ b/tools/gdb-sd_dump_hashmaps.py
+@@ -16,7 +16,6 @@ class sd_dump_hashmaps(gdb.Command):
+                 d = gdb.parse_and_eval("hashmap_debug_list")
+                 all_entry_sizes = gdb.parse_and_eval("all_entry_sizes")
+                 all_direct_buckets = gdb.parse_and_eval("all_direct_buckets")
+-                hashmap_base_t = gdb.lookup_type("HashmapBase")
+                 uchar_t = gdb.lookup_type("unsigned char")
+                 ulong_t = gdb.lookup_type("unsigned long")
+                 debug_offset = gdb.parse_and_eval("(unsigned long)&((HashmapBase*)0)->debug")

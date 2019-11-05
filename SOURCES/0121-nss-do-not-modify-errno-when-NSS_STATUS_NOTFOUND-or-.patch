@@ -1,0 +1,957 @@
+From 34bb0461192c9feba0c0f05a8baf8fefcd9d835e Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Sun, 15 Jul 2018 23:00:00 +0900
+Subject: [PATCH] nss: do not modify errno when NSS_STATUS_NOTFOUND or
+ NSS_STATUS_SUCCESS
+
+This also adds PROTECT_ERRNO for all nss module functions.
+
+C.f. glibc NSS documents https://www.gnu.org/software/libc/manual/html_node/NSS-Modules-Interface.html
+and discussion in https://sourceware.org/bugzilla/show_bug.cgi?id=23410.
+
+Fixes #9585.
+
+(cherry picked from commit 06202b9e659e5cc72aeecc5200155b7c012fccbc)
+
+Resolves: #1691691
+---
+ src/nss-myhostname/nss-myhostname.c | 16 +++---
+ src/nss-mymachines/nss-mymachines.c | 88 ++++++++++++-----------------
+ src/nss-resolve/nss-resolve.c       | 87 +++++++++++++---------------
+ src/nss-systemd/nss-systemd.c       | 74 +++++++++---------------
+ 4 files changed, 108 insertions(+), 157 deletions(-)
+
+diff --git a/src/nss-myhostname/nss-myhostname.c b/src/nss-myhostname/nss-myhostname.c
+index f82ce59f2c..5abc0c91bf 100644
+--- a/src/nss-myhostname/nss-myhostname.c
++++ b/src/nss-myhostname/nss-myhostname.c
+@@ -45,6 +45,7 @@ enum nss_status _nss_myhostname_gethostbyname4_r(
+         char *r_name;
+         unsigned n;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -64,7 +65,6 @@ enum nss_status _nss_myhostname_gethostbyname4_r(
+ 
+                 n_addresses = local_gateways(NULL, 0, AF_UNSPEC, &addresses);
+                 if (n_addresses <= 0) {
+-                        *errnop = ENOENT;
+                         *h_errnop = HOST_NOT_FOUND;
+                         return NSS_STATUS_NOTFOUND;
+                 }
+@@ -81,7 +81,6 @@ enum nss_status _nss_myhostname_gethostbyname4_r(
+ 
+                 /* We respond to our local host name, our hostname suffixed with a single dot. */
+                 if (!streq(name, hn) && !streq_ptr(startswith(name, hn), ".")) {
+-                        *errnop = ENOENT;
+                         *h_errnop = HOST_NOT_FOUND;
+                         return NSS_STATUS_NOTFOUND;
+                 }
+@@ -157,8 +156,8 @@ enum nss_status _nss_myhostname_gethostbyname4_r(
+         if (ttlp)
+                 *ttlp = 0;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -286,8 +285,8 @@ static enum nss_status fill_in_hostent(
+         if (canonp)
+                 *canonp = r_name;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -309,6 +308,7 @@ enum nss_status _nss_myhostname_gethostbyname3_r(
+         uint32_t local_address_ipv4 = 0;
+         int n_addresses = 0;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -334,7 +334,6 @@ enum nss_status _nss_myhostname_gethostbyname3_r(
+ 
+                 n_addresses = local_gateways(NULL, 0, af, &addresses);
+                 if (n_addresses <= 0) {
+-                        *errnop = ENOENT;
+                         *h_errnop = HOST_NOT_FOUND;
+                         return NSS_STATUS_NOTFOUND;
+                 }
+@@ -350,7 +349,6 @@ enum nss_status _nss_myhostname_gethostbyname3_r(
+                 }
+ 
+                 if (!streq(name, hn) && !streq_ptr(startswith(name, hn), ".")) {
+-                        *errnop = ENOENT;
+                         *h_errnop = HOST_NOT_FOUND;
+                         return NSS_STATUS_NOTFOUND;
+                 }
+@@ -393,6 +391,7 @@ enum nss_status _nss_myhostname_gethostbyaddr2_r(
+         bool additional_from_hostname = false;
+         unsigned n;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(addr);
+@@ -455,7 +454,6 @@ enum nss_status _nss_myhostname_gethostbyaddr2_r(
+                 }
+         }
+ 
+-        *errnop = ENOENT;
+         *h_errnop = HOST_NOT_FOUND;
+         return NSS_STATUS_NOTFOUND;
+ 
+diff --git a/src/nss-mymachines/nss-mymachines.c b/src/nss-mymachines/nss-mymachines.c
+index 8d6caa0ada..9b81cd9ad1 100644
+--- a/src/nss-mymachines/nss-mymachines.c
++++ b/src/nss-mymachines/nss-mymachines.c
+@@ -80,6 +80,7 @@ enum nss_status _nss_mymachines_gethostbyname4_r(
+         char *r_name;
+         int n_ifindices, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -126,7 +127,6 @@ enum nss_status _nss_mymachines_gethostbyname4_r(
+                 goto fail;
+ 
+         if (c <= 0) {
+-                *errnop = ESRCH;
+                 *h_errnop = HOST_NOT_FOUND;
+                 return NSS_STATUS_NOTFOUND;
+         }
+@@ -200,8 +200,8 @@ enum nss_status _nss_mymachines_gethostbyname4_r(
+         if (ttlp)
+                 *ttlp = 0;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -230,6 +230,7 @@ enum nss_status _nss_mymachines_gethostbyname3_r(
+         size_t l, idx, ms, alen;
+         int r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -278,7 +279,6 @@ enum nss_status _nss_mymachines_gethostbyname3_r(
+                 goto fail;
+ 
+         if (c <= 0) {
+-                *errnop = ENOENT;
+                 *h_errnop = HOST_NOT_FOUND;
+                 return NSS_STATUS_NOTFOUND;
+         }
+@@ -364,8 +364,8 @@ enum nss_status _nss_mymachines_gethostbyname3_r(
+         if (canonp)
+                 *canonp = r_name;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -394,6 +394,7 @@ enum nss_status _nss_mymachines_getpwnam_r(
+         size_t l;
+         int r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -401,28 +402,28 @@ enum nss_status _nss_mymachines_getpwnam_r(
+ 
+         p = startswith(name, "vu-");
+         if (!p)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         e = strrchr(p, '-');
+         if (!e || e == p)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (e - p > HOST_NAME_MAX - 1) /* -1 for the last dash */
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = parse_uid(e + 1, &uid);
+         if (r < 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         machine = strndupa(p, e - p);
+         if (!machine_name_is_valid(machine))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS") > 0)
+                 /* Make sure we can't deadlock if we are invoked by dbus-daemon. This way, it won't be able to resolve
+                  * these UIDs, but that should be unproblematic as containers should never be able to connect to a bus
+                  * running on the host. */
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = sd_bus_open_system(&bus);
+         if (r < 0)
+@@ -439,7 +440,7 @@ enum nss_status _nss_mymachines_getpwnam_r(
+                                machine, (uint32_t) uid);
+         if (r < 0) {
+                 if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_USER_MAPPING))
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+ 
+                 goto fail;
+         }
+@@ -450,7 +451,7 @@ enum nss_status _nss_mymachines_getpwnam_r(
+ 
+         /* Refuse to work if the mapped address is in the host UID range, or if there was no mapping at all. */
+         if (mapped < HOST_UID_LIMIT || mapped == uid)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         l = strlen(name);
+         if (buflen < l+1) {
+@@ -468,13 +469,8 @@ enum nss_status _nss_mymachines_getpwnam_r(
+         pwd->pw_dir = (char*) "/";
+         pwd->pw_shell = (char*) "/sbin/nologin";
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -493,17 +489,18 @@ enum nss_status _nss_mymachines_getpwuid_r(
+         uint32_t mapped;
+         int r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         if (!uid_is_valid(uid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* We consider all uids < 65536 host uids */
+         if (uid < HOST_UID_LIMIT)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = sd_bus_open_system(&bus);
+         if (r < 0)
+@@ -520,7 +517,7 @@ enum nss_status _nss_mymachines_getpwuid_r(
+                                (uint32_t) uid);
+         if (r < 0) {
+                 if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_USER_MAPPING))
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+ 
+                 goto fail;
+         }
+@@ -530,7 +527,7 @@ enum nss_status _nss_mymachines_getpwuid_r(
+                 goto fail;
+ 
+         if (mapped == uid)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (snprintf(buffer, buflen, "vu-%s-" UID_FMT, machine, (uid_t) mapped) >= (int) buflen) {
+                 *errnop = ERANGE;
+@@ -545,13 +542,8 @@ enum nss_status _nss_mymachines_getpwuid_r(
+         pwd->pw_dir = (char*) "/";
+         pwd->pw_shell = (char*) "/sbin/nologin";
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -574,6 +566,7 @@ enum nss_status _nss_mymachines_getgrnam_r(
+         size_t l;
+         int r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -581,25 +574,25 @@ enum nss_status _nss_mymachines_getgrnam_r(
+ 
+         p = startswith(name, "vg-");
+         if (!p)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         e = strrchr(p, '-');
+         if (!e || e == p)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (e - p > HOST_NAME_MAX - 1)  /* -1 for the last dash */
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = parse_gid(e + 1, &gid);
+         if (r < 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         machine = strndupa(p, e - p);
+         if (!machine_name_is_valid(machine))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = sd_bus_open_system(&bus);
+         if (r < 0)
+@@ -616,7 +609,7 @@ enum nss_status _nss_mymachines_getgrnam_r(
+                                machine, (uint32_t) gid);
+         if (r < 0) {
+                 if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_GROUP_MAPPING))
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+ 
+                 goto fail;
+         }
+@@ -626,7 +619,7 @@ enum nss_status _nss_mymachines_getgrnam_r(
+                 goto fail;
+ 
+         if (mapped < HOST_GID_LIMIT || mapped == gid)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         l = sizeof(char*) + strlen(name) + 1;
+         if (buflen < l) {
+@@ -642,13 +635,8 @@ enum nss_status _nss_mymachines_getgrnam_r(
+         gr->gr_passwd = (char*) "*"; /* locked */
+         gr->gr_mem = (char**) buffer;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -667,17 +655,18 @@ enum nss_status _nss_mymachines_getgrgid_r(
+         uint32_t mapped;
+         int r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         if (!gid_is_valid(gid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* We consider all gids < 65536 host gids */
+         if (gid < HOST_GID_LIMIT)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         r = sd_bus_open_system(&bus);
+         if (r < 0)
+@@ -694,7 +683,7 @@ enum nss_status _nss_mymachines_getgrgid_r(
+                                (uint32_t) gid);
+         if (r < 0) {
+                 if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_GROUP_MAPPING))
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+ 
+                 goto fail;
+         }
+@@ -704,7 +693,7 @@ enum nss_status _nss_mymachines_getgrgid_r(
+                 goto fail;
+ 
+         if (mapped == gid)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (buflen < sizeof(char*) + 1) {
+                 *errnop = ERANGE;
+@@ -722,13 +711,8 @@ enum nss_status _nss_mymachines_getgrgid_r(
+         gr->gr_passwd = (char*) "*"; /* locked */
+         gr->gr_mem = (char**) buffer;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+diff --git a/src/nss-resolve/nss-resolve.c b/src/nss-resolve/nss-resolve.c
+index eb3d2d977f..b2bb698ded 100644
+--- a/src/nss-resolve/nss-resolve.c
++++ b/src/nss-resolve/nss-resolve.c
+@@ -108,6 +108,7 @@ enum nss_status _nss_resolve_gethostbyname4_r(
+         char *r_name;
+         int c, r, i = 0;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -140,20 +141,15 @@ enum nss_status _nss_resolve_gethostbyname4_r(
+ 
+         r = sd_bus_call(bus, req, SD_RESOLVED_QUERY_TIMEOUT_USEC, &error, &reply);
+         if (r < 0) {
+-                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN")) {
+-                        *errnop = ESRCH;
+-                        *h_errnop = HOST_NOT_FOUND;
+-                        return NSS_STATUS_NOTFOUND;
+-                }
++                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN") ||
++                    !bus_error_shall_fallback(&error))
++                        goto not_found;
+ 
+                 /* Return NSS_STATUS_UNAVAIL when communication with systemd-resolved fails,
+                    allowing falling back to other nss modules. Treat all other error conditions as
+                    NOTFOUND. This includes DNSSEC errors and suchlike. (We don't use UNAVAIL in this
+                    case so that the nsswitch.conf configuration can distuingish such executed but
+                    negative replies from complete failure to talk to resolved). */
+-                if (!bus_error_shall_fallback(&error))
+-                        ret = NSS_STATUS_NOTFOUND;
+-
+                 goto fail;
+         }
+ 
+@@ -162,11 +158,8 @@ enum nss_status _nss_resolve_gethostbyname4_r(
+                 r = c;
+                 goto fail;
+         }
+-        if (c == 0) {
+-                *errnop = ESRCH;
+-                *h_errnop = HOST_NOT_FOUND;
+-                return NSS_STATUS_NOTFOUND;
+-        }
++        if (c == 0)
++                goto not_found;
+ 
+         if (isempty(canonical))
+                 canonical = name;
+@@ -247,8 +240,8 @@ enum nss_status _nss_resolve_gethostbyname4_r(
+         if (ttlp)
+                 *ttlp = 0;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -258,6 +251,10 @@ fail:
+         *errnop = -r;
+         *h_errnop = NO_RECOVERY;
+         return ret;
++
++not_found:
++        *h_errnop = HOST_NOT_FOUND;
++        return NSS_STATUS_NOTFOUND;
+ }
+ 
+ enum nss_status _nss_resolve_gethostbyname3_r(
+@@ -278,6 +275,7 @@ enum nss_status _nss_resolve_gethostbyname3_r(
+         const char *canonical;
+         int c, r, i = 0;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -318,14 +316,9 @@ enum nss_status _nss_resolve_gethostbyname3_r(
+ 
+         r = sd_bus_call(bus, req, SD_RESOLVED_QUERY_TIMEOUT_USEC, &error, &reply);
+         if (r < 0) {
+-                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN")) {
+-                        *errnop = ESRCH;
+-                        *h_errnop = HOST_NOT_FOUND;
+-                        return NSS_STATUS_NOTFOUND;
+-                }
+-
+-                if (!bus_error_shall_fallback(&error))
+-                        ret = NSS_STATUS_NOTFOUND;
++                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN") ||
++                    !bus_error_shall_fallback(&error))
++                        goto not_found;
+ 
+                 goto fail;
+         }
+@@ -335,11 +328,8 @@ enum nss_status _nss_resolve_gethostbyname3_r(
+                 r = c;
+                 goto fail;
+         }
+-        if (c == 0) {
+-                *errnop = ESRCH;
+-                *h_errnop = HOST_NOT_FOUND;
+-                return NSS_STATUS_NOTFOUND;
+-        }
++        if (c == 0)
++                goto not_found;
+ 
+         if (isempty(canonical))
+                 canonical = name;
+@@ -427,23 +417,27 @@ enum nss_status _nss_resolve_gethostbyname3_r(
+         result->h_length = alen;
+         result->h_addr_list = (char**) r_addr_list;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
+-        *h_errnop = NETDB_SUCCESS;
+-        h_errno = 0;
+-
+         if (ttlp)
+                 *ttlp = 0;
+ 
+         if (canonp)
+                 *canonp = r_name;
+ 
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
++        *h_errnop = NETDB_SUCCESS;
++        h_errno = 0;
++
+         return NSS_STATUS_SUCCESS;
+ 
+ fail:
+         *errnop = -r;
+         *h_errnop = NO_RECOVERY;
+         return ret;
++
++not_found:
++        *h_errnop = HOST_NOT_FOUND;
++        return NSS_STATUS_NOTFOUND;
+ }
+ 
+ enum nss_status _nss_resolve_gethostbyaddr2_r(
+@@ -464,6 +458,7 @@ enum nss_status _nss_resolve_gethostbyaddr2_r(
+         const char *n;
+         int r, ifindex;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(addr);
+@@ -516,14 +511,9 @@ enum nss_status _nss_resolve_gethostbyaddr2_r(
+ 
+         r = sd_bus_call(bus, req, SD_RESOLVED_QUERY_TIMEOUT_USEC, &error, &reply);
+         if (r < 0) {
+-                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN")) {
+-                        *errnop = ESRCH;
+-                        *h_errnop = HOST_NOT_FOUND;
+-                        return NSS_STATUS_NOTFOUND;
+-                }
+-
+-                if (!bus_error_shall_fallback(&error))
+-                        ret = NSS_STATUS_NOTFOUND;
++                if (sd_bus_error_has_name(&error, _BUS_ERROR_DNS "NXDOMAIN") ||
++                    !bus_error_shall_fallback(&error))
++                        goto not_found;
+ 
+                 goto fail;
+         }
+@@ -549,11 +539,8 @@ enum nss_status _nss_resolve_gethostbyaddr2_r(
+         if (r < 0)
+                 return r;
+ 
+-        if (c <= 0) {
+-                *errnop = ESRCH;
+-                *h_errnop = HOST_NOT_FOUND;
+-                return NSS_STATUS_NOTFOUND;
+-        }
++        if (c <= 0)
++                goto not_found;
+ 
+         ms += ALIGN(len) +              /* the address */
+               2 * sizeof(char*) +       /* pointers to the address, plus trailing NULL */
+@@ -612,8 +599,8 @@ enum nss_status _nss_resolve_gethostbyaddr2_r(
+         if (ttlp)
+                 *ttlp = 0;
+ 
+-        /* Explicitly reset all error variables */
+-        *errnop = 0;
++        /* Explicitly reset both *h_errnop and h_errno to work around
++         * https://bugzilla.redhat.com/show_bug.cgi?id=1125975 */
+         *h_errnop = NETDB_SUCCESS;
+         h_errno = 0;
+ 
+@@ -623,6 +610,10 @@ fail:
+         *errnop = -r;
+         *h_errnop = NO_RECOVERY;
+         return ret;
++
++not_found:
++        *h_errnop = HOST_NOT_FOUND;
++        return NSS_STATUS_NOTFOUND;
+ }
+ 
+ NSS_GETHOSTBYNAME_FALLBACKS(resolve);
+diff --git a/src/nss-systemd/nss-systemd.c b/src/nss-systemd/nss-systemd.c
+index f516b84c63..f554828d49 100644
+--- a/src/nss-systemd/nss-systemd.c
++++ b/src/nss-systemd/nss-systemd.c
+@@ -145,6 +145,7 @@ enum nss_status _nss_systemd_getpwnam_r(
+         size_t l;
+         int bypass, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+@@ -153,26 +154,24 @@ enum nss_status _nss_systemd_getpwnam_r(
+         /* If the username is not valid, then we don't know it. Ideally libc would filter these for us anyway. We don't
+          * generate EINVAL here, because it isn't really out business to complain about invalid user names. */
+         if (!valid_user_group_name(name))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* Synthesize entries for the root and nobody users, in case they are missing in /etc/passwd */
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_SYNTHETIC") <= 0) {
+                 if (streq(name, root_passwd.pw_name)) {
+                         *pwd = root_passwd;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+                 if (synthesize_nobody() &&
+                     streq(name, nobody_passwd.pw_name)) {
+                         *pwd = nobody_passwd;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+         }
+ 
+         /* Make sure that we don't go in circles when allocating a dynamic UID by checking our own database */
+         if (getenv_bool_secure("SYSTEMD_NSS_DYNAMIC_BYPASS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         bypass = getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS");
+         if (bypass <= 0) {
+@@ -184,7 +183,7 @@ enum nss_status _nss_systemd_getpwnam_r(
+         if (bypass > 0) {
+                 r = direct_lookup_name(name, (uid_t*) &translated);
+                 if (r == -ENOENT)
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+                 if (r < 0)
+                         goto fail;
+         } else {
+@@ -199,7 +198,7 @@ enum nss_status _nss_systemd_getpwnam_r(
+                                        name);
+                 if (r < 0) {
+                         if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_DYNAMIC_USER))
+-                                goto not_found;
++                                return NSS_STATUS_NOTFOUND;
+ 
+                         goto fail;
+                 }
+@@ -225,13 +224,8 @@ enum nss_status _nss_systemd_getpwnam_r(
+         pwd->pw_dir = (char*) DYNAMIC_USER_DIR;
+         pwd->pw_shell = (char*) DYNAMIC_USER_SHELL;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -251,31 +245,30 @@ enum nss_status _nss_systemd_getpwuid_r(
+         size_t l;
+         int bypass, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         if (!uid_is_valid(uid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* Synthesize data for the root user and for nobody in case they are missing from /etc/passwd */
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_SYNTHETIC") <= 0) {
+                 if (uid == root_passwd.pw_uid) {
+                         *pwd = root_passwd;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+                 if (synthesize_nobody() &&
+                     uid == nobody_passwd.pw_uid) {
+                         *pwd = nobody_passwd;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+         }
+ 
+         if (!uid_is_dynamic(uid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_DYNAMIC_BYPASS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         bypass = getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS");
+         if (bypass <= 0) {
+@@ -287,7 +280,7 @@ enum nss_status _nss_systemd_getpwuid_r(
+         if (bypass > 0) {
+                 r = direct_lookup_uid(uid, &direct);
+                 if (r == -ENOENT)
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+                 if (r < 0)
+                         goto fail;
+ 
+@@ -305,7 +298,7 @@ enum nss_status _nss_systemd_getpwuid_r(
+                                        (uint32_t) uid);
+                 if (r < 0) {
+                         if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_DYNAMIC_USER))
+-                                goto not_found;
++                                return NSS_STATUS_NOTFOUND;
+ 
+                         goto fail;
+                 }
+@@ -331,13 +324,8 @@ enum nss_status _nss_systemd_getpwuid_r(
+         pwd->pw_dir = (char*) DYNAMIC_USER_DIR;
+         pwd->pw_shell = (char*) DYNAMIC_USER_SHELL;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -358,31 +346,30 @@ enum nss_status _nss_systemd_getgrnam_r(
+         size_t l;
+         int bypass, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(name);
+         assert(gr);
+ 
+         if (!valid_user_group_name(name))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* Synthesize records for root and nobody, in case they are missing form /etc/group */
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_SYNTHETIC") <= 0) {
+                 if (streq(name, root_group.gr_name)) {
+                         *gr = root_group;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+                 if (synthesize_nobody() &&
+                     streq(name, nobody_group.gr_name)) {
+                         *gr = nobody_group;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+         }
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_DYNAMIC_BYPASS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         bypass = getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS");
+         if (bypass <= 0) {
+@@ -394,7 +381,7 @@ enum nss_status _nss_systemd_getgrnam_r(
+         if (bypass > 0) {
+                 r = direct_lookup_name(name, (uid_t*) &translated);
+                 if (r == -ENOENT)
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+                 if (r < 0)
+                         goto fail;
+         } else {
+@@ -409,7 +396,7 @@ enum nss_status _nss_systemd_getgrnam_r(
+                                        name);
+                 if (r < 0) {
+                         if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_DYNAMIC_USER))
+-                                goto not_found;
++                                return NSS_STATUS_NOTFOUND;
+ 
+                         goto fail;
+                 }
+@@ -433,13 +420,8 @@ enum nss_status _nss_systemd_getgrnam_r(
+         gr->gr_passwd = (char*) DYNAMIC_USER_PASSWD;
+         gr->gr_mem = (char**) buffer;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -459,31 +441,30 @@ enum nss_status _nss_systemd_getgrgid_r(
+         size_t l;
+         int bypass, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         if (!gid_is_valid(gid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         /* Synthesize records for root and nobody, in case they are missing from /etc/group */
+         if (getenv_bool_secure("SYSTEMD_NSS_BYPASS_SYNTHETIC") <= 0) {
+                 if (gid == root_group.gr_gid) {
+                         *gr = root_group;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+                 if (synthesize_nobody() &&
+                     gid == nobody_group.gr_gid) {
+                         *gr = nobody_group;
+-                        *errnop = 0;
+                         return NSS_STATUS_SUCCESS;
+                 }
+         }
+ 
+         if (!gid_is_dynamic(gid))
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         if (getenv_bool_secure("SYSTEMD_NSS_DYNAMIC_BYPASS") > 0)
+-                goto not_found;
++                return NSS_STATUS_NOTFOUND;
+ 
+         bypass = getenv_bool_secure("SYSTEMD_NSS_BYPASS_BUS");
+         if (bypass <= 0) {
+@@ -495,7 +476,7 @@ enum nss_status _nss_systemd_getgrgid_r(
+         if (bypass > 0) {
+                 r = direct_lookup_uid(gid, &direct);
+                 if (r == -ENOENT)
+-                        goto not_found;
++                        return NSS_STATUS_NOTFOUND;
+                 if (r < 0)
+                         goto fail;
+ 
+@@ -513,7 +494,7 @@ enum nss_status _nss_systemd_getgrgid_r(
+                                        (uint32_t) gid);
+                 if (r < 0) {
+                         if (sd_bus_error_has_name(&error, BUS_ERROR_NO_SUCH_DYNAMIC_USER))
+-                                goto not_found;
++                                return NSS_STATUS_NOTFOUND;
+ 
+                         goto fail;
+                 }
+@@ -537,13 +518,8 @@ enum nss_status _nss_systemd_getgrgid_r(
+         gr->gr_passwd = (char*) DYNAMIC_USER_PASSWD;
+         gr->gr_mem = (char**) buffer;
+ 
+-        *errnop = 0;
+         return NSS_STATUS_SUCCESS;
+ 
+-not_found:
+-        *errnop = 0;
+-        return NSS_STATUS_NOTFOUND;
+-
+ fail:
+         *errnop = -r;
+         return NSS_STATUS_UNAVAIL;
+@@ -598,6 +574,7 @@ static void systemd_endent(GetentData *data) {
+ }
+ 
+ static enum nss_status nss_systemd_endent(GetentData *p) {
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert_se(pthread_mutex_lock(&p->mutex) == 0);
+@@ -668,6 +645,7 @@ static enum nss_status systemd_setent(GetentData *p) {
+         uid_t id;
+         int bypass, r;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(p);
+@@ -750,6 +728,7 @@ enum nss_status _nss_systemd_getpwent_r(struct passwd *result, char *buffer, siz
+         UserEntry *p;
+         size_t len;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(result);
+@@ -778,7 +757,6 @@ enum nss_status _nss_systemd_getpwent_r(struct passwd *result, char *buffer, siz
+                 break;
+         }
+         if (!p) {
+-                *errnop = ENOENT;
+                 ret = NSS_STATUS_NOTFOUND;
+                 goto finalize;
+         }
+@@ -801,6 +779,7 @@ enum nss_status _nss_systemd_getgrent_r(struct group *result, char *buffer, size
+         UserEntry *p;
+         size_t len;
+ 
++        PROTECT_ERRNO;
+         BLOCK_SIGNALS(NSS_SIGNALS_BLOCK);
+ 
+         assert(result);
+@@ -827,7 +806,6 @@ enum nss_status _nss_systemd_getgrent_r(struct group *result, char *buffer, size
+                 break;
+         }
+         if (!p) {
+-                *errnop = ENOENT;
+                 ret = NSS_STATUS_NOTFOUND;
+                 goto finalize;
+         }

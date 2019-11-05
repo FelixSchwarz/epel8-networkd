@@ -1,0 +1,102 @@
+From 9a6a36b44ad131036fef5c91edc86c842c9821ba Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 7 Jul 2018 19:30:25 +0200
+Subject: [PATCH] fuzz-bus-message: add fuzzer for message parsing
+
+As with other fuzzers, SYSTEMD_FUZZ_OUTPUT=1 and SYSTEMD_LOG_LEVEL=debug can be
+used for debugging.
+
+(cherry picked from commit 56b560c26339c4b282c06038316a91509eae75fd)
+
+Resolves: #1696224
+---
+ src/fuzz/fuzz-bus-message.c         |  47 ++++++++++++++++++++++++++++
+ src/fuzz/meson.build                |   4 +++
+ test/fuzz/fuzz-bus-message/message1 | Bin 0 -> 534 bytes
+ 3 files changed, 51 insertions(+)
+ create mode 100644 src/fuzz/fuzz-bus-message.c
+ create mode 100644 test/fuzz/fuzz-bus-message/message1
+
+diff --git a/src/fuzz/fuzz-bus-message.c b/src/fuzz/fuzz-bus-message.c
+new file mode 100644
+index 0000000000..9842c62a6f
+--- /dev/null
++++ b/src/fuzz/fuzz-bus-message.c
+@@ -0,0 +1,47 @@
++/* SPDX-License-Identifier: LGPL-2.1+ */
++
++#include <errno.h>
++#include <stdio.h>
++
++#include "alloc-util.h"
++#include "bus-dump.h"
++#include "bus-message.h"
++#include "env-util.h"
++#include "fd-util.h"
++#include "fuzz.h"
++
++int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
++        _cleanup_free_ char *out = NULL; /* out should be freed after g */
++        size_t out_size;
++        _cleanup_fclose_ FILE *g = NULL;
++        _cleanup_(sd_bus_unrefp) sd_bus *bus = NULL;
++        _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
++        _cleanup_free_ void *buffer = NULL;
++        int r;
++
++        /* We don't want to fill the logs with messages about parse errors.
++         * Disable most logging if not running standalone */
++        if (!getenv("SYSTEMD_LOG_LEVEL"))
++                log_set_max_level(LOG_CRIT);
++
++        r = sd_bus_new(&bus);
++        assert_se(r >= 0);
++
++        assert_se(buffer = memdup(data, size));
++
++        r = bus_message_from_malloc(bus, buffer, size, NULL, 0, NULL, &m);
++        if (r == -EBADMSG)
++                return 0;
++        assert_se(r >= 0);
++        TAKE_PTR(buffer);
++
++        if (getenv_bool("SYSTEMD_FUZZ_OUTPUT") <= 0)
++                assert_se(g = open_memstream(&out, &out_size));
++
++        bus_message_dump(m, g ?: stdout, BUS_MESSAGE_DUMP_WITH_HEADER);
++
++        r = sd_bus_message_rewind(m, true);
++        assert_se(r >= 0);
++
++        return 0;
++}
+diff --git a/src/fuzz/meson.build b/src/fuzz/meson.build
+index 5c81ac0c5b..1dbe28e57e 100644
+--- a/src/fuzz/meson.build
++++ b/src/fuzz/meson.build
+@@ -1,6 +1,10 @@
+ # SPDX-License-Identifier: LGPL-2.1+
+ 
+ fuzzers += [
++        [['src/fuzz/fuzz-bus-message.c'],
++         [libshared],
++         []],
++
+         [['src/fuzz/fuzz-dns-packet.c',
+           dns_type_headers],
+          [libsystemd_resolve_core,
+diff --git a/test/fuzz/fuzz-bus-message/message1 b/test/fuzz/fuzz-bus-message/message1
+new file mode 100644
+index 0000000000000000000000000000000000000000..2df70fd7cb6f0e632c4d5c2358091309a5cd3edc
+GIT binary patch
+literal 534
+zcmZ{h!A`?442GSJjTUi2h$EV`OM6*iyZ|>&NW6m6ZC#~`RCNGV2*icg27V{4hLEuI
+z*Z%6nv6IG-c{fDW8PO*Z8RG~@1*A4LLPziq^|n=>fKTCf&ROnOFWhXL{-6KzKQR>*
+zA}kdo{MtXi^_lPUKI=U`x#dhG*Hq0<i2cUpS}%ckA-=00E9KEH5u{MeESA@QculFG
+zruVss?wLceSE4J#)5yVN0GffvA#~1mm{Zra+=e{w{I&z@*?J#i4Is_HhZ+f`nuHx|
+zld${fh;=jUB)V|NE5y2-nFH%A%GTPz>w(L%415E=fPT+(I2*knx96tO2RVnnVP6o!
+Yuz#WfEX)Cqd!b_JHzYppZsXhk08nC8%>V!Z
+
+literal 0
+HcmV?d00001
+

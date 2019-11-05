@@ -1,0 +1,46 @@
+From f9a28e4e070ed86a0c5138dbfb98a60f00beb8d4 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Mon, 3 Sep 2018 07:05:48 +0000
+Subject: [PATCH] tests: add a fuzzer for server_process_native_message
+
+(cherry picked from commit 9cdea02db57a36442ad9e9afcd67760ca319173a)
+
+Resolves: #1696224
+---
+ src/fuzz/fuzz-journald-native.c | 10 ++++++++++
+ src/fuzz/meson.build            |  5 +++++
+ 2 files changed, 15 insertions(+)
+ create mode 100644 src/fuzz/fuzz-journald-native.c
+
+diff --git a/src/fuzz/fuzz-journald-native.c b/src/fuzz/fuzz-journald-native.c
+new file mode 100644
+index 0000000000..f4de5fd8eb
+--- /dev/null
++++ b/src/fuzz/fuzz-journald-native.c
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: LGPL-2.1+ */
++
++#include "fuzz.h"
++#include "fuzz-journald.h"
++#include "journald-native.h"
++
++int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
++        fuzz_journald_processing_function(data, size, server_process_native_message);
++        return 0;
++}
+diff --git a/src/fuzz/meson.build b/src/fuzz/meson.build
+index 28770b68b8..5a97ef5091 100644
+--- a/src/fuzz/meson.build
++++ b/src/fuzz/meson.build
+@@ -19,6 +19,11 @@ fuzzers += [
+           libshared],
+          [libmount]],
+ 
++        [['src/fuzz/fuzz-journald-native.c'],
++         [libjournal_core,
++          libshared],
++         [libselinux]],
++
+         [['src/fuzz/fuzz-journald-syslog.c'],
+          [libjournal_core,
+           libshared],

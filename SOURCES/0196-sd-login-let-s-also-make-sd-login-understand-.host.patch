@@ -1,0 +1,56 @@
+From 1fd670e06332423a3e0b19ca717145c14e8418a1 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 17 Jul 2018 12:24:50 +0200
+Subject: [PATCH] sd-login: let's also make sd-login understand ".host"
+
+if sd-bus and machined grok it, then sd-login should grok it too.
+
+(cherry picked from commit a8c9b7a0fc0aa02666042543ff9a652aae3c9499)
+
+Resolves: #1683334
+---
+ src/libsystemd/sd-login/sd-login.c | 27 +++++++++++++++++----------
+ 1 file changed, 17 insertions(+), 10 deletions(-)
+
+diff --git a/src/libsystemd/sd-login/sd-login.c b/src/libsystemd/sd-login/sd-login.c
+index c2f7133e42..aeae6d78a9 100644
+--- a/src/libsystemd/sd-login/sd-login.c
++++ b/src/libsystemd/sd-login/sd-login.c
+@@ -892,20 +892,27 @@ _public_ int sd_machine_get_class(const char *machine, char **class) {
+         const char *p;
+         int r;
+ 
+-        assert_return(machine_name_is_valid(machine), -EINVAL);
+         assert_return(class, -EINVAL);
+ 
+-        p = strjoina("/run/systemd/machines/", machine);
+-        r = parse_env_file(NULL, p, NEWLINE, "CLASS", &c, NULL);
+-        if (r == -ENOENT)
+-                return -ENXIO;
+-        if (r < 0)
+-                return r;
+-        if (!c)
+-                return -EIO;
++        if (streq(machine, ".host")) {
++                c = strdup("host");
++                if (!c)
++                        return -ENOMEM;
++        } else {
++                if (!machine_name_is_valid(machine))
++                        return -EINVAL;
+ 
+-        *class = TAKE_PTR(c);
++                p = strjoina("/run/systemd/machines/", machine);
++                r = parse_env_file(NULL, p, NEWLINE, "CLASS", &c, NULL);
++                if (r == -ENOENT)
++                        return -ENXIO;
++                if (r < 0)
++                        return r;
++                if (!c)
++                        return -EIO;
++        }
+ 
++        *class = TAKE_PTR(c);
+         return 0;
+ }
+ 

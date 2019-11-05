@@ -1,0 +1,40 @@
+From eb711891df269ea784e3c9adc3483d9ec86c25e9 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Mon, 3 Sep 2018 07:03:10 +0000
+Subject: [PATCH] journald: make server_process_native_message compatible with
+ fuzz_journald_processing_function
+
+(cherry picked from commit 21acb27b71f6284a57e4e9f3ac5f0d38721ef4eb)
+
+Resolves: #1696224
+---
+ src/journal/journald-native.c | 2 +-
+ src/journal/journald-native.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/journal/journald-native.c b/src/journal/journald-native.c
+index da62448ca6..466b6f7213 100644
+--- a/src/journal/journald-native.c
++++ b/src/journal/journald-native.c
+@@ -293,7 +293,7 @@ finish:
+ 
+ void server_process_native_message(
+                 Server *s,
+-                const void *buffer, size_t buffer_size,
++                const char *buffer, size_t buffer_size,
+                 const struct ucred *ucred,
+                 const struct timeval *tv,
+                 const char *label, size_t label_len) {
+diff --git a/src/journal/journald-native.h b/src/journal/journald-native.h
+index 7211d4fab4..2a33ef74c5 100644
+--- a/src/journal/journald-native.h
++++ b/src/journal/journald-native.h
+@@ -5,7 +5,7 @@
+ 
+ void server_process_native_message(
+                 Server *s,
+-                const void *buffer,
++                const char *buffer,
+                 size_t buffer_size,
+                 const struct ucred *ucred,
+                 const struct timeval *tv,

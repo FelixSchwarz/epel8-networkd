@@ -20,7 +20,7 @@ Resolves: #1610397
  2 files changed, 10 insertions(+), 8 deletions(-)
 
 diff --git a/src/libsystemd/sd-bus/bus-objects.c b/src/libsystemd/sd-bus/bus-objects.c
-index 9609834fa..a18ff88b0 100644
+index 9609834fa9..a18ff88b07 100644
 --- a/src/libsystemd/sd-bus/bus-objects.c
 +++ b/src/libsystemd/sd-bus/bus-objects.c
 @@ -2090,7 +2090,6 @@ _public_ int sd_bus_emit_properties_changed_strv(
@@ -95,7 +95,7 @@ index 9609834fa..a18ff88b0 100644
                  bus->nodes_modified = false;
                  m = sd_bus_message_unref(m);
 diff --git a/src/libsystemd/sd-bus/sd-bus.c b/src/libsystemd/sd-bus/sd-bus.c
-index 089b51a6d..7f03528b8 100644
+index 089b51a6d9..7f03528b89 100644
 --- a/src/libsystemd/sd-bus/sd-bus.c
 +++ b/src/libsystemd/sd-bus/sd-bus.c
 @@ -2883,7 +2883,6 @@ finish:

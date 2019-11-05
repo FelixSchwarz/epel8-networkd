@@ -1,0 +1,184 @@
+From 5e75fbf0ccc427fbe5151ab2096f75dcad5b00e7 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Thu, 5 Jul 2018 09:56:54 +0200
+Subject: [PATCH] core: swap order of "n_storage_fds" and "n_socket_fds"
+ parameters
+
+When process fd lists to pass to activated programs we always place the
+socket activation fds first, and the storage fds last. Irritatingly in
+almost all calls the "n_storage_fds" parameter (i.e. the number of
+storage fds to pass) came first so far, and the "n_socket_fds" parameter
+second. Let's clean this up, and specify the number of fds in the order
+the fds themselves are passed.
+
+(Also, let's fix one more case where "unsigned" was used to size an
+array, while we should use "size_t" instead.)
+
+(cherry picked from commit 25b583d7ffd699384435eba8e49f6ce927a83af0)
+
+Resolves: #1683334
+---
+ src/core/execute.c | 14 +++++++-------
+ src/core/execute.h |  2 +-
+ src/core/service.c | 25 ++++++++++++++-----------
+ 3 files changed, 22 insertions(+), 19 deletions(-)
+
+diff --git a/src/core/execute.c b/src/core/execute.c
+index ffb92ddfc7..7476ac51da 100644
+--- a/src/core/execute.c
++++ b/src/core/execute.c
+@@ -147,11 +147,11 @@ static int shift_fds(int fds[], size_t n_fds) {
+         return 0;
+ }
+ 
+-static int flags_fds(const int fds[], size_t n_storage_fds, size_t n_socket_fds, bool nonblock) {
++static int flags_fds(const int fds[], size_t n_socket_fds, size_t n_storage_fds, bool nonblock) {
+         size_t i, n_fds;
+         int r;
+ 
+-        n_fds = n_storage_fds + n_socket_fds;
++        n_fds = n_socket_fds + n_storage_fds;
+         if (n_fds <= 0)
+                 return 0;
+ 
+@@ -2718,8 +2718,8 @@ static int exec_child(
+                 int socket_fd,
+                 int named_iofds[3],
+                 int *fds,
+-                size_t n_storage_fds,
+                 size_t n_socket_fds,
++                size_t n_storage_fds,
+                 char **files_env,
+                 int user_lookup_fd,
+                 int *exit_status) {
+@@ -3171,7 +3171,7 @@ static int exec_child(
+         if (r >= 0)
+                 r = shift_fds(fds, n_fds);
+         if (r >= 0)
+-                r = flags_fds(fds, n_storage_fds, n_socket_fds, context->non_blocking);
++                r = flags_fds(fds, n_socket_fds, n_storage_fds, context->non_blocking);
+         if (r < 0) {
+                 *exit_status = EXIT_FDS;
+                 return log_unit_error_errno(unit, r, "Failed to adjust passed file descriptors: %m");
+@@ -3449,7 +3449,7 @@ int exec_spawn(Unit *unit,
+         assert(context);
+         assert(ret);
+         assert(params);
+-        assert(params->fds || (params->n_storage_fds + params->n_socket_fds <= 0));
++        assert(params->fds || (params->n_socket_fds + params->n_storage_fds <= 0));
+ 
+         if (context->std_input == EXEC_INPUT_SOCKET ||
+             context->std_output == EXEC_OUTPUT_SOCKET ||
+@@ -3469,8 +3469,8 @@ int exec_spawn(Unit *unit,
+         } else {
+                 socket_fd = -1;
+                 fds = params->fds;
+-                n_storage_fds = params->n_storage_fds;
+                 n_socket_fds = params->n_socket_fds;
++                n_storage_fds = params->n_storage_fds;
+         }
+ 
+         r = exec_context_named_iofds(context, params, named_iofds);
+@@ -3509,8 +3509,8 @@ int exec_spawn(Unit *unit,
+                                socket_fd,
+                                named_iofds,
+                                fds,
+-                               n_storage_fds,
+                                n_socket_fds,
++                               n_storage_fds,
+                                files_env,
+                                unit->manager->user_lookup_fds[1],
+                                &exit_status);
+diff --git a/src/core/execute.h b/src/core/execute.h
+index 77ffe82323..49705e0d3a 100644
+--- a/src/core/execute.h
++++ b/src/core/execute.h
+@@ -296,8 +296,8 @@ struct ExecParameters {
+ 
+         int *fds;
+         char **fd_names;
+-        size_t n_storage_fds;
+         size_t n_socket_fds;
++        size_t n_storage_fds;
+ 
+         ExecFlags flags;
+         bool selinux_context_net:1;
+diff --git a/src/core/service.c b/src/core/service.c
+index db17221888..7f8ce1b998 100644
+--- a/src/core/service.c
++++ b/src/core/service.c
+@@ -1178,21 +1178,23 @@ static int service_coldplug(Unit *u) {
+         return 0;
+ }
+ 
+-static int service_collect_fds(Service *s,
+-                               int **fds,
+-                               char ***fd_names,
+-                               unsigned *n_storage_fds,
+-                               unsigned *n_socket_fds) {
++static int service_collect_fds(
++                Service *s,
++                int **fds,
++                char ***fd_names,
++                size_t *n_socket_fds,
++                size_t *n_storage_fds) {
+ 
+         _cleanup_strv_free_ char **rfd_names = NULL;
+         _cleanup_free_ int *rfds = NULL;
+-        unsigned rn_socket_fds = 0, rn_storage_fds = 0;
++        size_t rn_socket_fds = 0, rn_storage_fds = 0;
+         int r;
+ 
+         assert(s);
+         assert(fds);
+         assert(fd_names);
+         assert(n_socket_fds);
++        assert(n_storage_fds);
+ 
+         if (s->socket_fd >= 0) {
+ 
+@@ -1256,7 +1258,7 @@ static int service_collect_fds(Service *s,
+ 
+         if (s->n_fd_store > 0) {
+                 ServiceFDStore *fs;
+-                unsigned n_fds;
++                size_t n_fds;
+                 char **nl;
+                 int *t;
+ 
+@@ -1325,9 +1327,10 @@ static int service_spawn(
+                 .stdin_fd   = -1,
+                 .stdout_fd  = -1,
+                 .stderr_fd  = -1,
++                .exec_fd    = -1,
+         };
+         _cleanup_strv_free_ char **final_env = NULL, **our_env = NULL, **fd_names = NULL;
+-        unsigned n_storage_fds = 0, n_socket_fds = 0, n_env = 0;
++        size_t n_socket_fds = 0, n_storage_fds = 0, n_env = 0;
+         _cleanup_free_ int *fds = NULL;
+         pid_t pid;
+         int r;
+@@ -1353,11 +1356,11 @@ static int service_spawn(
+             s->exec_context.std_output == EXEC_OUTPUT_SOCKET ||
+             s->exec_context.std_error == EXEC_OUTPUT_SOCKET) {
+ 
+-                r = service_collect_fds(s, &fds, &fd_names, &n_storage_fds, &n_socket_fds);
++                r = service_collect_fds(s, &fds, &fd_names, &n_socket_fds, &n_storage_fds);
+                 if (r < 0)
+                         return r;
+ 
+-                log_unit_debug(UNIT(s), "Passing %i fds to service", n_storage_fds + n_socket_fds);
++                log_unit_debug(UNIT(s), "Passing %zu fds to service", n_socket_fds + n_storage_fds);
+         }
+ 
+         r = service_arm_timer(s, usec_add(now(CLOCK_MONOTONIC), timeout));
+@@ -1450,8 +1453,8 @@ static int service_spawn(
+         exec_params.environment = final_env;
+         exec_params.fds = fds;
+         exec_params.fd_names = fd_names;
+-        exec_params.n_storage_fds = n_storage_fds;
+         exec_params.n_socket_fds = n_socket_fds;
++        exec_params.n_storage_fds = n_storage_fds;
+         exec_params.watchdog_usec = s->watchdog_usec;
+         exec_params.selinux_context_net = s->socket_fd_selinux_context_net;
+         if (s->type == SERVICE_IDLE)

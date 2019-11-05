@@ -1,0 +1,125 @@
+From 37c1da056b63323514d71d2832a01ea916f004cc Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Fri, 5 Oct 2018 22:56:40 +0200
+Subject: [PATCH] nspawn: rework how we allocate/kill scopes
+
+Fixes: #6347
+(cherry picked from commit 1d78fea2d6230e0aafa2603abc8f1f51966ef134)
+
+Resolves: #1697893
+---
+ src/nspawn/nspawn-register.c | 64 +++++++++++++++++++++++++++++++++++-
+ src/nspawn/nspawn-register.h |  1 +
+ src/nspawn/nspawn.c          |  8 +++--
+ 3 files changed, 70 insertions(+), 3 deletions(-)
+
+diff --git a/src/nspawn/nspawn-register.c b/src/nspawn/nspawn-register.c
+index 0d45cce66e..a7cdfc1c7d 100644
+--- a/src/nspawn/nspawn-register.c
++++ b/src/nspawn/nspawn-register.c
+@@ -274,10 +274,12 @@ int allocate_scope(
+ 
+         description = strjoina("Container ", machine_name);
+ 
+-        r = sd_bus_message_append(m, "(sv)(sv)(sv)(sv)",
++        r = sd_bus_message_append(m, "(sv)(sv)(sv)(sv)(sv)(sv)",
+                                   "PIDs", "au", 1, pid,
+                                   "Description", "s", description,
+                                   "Delegate", "b", 1,
++                                  "CollectMode", "s", "inactive-or-failed",
++                                  "AddRef", "b", 1,
+                                   "Slice", "s", isempty(slice) ? SPECIAL_MACHINE_SLICE : slice);
+         if (r < 0)
+                 return bus_log_create_error(r);
+@@ -324,3 +326,63 @@ int allocate_scope(
+ 
+         return 0;
+ }
++
++int terminate_scope(
++                sd_bus *bus,
++                const char *machine_name) {
++
++        _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
++        _cleanup_free_ char *scope = NULL;
++        int r;
++
++        r = unit_name_mangle_with_suffix(machine_name, 0, ".scope", &scope);
++        if (r < 0)
++                return log_error_errno(r, "Failed to mangle scope name: %m");
++
++        r = sd_bus_call_method(
++                        bus,
++                        "org.freedesktop.systemd1",
++                        "/org/freedesktop/systemd1",
++                        "org.freedesktop.systemd1.Manager",
++                        "AbandonScope",
++                        &error,
++                        NULL,
++                        "s",
++                        scope);
++        if (r < 0) {
++                log_debug_errno(r, "Failed to abandon scope '%s', ignoring: %s", scope, bus_error_message(&error, r));
++                sd_bus_error_free(&error);
++        }
++
++        r = sd_bus_call_method(
++                        bus,
++                        "org.freedesktop.systemd1",
++                        "/org/freedesktop/systemd1",
++                        "org.freedesktop.systemd1.Manager",
++                        "KillUnit",
++                        &error,
++                        NULL,
++                        "ssi",
++                        scope,
++                        "all",
++                        (int32_t) SIGKILL);
++        if (r < 0) {
++                log_debug_errno(r, "Failed to SIGKILL scope '%s', ignoring: %s", scope, bus_error_message(&error, r));
++                sd_bus_error_free(&error);
++        }
++
++        r = sd_bus_call_method(
++                        bus,
++                        "org.freedesktop.systemd1",
++                        "/org/freedesktop/systemd1",
++                        "org.freedesktop.systemd1.Manager",
++                        "UnrefUnit",
++                        &error,
++                        NULL,
++                        "s",
++                        scope);
++        if (r < 0)
++                log_debug_errno(r, "Failed to drop reference to scope '%s', ignoring: %s", scope, bus_error_message(&error, r));
++
++        return 0;
++}
+diff --git a/src/nspawn/nspawn-register.h b/src/nspawn/nspawn-register.h
+index ddd8b053a3..05f5776f23 100644
+--- a/src/nspawn/nspawn-register.h
++++ b/src/nspawn/nspawn-register.h
+@@ -11,3 +11,4 @@ int register_machine(sd_bus *bus, const char *machine_name, pid_t pid, const cha
+ int terminate_machine(sd_bus *bus, const char *machine_name);
+ 
+ int allocate_scope(sd_bus *bus, const char *machine_name, pid_t pid, const char *slice, CustomMount *mounts, unsigned n_mounts, int kill_signal, char **properties);
++int terminate_scope(sd_bus *bus, const char *machine_name);
+diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
+index c4943f6eb7..b40411dcd0 100644
+--- a/src/nspawn/nspawn.c
++++ b/src/nspawn/nspawn.c
+@@ -4065,8 +4065,12 @@ static int run(int master,
+                 putc('\n', stdout);
+ 
+         /* Kill if it is not dead yet anyway */
+-        if (arg_register && !arg_keep_unit && bus)
+-                terminate_machine(bus, arg_machine);
++        if (bus) {
++                if (arg_register)
++                        terminate_machine(bus, arg_machine);
++                else if (!arg_keep_unit)
++                        terminate_scope(bus, arg_machine);
++        }
+ 
+         /* Normally redundant, but better safe than sorry */
+         (void) kill(*pid, SIGKILL);

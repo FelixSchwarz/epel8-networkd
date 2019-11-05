@@ -1,0 +1,50 @@
+From 4c6c21669483a38cf2a387784a3881b3a47139a3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 7 Jul 2018 19:08:52 +0200
+Subject: [PATCH] test-bus-marshal: use cescaping instead of hexmem
+
+It is easier to see the contents this way by eye.
+
+(cherry picked from commit 3ddf3d439463ab2c76391a4d22b54166be2dbe94)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/test-bus-marshal.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/test-bus-marshal.c b/src/libsystemd/sd-bus/test-bus-marshal.c
+index c647f0ff12..f007168ca6 100644
+--- a/src/libsystemd/sd-bus/test-bus-marshal.c
++++ b/src/libsystemd/sd-bus/test-bus-marshal.c
+@@ -20,8 +20,8 @@
+ #include "bus-label.h"
+ #include "bus-message.h"
+ #include "bus-util.h"
++#include "escape.h"
+ #include "fd-util.h"
+-#include "hexdecoct.h"
+ #include "log.h"
+ #include "util.h"
+ 
+@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
+         uint8_t u, v;
+         void *buffer = NULL;
+         size_t sz;
+-        char *h;
++        _cleanup_free_ char *h = NULL;
+         const int32_t integer_array[] = { -1, -2, 0, 1, 2 }, *return_array;
+         char *s;
+         _cleanup_free_ char *first = NULL, *second = NULL, *third = NULL;
+@@ -194,11 +194,9 @@ int main(int argc, char *argv[]) {
+         r = bus_message_get_blob(m, &buffer, &sz);
+         assert_se(r >= 0);
+ 
+-        h = hexmem(buffer, sz);
++        h = cescape_length(buffer, sz);
+         assert_se(h);
+-
+         log_info("message size = %zu, contents =\n%s", sz, h);
+-        free(h);
+ 
+ #if HAVE_GLIB
+ #ifndef __SANITIZE_ADDRESS__

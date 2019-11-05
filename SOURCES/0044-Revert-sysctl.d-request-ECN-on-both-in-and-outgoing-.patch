@@ -17,7 +17,7 @@ Resolves: #1619790
  1 file changed, 3 deletions(-)
 
 diff --git a/sysctl.d/50-default.conf b/sysctl.d/50-default.conf
-index b67ae87ca..e263cf062 100644
+index b67ae87ca6..e263cf0628 100644
 --- a/sysctl.d/50-default.conf
 +++ b/sysctl.d/50-default.conf
 @@ -33,9 +33,6 @@ net.ipv4.conf.all.promote_secondaries = 1

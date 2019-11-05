@@ -22,7 +22,7 @@ Resolves: #1631532
  1 file changed, 28 insertions(+), 10 deletions(-)
 
 diff --git a/src/basic/virt.c b/src/basic/virt.c
-index d347732bb..e05b3e6d9 100644
+index d347732bb3..e05b3e6d99 100644
 --- a/src/basic/virt.c
 +++ b/src/basic/virt.c
 @@ -11,6 +11,7 @@
