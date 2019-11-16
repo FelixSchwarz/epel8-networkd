@@ -1,0 +1,39 @@
+From 7a650ee8d3faf79fd5ef866b69741880a3a42b8d Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Thu, 2 May 2019 14:11:54 +0200
+Subject: [PATCH] journal: don't enable systemd-journald-audit.socket by
+ default
+
+Resolves: #1699287
+---
+ units/meson.build                 | 3 +--
+ units/systemd-journald.service.in | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/units/meson.build b/units/meson.build
+index e4ac6ced64..e118d81888 100644
+--- a/units/meson.build
++++ b/units/meson.build
+@@ -89,8 +89,7 @@ units = [
+          'sockets.target.wants/'],
+         ['systemd-journal-gatewayd.socket',     'ENABLE_REMOTE HAVE_MICROHTTPD'],
+         ['systemd-journal-remote.socket',       'ENABLE_REMOTE HAVE_MICROHTTPD'],
+-        ['systemd-journald-audit.socket',       '',
+-         'sockets.target.wants/'],
++        ['systemd-journald-audit.socket',       ''],
+         ['systemd-journald-dev-log.socket',     '',
+          'sockets.target.wants/'],
+         ['systemd-journald.socket',             '',
+diff --git a/units/systemd-journald.service.in b/units/systemd-journald.service.in
+index 4eab2fa841..e109b25792 100644
+--- a/units/systemd-journald.service.in
++++ b/units/systemd-journald.service.in
+@@ -17,7 +17,7 @@ Before=sysinit.target
+ 
+ [Service]
+ Type=notify
+-Sockets=systemd-journald.socket systemd-journald-dev-log.socket systemd-journald-audit.socket
++Sockets=systemd-journald.socket systemd-journald-dev-log.socket
+ ExecStart=@rootlibexecdir@/systemd-journald
+ Restart=always
+ RestartSec=0

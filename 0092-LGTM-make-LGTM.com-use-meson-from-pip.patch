@@ -1,0 +1,27 @@
+From 9123fecee040fc961905f5c2e56152443907015a Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Tue, 24 Jul 2018 01:37:29 +0900
+Subject: [PATCH] LGTM: make LGTM.com use meson from pip
+
+(cherry picked from commit 55d651d8f69919b98cdc062e312e4454c34428ef)
+---
+ .lgtm.yml | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+ create mode 100644 .lgtm.yml
+
+diff --git a/.lgtm.yml b/.lgtm.yml
+new file mode 100644
+index 0000000000..37f9c4335c
+--- /dev/null
++++ b/.lgtm.yml
+@@ -0,0 +1,10 @@
++extraction:
++  cpp:
++    prepare:
++      packages:
++        - python3-pip
++        - python3-setuptools
++        - python3-wheel
++    after_prepare:
++      - pip3 install meson
++      - export PATH="$HOME/.local/bin/:$PATH"

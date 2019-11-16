@@ -26,7 +26,7 @@ Resolves: #1658115
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/src/journal/journald-context.c b/src/journal/journald-context.c
-index 51f79fd80..dba3525ed 100644
+index 51f79fd803..dba3525ed8 100644
 --- a/src/journal/journald-context.c
 +++ b/src/journal/journald-context.c
 @@ -13,6 +13,8 @@

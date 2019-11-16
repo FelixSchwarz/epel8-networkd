@@ -31,7 +31,7 @@ Resolves: #1656869
  2 files changed, 115 insertions(+), 4 deletions(-)
 
 diff --git a/man/systemd-cryptsetup-generator.xml b/man/systemd-cryptsetup-generator.xml
-index c37ee76b8..e30d69bfe 100644
+index c37ee76b87..e30d69bfe7 100644
 --- a/man/systemd-cryptsetup-generator.xml
 +++ b/man/systemd-cryptsetup-generator.xml
 @@ -144,6 +144,20 @@
@@ -56,7 +56,7 @@ index c37ee76b8..e30d69bfe 100644
          is honored only by initial RAM disk
          (initrd) while
 diff --git a/src/cryptsetup/cryptsetup-generator.c b/src/cryptsetup/cryptsetup-generator.c
-index f5a81829b..8c7a76e78 100644
+index f5a81829b9..8c7a76e789 100644
 --- a/src/cryptsetup/cryptsetup-generator.c
 +++ b/src/cryptsetup/cryptsetup-generator.c
 @@ -24,6 +24,7 @@

@@ -1,0 +1,44 @@
+From c9fdcd0693ac63bc4b7326e248854617d9573bd6 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Fri, 26 Oct 2018 09:19:09 +0000
+Subject: [PATCH] lgtm: add a custom query for catching the use of fgets
+
+As everybody knows, nodoby really reads CODING_STYLE (especially
+the last paragraph :-)) so let's utilize LGTM to help us catch the
+use of fgets.
+
+(cherry picked from commit f86c1da28340f2a2afd34d72c9f416a2a94219a8)
+---
+ .lgtm/cpp-queries/fgets.ql | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100644 .lgtm/cpp-queries/fgets.ql
+
+diff --git a/.lgtm/cpp-queries/fgets.ql b/.lgtm/cpp-queries/fgets.ql
+new file mode 100644
+index 0000000000..82de8c4482
+--- /dev/null
++++ b/.lgtm/cpp-queries/fgets.ql
+@@ -0,0 +1,23 @@
++/**
++ * @name Use of fgets()
++ * @description fgets() is dangerous to call. Use read_line() instead.
++ * @kind problem
++ * @problem.severity error
++ * @precision high
++ * @id cpp/fgets
++ * @tags reliability
++ *       security
++ */
++import cpp
++
++
++predicate dangerousFunction(Function function) {
++  exists (string name | name = function.getQualifiedName() |
++    name = "fgets")
++}
++
++
++from FunctionCall call, Function target
++where call.getTarget() = target
++  and dangerousFunction(target)
++select call, target.getQualifiedName() + " is potentially dangerous"

@@ -1,0 +1,28 @@
+From d26406cc3f2c186691ce0a09052d3c39d15cc722 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Fri, 26 Oct 2018 10:25:36 +0000
+Subject: [PATCH] lgtm: drop redundant newlines
+
+(cherry picked from commit 845702c63863add5606a7a7f00a959ffdcf89635)
+---
+ .lgtm/cpp-queries/fgets.ql | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/.lgtm/cpp-queries/fgets.ql b/.lgtm/cpp-queries/fgets.ql
+index 82de8c4482..a4181e4f3d 100644
+--- a/.lgtm/cpp-queries/fgets.ql
++++ b/.lgtm/cpp-queries/fgets.ql
+@@ -10,13 +10,11 @@
+  */
+ import cpp
+ 
+-
+ predicate dangerousFunction(Function function) {
+   exists (string name | name = function.getQualifiedName() |
+     name = "fgets")
+ }
+ 
+-
+ from FunctionCall call, Function target
+ where call.getTarget() = target
+   and dangerousFunction(target)

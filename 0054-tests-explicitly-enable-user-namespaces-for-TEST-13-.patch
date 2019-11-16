@@ -10,7 +10,7 @@ Cherry-picked from: 67f5c0c776ce9449ad21e9854665573a05141fd4
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/test/TEST-13-NSPAWN-SMOKE/test.sh b/test/TEST-13-NSPAWN-SMOKE/test.sh
-index 6a0cb42ea..c0789b5d2 100755
+index 6a0cb42eaf..c0789b5d20 100755
 --- a/test/TEST-13-NSPAWN-SMOKE/test.sh
 +++ b/test/TEST-13-NSPAWN-SMOKE/test.sh
 @@ -18,7 +18,7 @@ test_setup() {

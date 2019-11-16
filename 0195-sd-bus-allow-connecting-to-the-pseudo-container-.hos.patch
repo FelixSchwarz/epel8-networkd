@@ -1,0 +1,57 @@
+From 6bf178a9a6e3fd6544d8e37a0082febf81c0ad2d Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 17 Jul 2018 12:23:26 +0200
+Subject: [PATCH] sd-bus: allow connecting to the pseudo-container ".host"
+
+machined exposes the pseudo-container ".host" as a reference to the host
+system, and this means "machinectl login .host" and "machinectl shell
+.host" get your a login/shell on the host. systemd-run currently doesn't
+allow that. Let's fix that, and make sd-bus understand ".host" as an
+alias for connecting to the host system.
+
+(cherry picked from commit 1e5057b904473696ae0d591d7555233adcb51fa4)
+
+Resolves: #1683334
+---
+ src/basic/util.c               | 5 +++++
+ src/libsystemd/sd-bus/sd-bus.c | 4 ++--
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/basic/util.c b/src/basic/util.c
+index 8f2d6061da..82cb937314 100644
+--- a/src/basic/util.c
++++ b/src/basic/util.c
+@@ -255,6 +255,11 @@ int container_get_leader(const char *machine, pid_t *pid) {
+         assert(machine);
+         assert(pid);
+ 
++        if (streq(machine, ".host")) {
++                *pid = 1;
++                return 0;
++        }
++
+         if (!machine_name_is_valid(machine))
+                 return -EINVAL;
+ 
+diff --git a/src/libsystemd/sd-bus/sd-bus.c b/src/libsystemd/sd-bus/sd-bus.c
+index 7f03528b89..f53a98d6bf 100644
+--- a/src/libsystemd/sd-bus/sd-bus.c
++++ b/src/libsystemd/sd-bus/sd-bus.c
+@@ -952,7 +952,7 @@ static int parse_container_unix_address(sd_bus *b, const char **p, char **guid)
+                 return -EINVAL;
+ 
+         if (machine) {
+-                if (!machine_name_is_valid(machine))
++                if (!streq(machine, ".host") && !machine_name_is_valid(machine))
+                         return -EINVAL;
+ 
+                 free_and_replace(b->machine, machine);
+@@ -1450,7 +1450,7 @@ _public_ int sd_bus_open_system_machine(sd_bus **ret, const char *machine) {
+ 
+         assert_return(machine, -EINVAL);
+         assert_return(ret, -EINVAL);
+-        assert_return(machine_name_is_valid(machine), -EINVAL);
++        assert_return(streq(machine, ".host") || machine_name_is_valid(machine), -EINVAL);
+ 
+         r = sd_bus_new(&b);
+         if (r < 0)

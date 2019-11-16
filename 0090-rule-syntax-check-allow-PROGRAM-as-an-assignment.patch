@@ -1,0 +1,33 @@
+From 1dd326b6dd0a23d1a9ee1c567962c6d5d4ef03ca Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Wed, 30 Jan 2019 12:22:41 +0100
+Subject: [PATCH] rule-syntax-check: allow PROGRAM as an assignment
+
+(cherry picked from commit ed2dc503da57b0110819563e0d1c85d023435e07)
+---
+ test/rule-syntax-check.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/test/rule-syntax-check.py b/test/rule-syntax-check.py
+index 706d93632e..c7c0a1a656 100755
+--- a/test/rule-syntax-check.py
++++ b/test/rule-syntax-check.py
+@@ -17,6 +17,8 @@ if not rules_files:
+ 
+ quoted_string_re = r'"(?:[^\\"]|\\.)*"'
+ no_args_tests = re.compile(r'(ACTION|DEVPATH|KERNELS?|NAME|SYMLINK|SUBSYSTEMS?|DRIVERS?|TAG|PROGRAM|RESULT|TEST)\s*(?:=|!)=\s*' + quoted_string_re + '$')
++# PROGRAM can also be specified as an assignment.
++program_assign = re.compile(r'PROGRAM\s*=\s*' + quoted_string_re + '$')
+ args_tests = re.compile(r'(ATTRS?|ENV|TEST){([a-zA-Z0-9/_.*%-]+)}\s*(?:=|!)=\s*' + quoted_string_re + '$')
+ no_args_assign = re.compile(r'(NAME|SYMLINK|OWNER|GROUP|MODE|TAG|RUN|LABEL|GOTO|WAIT_FOR|OPTIONS|IMPORT)\s*(?:\+=|:=|=)\s*' + quoted_string_re + '$')
+ args_assign = re.compile(r'(ATTR|ENV|IMPORT|RUN){([a-zA-Z0-9/_.*%-]+)}\s*(=|\+=)\s*' + quoted_string_re + '$')
+@@ -51,7 +53,8 @@ for path in rules_files:
+         for clause_match in comma_separated_group_re.finditer(line):
+             clause = clause_match.group().strip()
+             if not (no_args_tests.match(clause) or args_tests.match(clause) or
+-                    no_args_assign.match(clause) or args_assign.match(clause)):
++                    no_args_assign.match(clause) or args_assign.match(clause) or
++                    program_assign.match(clause)):
+ 
+                 print('Invalid line {}:{}: {}'.format(path, lineno, line))
+                 print('  clause:', clause)

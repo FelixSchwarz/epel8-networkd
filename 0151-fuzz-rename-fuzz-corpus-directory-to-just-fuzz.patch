@@ -1,0 +1,164 @@
+From 4bb9ba2cc0a64fc522d131f9a6cc5befe42d33bb Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 7 Jul 2018 17:43:40 +0200
+Subject: [PATCH] fuzz: rename "fuzz-corpus" directory to just "fuzz"
+
+Also, all corpus subdirectories are named exactly the same as the fuzzer they
+are for. This makes the paths a bit longer, but easier.
+
+(cherry picked from commit 93b575b26605c347a717b2aa24ddf9cad08b8080)
+
+Resolves: #1696224
+---
+ test/{fuzz-corpus => fuzz}/.gitattributes           |   0
+ .../fuzz-dhcp-server}/discover-existing             | Bin
+ .../fuzz-dhcp-server}/discover-new                  | Bin
+ .../dhcp-server => fuzz/fuzz-dhcp-server}/release   | Bin
+ .../fuzz-dhcp-server}/request-existing              | Bin
+ .../fuzz-dhcp-server}/request-new                   | Bin
+ .../fuzz-dhcp-server}/request-reboot                | Bin
+ .../fuzz-dhcp-server}/request-renew                 | Bin
+ .../fuzz-journal-remote}/invalid-ts.txt             | Bin
+ .../fuzz-journal-remote}/sample.txt                 |   0
+ .../dev-mapper-fedora_krowka\\x2dswap.swap"         |   0
+ .../fuzz-unit-file}/directives.service              |   0
+ .../unit-file => fuzz/fuzz-unit-file}/empty.scope   |   0
+ .../unit-file => fuzz/fuzz-unit-file}/machine.slice |   0
+ .../proc-sys-fs-binfmt_misc.automount               |   0
+ .../unit-file => fuzz/fuzz-unit-file}/syslog.socket |   0
+ .../systemd-ask-password-console.path               |   0
+ .../fuzz-unit-file}/systemd-machined.service        |   0
+ .../fuzz-unit-file}/systemd-resolved.service        |   0
+ .../fuzz-unit-file}/systemd-tmpfiles-clean.timer    |   0
+ .../unit-file => fuzz/fuzz-unit-file}/timers.target |   0
+ .../fuzz-unit-file}/var-lib-machines.mount          |   0
+ tools/oss-fuzz.sh                                   |   6 ++++--
+ 23 files changed, 4 insertions(+), 2 deletions(-)
+ rename test/{fuzz-corpus => fuzz}/.gitattributes (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/discover-existing (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/discover-new (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/release (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/request-existing (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/request-new (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/request-reboot (100%)
+ rename test/{fuzz-corpus/dhcp-server => fuzz/fuzz-dhcp-server}/request-renew (100%)
+ rename test/{fuzz-corpus/journal-remote => fuzz/fuzz-journal-remote}/invalid-ts.txt (100%)
+ rename test/{fuzz-corpus/journal-remote => fuzz/fuzz-journal-remote}/sample.txt (100%)
+ rename "test/fuzz-corpus/unit-file/dev-mapper-fedora_krowka\\x2dswap.swap" => "test/fuzz/fuzz-unit-file/dev-mapper-fedora_krowka\\x2dswap.swap" (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/directives.service (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/empty.scope (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/machine.slice (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/proc-sys-fs-binfmt_misc.automount (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/syslog.socket (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/systemd-ask-password-console.path (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/systemd-machined.service (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/systemd-resolved.service (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/systemd-tmpfiles-clean.timer (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/timers.target (100%)
+ rename test/{fuzz-corpus/unit-file => fuzz/fuzz-unit-file}/var-lib-machines.mount (100%)
+
+diff --git a/test/fuzz-corpus/.gitattributes b/test/fuzz/.gitattributes
+similarity index 100%
+rename from test/fuzz-corpus/.gitattributes
+rename to test/fuzz/.gitattributes
+diff --git a/test/fuzz-corpus/dhcp-server/discover-existing b/test/fuzz/fuzz-dhcp-server/discover-existing
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/discover-existing
+rename to test/fuzz/fuzz-dhcp-server/discover-existing
+diff --git a/test/fuzz-corpus/dhcp-server/discover-new b/test/fuzz/fuzz-dhcp-server/discover-new
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/discover-new
+rename to test/fuzz/fuzz-dhcp-server/discover-new
+diff --git a/test/fuzz-corpus/dhcp-server/release b/test/fuzz/fuzz-dhcp-server/release
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/release
+rename to test/fuzz/fuzz-dhcp-server/release
+diff --git a/test/fuzz-corpus/dhcp-server/request-existing b/test/fuzz/fuzz-dhcp-server/request-existing
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/request-existing
+rename to test/fuzz/fuzz-dhcp-server/request-existing
+diff --git a/test/fuzz-corpus/dhcp-server/request-new b/test/fuzz/fuzz-dhcp-server/request-new
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/request-new
+rename to test/fuzz/fuzz-dhcp-server/request-new
+diff --git a/test/fuzz-corpus/dhcp-server/request-reboot b/test/fuzz/fuzz-dhcp-server/request-reboot
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/request-reboot
+rename to test/fuzz/fuzz-dhcp-server/request-reboot
+diff --git a/test/fuzz-corpus/dhcp-server/request-renew b/test/fuzz/fuzz-dhcp-server/request-renew
+similarity index 100%
+rename from test/fuzz-corpus/dhcp-server/request-renew
+rename to test/fuzz/fuzz-dhcp-server/request-renew
+diff --git a/test/fuzz-corpus/journal-remote/invalid-ts.txt b/test/fuzz/fuzz-journal-remote/invalid-ts.txt
+similarity index 100%
+rename from test/fuzz-corpus/journal-remote/invalid-ts.txt
+rename to test/fuzz/fuzz-journal-remote/invalid-ts.txt
+diff --git a/test/fuzz-corpus/journal-remote/sample.txt b/test/fuzz/fuzz-journal-remote/sample.txt
+similarity index 100%
+rename from test/fuzz-corpus/journal-remote/sample.txt
+rename to test/fuzz/fuzz-journal-remote/sample.txt
+diff --git "a/test/fuzz-corpus/unit-file/dev-mapper-fedora_krowka\\x2dswap.swap" "b/test/fuzz/fuzz-unit-file/dev-mapper-fedora_krowka\\x2dswap.swap"
+similarity index 100%
+rename from "test/fuzz-corpus/unit-file/dev-mapper-fedora_krowka\\x2dswap.swap"
+rename to "test/fuzz/fuzz-unit-file/dev-mapper-fedora_krowka\\x2dswap.swap"
+diff --git a/test/fuzz-corpus/unit-file/directives.service b/test/fuzz/fuzz-unit-file/directives.service
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/directives.service
+rename to test/fuzz/fuzz-unit-file/directives.service
+diff --git a/test/fuzz-corpus/unit-file/empty.scope b/test/fuzz/fuzz-unit-file/empty.scope
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/empty.scope
+rename to test/fuzz/fuzz-unit-file/empty.scope
+diff --git a/test/fuzz-corpus/unit-file/machine.slice b/test/fuzz/fuzz-unit-file/machine.slice
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/machine.slice
+rename to test/fuzz/fuzz-unit-file/machine.slice
+diff --git a/test/fuzz-corpus/unit-file/proc-sys-fs-binfmt_misc.automount b/test/fuzz/fuzz-unit-file/proc-sys-fs-binfmt_misc.automount
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/proc-sys-fs-binfmt_misc.automount
+rename to test/fuzz/fuzz-unit-file/proc-sys-fs-binfmt_misc.automount
+diff --git a/test/fuzz-corpus/unit-file/syslog.socket b/test/fuzz/fuzz-unit-file/syslog.socket
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/syslog.socket
+rename to test/fuzz/fuzz-unit-file/syslog.socket
+diff --git a/test/fuzz-corpus/unit-file/systemd-ask-password-console.path b/test/fuzz/fuzz-unit-file/systemd-ask-password-console.path
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/systemd-ask-password-console.path
+rename to test/fuzz/fuzz-unit-file/systemd-ask-password-console.path
+diff --git a/test/fuzz-corpus/unit-file/systemd-machined.service b/test/fuzz/fuzz-unit-file/systemd-machined.service
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/systemd-machined.service
+rename to test/fuzz/fuzz-unit-file/systemd-machined.service
+diff --git a/test/fuzz-corpus/unit-file/systemd-resolved.service b/test/fuzz/fuzz-unit-file/systemd-resolved.service
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/systemd-resolved.service
+rename to test/fuzz/fuzz-unit-file/systemd-resolved.service
+diff --git a/test/fuzz-corpus/unit-file/systemd-tmpfiles-clean.timer b/test/fuzz/fuzz-unit-file/systemd-tmpfiles-clean.timer
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/systemd-tmpfiles-clean.timer
+rename to test/fuzz/fuzz-unit-file/systemd-tmpfiles-clean.timer
+diff --git a/test/fuzz-corpus/unit-file/timers.target b/test/fuzz/fuzz-unit-file/timers.target
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/timers.target
+rename to test/fuzz/fuzz-unit-file/timers.target
+diff --git a/test/fuzz-corpus/unit-file/var-lib-machines.mount b/test/fuzz/fuzz-unit-file/var-lib-machines.mount
+similarity index 100%
+rename from test/fuzz-corpus/unit-file/var-lib-machines.mount
+rename to test/fuzz/fuzz-unit-file/var-lib-machines.mount
+diff --git a/tools/oss-fuzz.sh b/tools/oss-fuzz.sh
+index 200407fcca..451cc665ce 100755
+--- a/tools/oss-fuzz.sh
++++ b/tools/oss-fuzz.sh
+@@ -35,8 +35,10 @@ fi
+ meson $build -D$fuzzflag -Db_lundef=false
+ ninja -C $build fuzzers
+ 
+-for d in "$(dirname "$0")/../test/fuzz-corpus/"*; do
+-        zip -jqr $OUT/fuzz-$(basename "$d")_seed_corpus.zip "$d"
++# The seed corpus is a separate flat archive for each fuzzer,
++# with a fixed name ${fuzzer}_seed_corpus.zip.
++for d in "$(dirname "$0")/../test/fuzz/fuzz-"*; do
++        zip -jqr $OUT/$(basename "$d")_seed_corpus.zip "$d"
+ done
+ 
+ # get fuzz-dns-packet corpus

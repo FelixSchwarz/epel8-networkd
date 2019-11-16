@@ -12,7 +12,7 @@ Resolves: #1643429
  2 files changed, 20 insertions(+), 9 deletions(-)
 
 diff --git a/man/systemd-debug-generator.xml b/man/systemd-debug-generator.xml
-index d5cf4109b..fa88e8ac0 100644
+index d5cf4109b0..fa88e8ac01 100644
 --- a/man/systemd-debug-generator.xml
 +++ b/man/systemd-debug-generator.xml
 @@ -33,27 +33,38 @@
@@ -63,7 +63,7 @@ index d5cf4109b..fa88e8ac0 100644
      <para><filename>systemd-debug-generator</filename> implements
      <citerefentry><refentrytitle>systemd.generator</refentrytitle><manvolnum>7</manvolnum></citerefentry>.</para>
 diff --git a/src/debug-generator/debug-generator.c b/src/debug-generator/debug-generator.c
-index dd6ab94fa..800d31ceb 100644
+index dd6ab94fa2..800d31cebe 100644
 --- a/src/debug-generator/debug-generator.c
 +++ b/src/debug-generator/debug-generator.c
 @@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {

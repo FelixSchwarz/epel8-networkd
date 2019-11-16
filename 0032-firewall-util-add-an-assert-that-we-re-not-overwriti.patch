@@ -15,7 +15,7 @@ Resolves: #1602706
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/src/shared/firewall-util.c b/src/shared/firewall-util.c
-index eb4f5ff61..cba52fb41 100644
+index eb4f5ff616..cba52fb419 100644
 --- a/src/shared/firewall-util.c
 +++ b/src/shared/firewall-util.c
 @@ -50,8 +50,14 @@ static int entry_fill_basics(

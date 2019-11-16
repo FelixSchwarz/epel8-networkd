@@ -13,7 +13,7 @@ Resolves: #1523236
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/man/systemd-system.conf.xml b/man/systemd-system.conf.xml
-index a914ef252..085086200 100644
+index a914ef2523..085086200a 100644
 --- a/man/systemd-system.conf.xml
 +++ b/man/systemd-system.conf.xml
 @@ -339,7 +339,7 @@
@@ -26,7 +26,7 @@ index a914ef252..085086200 100644
        </varlistentry>
  
 diff --git a/src/basic/cgroup-util.h b/src/basic/cgroup-util.h
-index 1a28a8163..f10c26ad5 100644
+index 1a28a8163a..f10c26ad51 100644
 --- a/src/basic/cgroup-util.h
 +++ b/src/basic/cgroup-util.h
 @@ -100,7 +100,7 @@ static inline bool CGROUP_BLKIO_WEIGHT_IS_OK(uint64_t x) {
@@ -39,7 +39,7 @@ index 1a28a8163..f10c26ad5 100644
  
  typedef enum CGroupUnified {
 diff --git a/src/core/system.conf.in b/src/core/system.conf.in
-index f0a59a79a..653ec6b8c 100644
+index f0a59a79a5..653ec6b8c9 100644
 --- a/src/core/system.conf.in
 +++ b/src/core/system.conf.in
 @@ -45,7 +45,7 @@

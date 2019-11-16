@@ -11,7 +11,7 @@ Related: #1664976
  1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/src/journal/journald-server.c b/src/journal/journald-server.c
-index 4f1550ec5..ce2446a2f 100644
+index 4f1550ec5b..ce2446a2f1 100644
 --- a/src/journal/journald-server.c
 +++ b/src/journal/journald-server.c
 @@ -1124,8 +1124,7 @@ int server_process_datagram(sd_event_source *es, int fd, uint32_t revents, void

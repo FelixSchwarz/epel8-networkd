@@ -1,0 +1,30 @@
+From 7b3ef169e3142fb471c48f265881b371380d77e0 Mon Sep 17 00:00:00 2001
+From: Zhang Xianwei <zhang.xianwei8@zte.com.cn>
+Date: Mon, 13 May 2019 18:41:55 +0800
+Subject: [PATCH] udev/scsi_id: fix incorrect page length when get device
+ identification VPD page
+
+The length of device identification VPD page is filled with two bytes,
+but scsi_id only gets the low byte. Fix it.
+
+Signed-off-by: Zhang Xianwei <zhang.xianwei8@zte.com.cn>
+(cherry picked from commit 1f7b6872dbe8ccae1f3bda9aa6aeb87c9b42e01e)
+
+Resolves: #1713227
+---
+ src/udev/scsi_id/scsi_serial.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/udev/scsi_id/scsi_serial.c b/src/udev/scsi_id/scsi_serial.c
+index fd91657a32..fb6055395d 100644
+--- a/src/udev/scsi_id/scsi_serial.c
++++ b/src/udev/scsi_id/scsi_serial.c
+@@ -661,7 +661,7 @@ static int do_scsi_page83_inquiry(struct udev *udev,
+                  * Examine each descriptor returned. There is normally only
+                  * one or a small number of descriptors.
+                  */
+-                for (j = 4; j <= (unsigned int)page_83[3] + 3; j += page_83[j + 3] + 4) {
++                for (j = 4; j <= ((unsigned)page_83[2] << 8) + (unsigned)page_83[3] + 3; j += page_83[j + 3] + 4) {
+                         retval = check_fill_0x83_id(udev,
+                                                     dev_scsi, &page_83[j],
+                                                     &id_search_list[id_ind],

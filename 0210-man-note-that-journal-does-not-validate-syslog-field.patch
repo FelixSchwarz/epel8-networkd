@@ -1,0 +1,28 @@
+From 705a67a53a8a1b836ef17f048366bbf33357afc1 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Tue, 14 May 2019 10:45:08 +0200
+Subject: [PATCH] man: note that journal does not validate syslog fields
+
+(cherry picked from commit 63ea8032f28052f7cda860e5324c0a83dee7ed23)
+
+Resolves: #1707175
+---
+ man/systemd.journal-fields.xml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/man/systemd.journal-fields.xml b/man/systemd.journal-fields.xml
+index c079274c32..0c95c4cd95 100644
+--- a/man/systemd.journal-fields.xml
++++ b/man/systemd.journal-fields.xml
+@@ -111,6 +111,11 @@
+           <varname>program_invocation_short_name</varname> variable,
+           see
+           <citerefentry project='die-net'><refentrytitle>program_invocation_short_name</refentrytitle><manvolnum>3</manvolnum></citerefentry>.)</para>
++          <para>Note that the journal service does not validate the values of any structured
++          journal fields whose name is not prefixed with an underscore, and this includes any
++          syslog related fields such as these. Hence, applications that supply a facility, PID,
++          or log level are expected to do so properly formatted, i.e. as numeric integers formatted
++          as decimal strings.</para>
+         </listitem>
+ 
+       </varlistentry>

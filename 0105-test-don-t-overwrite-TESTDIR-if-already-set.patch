@@ -1,0 +1,30 @@
+From 9cf9680910544638129bf083bca902881d9ab5bc Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <frantisek@sumsal.cz>
+Date: Tue, 12 Mar 2019 22:44:25 +0100
+Subject: [PATCH] test: don't overwrite TESTDIR if already set
+
+(cherry picked from commit 3f50fff536d715aee5e5195ec60e2af047b73c7f)
+---
+ test/test-functions | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/test/test-functions b/test/test-functions
+index 670c2625f7..af9d16140f 100644
+--- a/test/test-functions
++++ b/test/test-functions
+@@ -711,8 +711,13 @@ inst_libs() {
+ 
+ import_testdir() {
+     [[ -e $STATEFILE ]] && . $STATEFILE
+-    if [[ -z "$TESTDIR" ]] || [[ ! -d "$TESTDIR" ]]; then
+-        TESTDIR=$(mktemp --tmpdir=/var/tmp -d -t systemd-test.XXXXXX)
++    if [[ ! -d "$TESTDIR" ]]; then
++        if [[ -z "$TESTDIR" ]]; then
++            TESTDIR=$(mktemp --tmpdir=/var/tmp -d -t systemd-test.XXXXXX)
++        else
++            mkdir -p "$TESTDIR"
++        fi
++
+         echo "TESTDIR=\"$TESTDIR\"" > $STATEFILE
+         export TESTDIR
+     fi

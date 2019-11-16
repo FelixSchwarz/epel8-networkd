@@ -18,7 +18,7 @@ Related: #1643429
  2 files changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/src/basic/proc-cmdline.c b/src/basic/proc-cmdline.c
-index add481c2a..530ac3746 100644
+index add481c2ae..530ac37460 100644
 --- a/src/basic/proc-cmdline.c
 +++ b/src/basic/proc-cmdline.c
 @@ -72,7 +72,8 @@ int proc_cmdline_parse(proc_cmdline_parse_t parse_item, void *data, unsigned fla
@@ -32,7 +32,7 @@ index add481c2a..530ac3746 100644
                  value = strchr(key, '=');
                  if (value)
 diff --git a/src/basic/proc-cmdline.h b/src/basic/proc-cmdline.h
-index 4a9e6e0f6..140200dbf 100644
+index 4a9e6e0f62..140200dbf4 100644
 --- a/src/basic/proc-cmdline.h
 +++ b/src/basic/proc-cmdline.h
 @@ -8,6 +8,7 @@

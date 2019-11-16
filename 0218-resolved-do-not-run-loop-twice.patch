@@ -1,0 +1,46 @@
+From b72a0dc69d0c54efe2699560d3053847976f7ff2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Tue, 27 Aug 2019 19:02:53 +0200
+Subject: [PATCH] resolved: do not run loop twice
+
+This doesn't matter much, but let's just do the loop once and allocate
+the populate the result set on the fly. If we find an error, it'll get
+cleaned up automatically.
+
+Related: #1746857
+---
+ src/resolve/resolved-link-bus.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/src/resolve/resolved-link-bus.c b/src/resolve/resolved-link-bus.c
+index b1581740d8..46d2b11636 100644
+--- a/src/resolve/resolved-link-bus.c
++++ b/src/resolve/resolved-link-bus.c
+@@ -492,6 +492,10 @@ int bus_link_method_set_dnssec_negative_trust_anchors(sd_bus_message *message, v
+         if (r < 0)
+                 return r;
+ 
++        ns = set_new(&dns_name_hash_ops);
++        if (!ns)
++                return -ENOMEM;
++
+         r = sd_bus_message_read_strv(message, &ntas);
+         if (r < 0)
+                 return r;
+@@ -501,14 +505,9 @@ int bus_link_method_set_dnssec_negative_trust_anchors(sd_bus_message *message, v
+                 if (r < 0)
+                         return r;
+                 if (r == 0)
+-                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Invalid negative trust anchor domain: %s", *i);
+-        }
++                        return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS,
++                                                 "Invalid negative trust anchor domain: %s", *i);
+ 
+-        ns = set_new(&dns_name_hash_ops);
+-        if (!ns)
+-                return -ENOMEM;
+-
+-        STRV_FOREACH(i, ntas) {
+                 r = set_put_strdup(ns, *i);
+                 if (r < 0)
+                         return r;

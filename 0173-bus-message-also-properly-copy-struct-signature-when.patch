@@ -1,0 +1,33 @@
+From 13993b51c5cab806d81a7305c895bafd4cd48876 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 11 Aug 2018 09:02:48 +0200
+Subject: [PATCH] bus-message: also properly copy struct signature when
+ skipping
+
+The change is similar to that in the previous commit, but I don't have
+a reproducer / test case case for this one, so I'm keeping it seperate.
+
+(cherry picked from commit 3d338a302f56c0ef0445660d9856794abe1af8b5)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 202f1aab30..e71d29f91d 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -5036,9 +5036,9 @@ static int message_skip_fields(
+ 
+                         assert(l >= 2);
+                         {
+-                                char sig[l-1], *s;
+-                                strncpy(sig, *signature + 1, l-1);
+-                                s = sig;
++                                char sig[l + 1], *s = sig;
++                                strncpy(sig, *signature + 1, l);
++                                sig[l] = '\0';
+ 
+                                 r = message_skip_fields(m, ri, (uint32_t) -1, (const char**) &s);
+                                 if (r < 0)

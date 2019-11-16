@@ -1,4 +1,4 @@
-From 9c2246f25010b9657b765c546c0e278d4824ab2c Mon Sep 17 00:00:00 2001
+From ac9c51b72213bcea3dc9cea330d4c5fce9c4470e Mon Sep 17 00:00:00 2001
 From: Riccardo Schirone <rschiron@redhat.com>
 Date: Mon, 4 Feb 2019 14:29:09 +0100
 Subject: [PATCH] Refuse dbus message paths longer than BUS_PATH_SIZE_MAX
@@ -20,7 +20,7 @@ Related: #1678641
  2 files changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/src/libsystemd/sd-bus/bus-internal.c b/src/libsystemd/sd-bus/bus-internal.c
-index 7bb653338..35e0b668e 100644
+index 7bb653338d..35e0b668ee 100644
 --- a/src/libsystemd/sd-bus/bus-internal.c
 +++ b/src/libsystemd/sd-bus/bus-internal.c
 @@ -45,7 +45,7 @@ bool object_path_is_valid(const char *p) {
@@ -33,7 +33,7 @@ index 7bb653338..35e0b668e 100644
  
  char* object_path_startswith(const char *a, const char *b) {
 diff --git a/src/libsystemd/sd-bus/bus-internal.h b/src/libsystemd/sd-bus/bus-internal.h
-index 2087ef8ee..90e602898 100644
+index 2087ef8eeb..90e6028983 100644
 --- a/src/libsystemd/sd-bus/bus-internal.h
 +++ b/src/libsystemd/sd-bus/bus-internal.h
 @@ -333,6 +333,10 @@ struct sd_bus {

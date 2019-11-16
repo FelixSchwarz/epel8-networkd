@@ -13,7 +13,7 @@ Subject: [PATCH] travis: enable Travis CI on CentOS 7
  create mode 100644 ci/travis_wait.bash
 
 diff --git a/.travis.yml b/.travis.yml
-index d98003818..fc6388732 100644
+index d980038181..fc63887324 100644
 --- a/.travis.yml
 +++ b/.travis.yml
 @@ -1,77 +1,29 @@
@@ -115,7 +115,7 @@ index d98003818..fc6388732 100644
 +              - $CI_ROOT/travis-centos.sh CLEANUP
 diff --git a/ci/travis-centos.sh b/ci/travis-centos.sh
 new file mode 100755
-index 000000000..60bbdf14c
+index 0000000000..60bbdf14c2
 --- /dev/null
 +++ b/ci/travis-centos.sh
 @@ -0,0 +1,69 @@
@@ -190,7 +190,7 @@ index 000000000..60bbdf14c
 +done
 diff --git a/ci/travis_wait.bash b/ci/travis_wait.bash
 new file mode 100644
-index 000000000..acf6ad15e
+index 0000000000..acf6ad15e4
 --- /dev/null
 +++ b/ci/travis_wait.bash
 @@ -0,0 +1,61 @@

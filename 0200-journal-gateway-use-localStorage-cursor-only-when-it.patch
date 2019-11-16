@@ -1,0 +1,36 @@
+From 8ae19bfcfe0a52b55171f4f60772afe418831230 Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Wed, 27 Jun 2018 14:50:19 +0900
+Subject: [PATCH] journal-gateway: use localStorage["cursor"] only when it has
+ valid value
+
+Discovered by LGTM.
+
+(cherry picked from commit 944072feddb73333023d0a98bf87fd2a17f894d3)
+
+Resolves: #1705971
+---
+ src/journal-remote/browse.html | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/src/journal-remote/browse.html b/src/journal-remote/browse.html
+index 9f519adbd6..e5162d1088 100644
+--- a/src/journal-remote/browse.html
++++ b/src/journal-remote/browse.html
+@@ -236,10 +236,12 @@
+ 
+                 function entriesLoad(range) {
+ 
+-                        if (range == null)
+-                                range = localStorage["cursor"] + ":0";
+-                        if (range == null)
+-                                range = "";
++                        if (range == null) {
++                                if (localStorage["cursor"] != null && localStorage["cursor"] != "")
++                                        range = localStorage["cursor"] + ":0";
++                                else
++                                        range = "";
++                        }
+ 
+                         var url = "/entries";
+ 

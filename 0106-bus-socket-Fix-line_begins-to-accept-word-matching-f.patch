@@ -1,4 +1,4 @@
-From cce8d42c8d86167f22c86c226383a40dea28388a Mon Sep 17 00:00:00 2001
+From 94b18b8123b5d957ed84e4aa8e268b60f5427821 Mon Sep 17 00:00:00 2001
 From: Filipe Brandenburger <filbranden@google.com>
 Date: Tue, 17 Jul 2018 11:32:40 -0700
 Subject: [PATCH] bus-socket: Fix line_begins() to accept word matching full
@@ -31,7 +31,7 @@ Resolves: #1692991
  1 file changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/src/libsystemd/sd-bus/bus-socket.c b/src/libsystemd/sd-bus/bus-socket.c
-index b147a3843..a5513d1ab 100644
+index b147a3843a..a5513d1ab5 100644
 --- a/src/libsystemd/sd-bus/bus-socket.c
 +++ b/src/libsystemd/sd-bus/bus-socket.c
 @@ -248,10 +248,7 @@ static bool line_begins(const char *s, size_t m, const char *word) {

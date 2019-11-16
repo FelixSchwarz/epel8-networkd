@@ -1,0 +1,103 @@
+From b05795bd3d8afcdcb765639a636ada8d36a2ee79 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Fri, 18 Jan 2019 20:04:13 +0100
+Subject: [PATCH] util.h: add new UNPROTECT_ERRNO macro
+
+THis is inspired by #11395, but much simpler.
+
+(cherry picked from commit 840f606d88fef2f5d240b2d759ce7b951354d5bb)
+
+Resolves: #1691691
+---
+ src/basic/util.h        |  9 +++++++++
+ src/test/test-fs-util.c |  6 +++---
+ src/test/test-util.c    | 25 +++++++++++++++++++++++++
+ 3 files changed, 37 insertions(+), 3 deletions(-)
+
+diff --git a/src/basic/util.h b/src/basic/util.h
+index 9699d228f9..27b5a09782 100644
+--- a/src/basic/util.h
++++ b/src/basic/util.h
+@@ -134,11 +134,20 @@ static inline void *mempset(void *s, int c, size_t n) {
+ }
+ 
+ static inline void _reset_errno_(int *saved_errno) {
++        if (*saved_errno < 0) /* Invalidated by UNPROTECT_ERRNO? */
++                return;
++
+         errno = *saved_errno;
+ }
+ 
+ #define PROTECT_ERRNO _cleanup_(_reset_errno_) __attribute__((unused)) int _saved_errno_ = errno
+ 
++#define UNPROTECT_ERRNO                         \
++        do {                                    \
++                errno = _saved_errno_;          \
++                _saved_errno_ = -1;             \
++        } while (false)
++
+ static inline int negative_errno(void) {
+         /* This helper should be used to shut up gcc if you know 'errno' is
+          * negative. Instead of "return -errno;", use "return negative_errno();"
+diff --git a/src/test/test-fs-util.c b/src/test/test-fs-util.c
+index fc650b513e..7b7990bb70 100644
+--- a/src/test/test-fs-util.c
++++ b/src/test/test-fs-util.c
+@@ -322,11 +322,11 @@ static void test_unlink_noerrno(void) {
+ 
+         {
+                 PROTECT_ERRNO;
+-                errno = -42;
++                errno = 42;
+                 assert_se(unlink_noerrno(name) >= 0);
+-                assert_se(errno == -42);
++                assert_se(errno == 42);
+                 assert_se(unlink_noerrno(name) < 0);
+-                assert_se(errno == -42);
++                assert_se(errno == 42);
+         }
+ }
+ 
+diff --git a/src/test/test-util.c b/src/test/test-util.c
+index 4d3e5c5b94..df60d89115 100644
+--- a/src/test/test-util.c
++++ b/src/test/test-util.c
+@@ -164,6 +164,30 @@ static void test_protect_errno(void) {
+         assert_se(errno == 12);
+ }
+ 
++static void test_unprotect_errno_inner_function(void) {
++        PROTECT_ERRNO;
++
++        errno = 2222;
++}
++
++static void test_unprotect_errno(void) {
++        log_info("/* %s */", __func__);
++
++        errno = 4711;
++
++        PROTECT_ERRNO;
++
++        errno = 815;
++
++        UNPROTECT_ERRNO;
++
++        assert_se(errno == 4711);
++
++        test_unprotect_errno_inner_function();
++
++        assert_se(errno == 4711);
++}
++
+ static void test_in_set(void) {
+         assert_se(IN_SET(1, 1));
+         assert_se(IN_SET(1, 1, 2, 3, 4));
+@@ -307,6 +331,7 @@ int main(int argc, char *argv[]) {
+         test_div_round_up();
+         test_u64log2();
+         test_protect_errno();
++        test_unprotect_errno();
+         test_in_set();
+         test_log2i();
+         test_raw_clone();

@@ -1,0 +1,29 @@
+From d0d284178c1ceb2bd13c9b501008c4458a58fe37 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Tue, 3 Jul 2018 19:29:42 +0000
+Subject: [PATCH] tests: redirect ASAN reports on journald to a file
+
+Otherwise, they will end up in /dev/null.
+
+(cherry picked from commit 88ed0f261ba8164a689395ddee8b92d00e073515)
+---
+ test/test-functions | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/test/test-functions b/test/test-functions
+index a6f88e4545..822136913b 100644
+--- a/test/test-functions
++++ b/test/test-functions
+@@ -343,6 +343,12 @@ echo DefaultEnvironment=\$DEFAULT_ENVIRONMENT >>/etc/systemd/system.conf
+ # ASAN and syscall filters aren't compatible with each other.
+ find / -name '*.service' -type f | xargs sed -i 's/^\\(MemoryDeny\\|SystemCall\\)/#\\1/'
+ 
++# The redirection of ASAN reports to a file prevents them from ending up in /dev/null.
++# But, apparently, sometimes it doesn't work: https://github.com/google/sanitizers/issues/886.
++JOURNALD_CONF_DIR=/etc/systemd/system/systemd-journald.service.d
++mkdir -p "\$JOURNALD_CONF_DIR"
++printf "[Service]\nEnvironment=ASAN_OPTIONS=\$DEFAULT_ASAN_OPTIONS:log_path=/systemd-journald.asan.log\n" >"\$JOURNALD_CONF_DIR/env.conf"
++
+ export ASAN_OPTIONS=\$DEFAULT_ASAN_OPTIONS:log_path=/systemd.asan.log
+ exec  $ROOTLIBDIR/systemd "\$@"
+ EOF

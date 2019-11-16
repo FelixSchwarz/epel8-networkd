@@ -1,0 +1,22 @@
+From 72dd8d8cd1a7417805009050f859d502b1c6cf3e Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Thu, 6 Jun 2019 09:35:27 +0200
+Subject: [PATCH] rules: skip memory hotplug on ppc64
+
+Resolves (#1713159)
+---
+ rules/40-redhat.rules | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
+index 17b33682bd..fadc6e59f1 100644
+--- a/rules/40-redhat.rules
++++ b/rules/40-redhat.rules
+@@ -7,6 +7,7 @@ SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}
+ SUBSYSTEM!="memory", GOTO="memory_hotplug_end"
+ ACTION!="add", GOTO="memory_hotplug_end"
+ PROGRAM="/bin/uname -p", RESULT=="s390*", GOTO="memory_hotplug_end"
++PROGRAM="/bin/uname -p", RESULT=="ppc64*", GOTO="memory_hotplug_end"
+ 
+ ENV{.state}="online"
+ PROGRAM="/bin/systemd-detect-virt", RESULT=="none", ENV{.state}="online_movable"

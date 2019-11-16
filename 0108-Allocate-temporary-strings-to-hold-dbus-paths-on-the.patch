@@ -1,4 +1,4 @@
-From 268f983d2a9e093f1d432f4c530ed51f08f14870 Mon Sep 17 00:00:00 2001
+From 5eb96e51ca2ce0e90e90ecb9f78e8305f51fa5dd Mon Sep 17 00:00:00 2001
 From: Riccardo Schirone <rschiron@redhat.com>
 Date: Mon, 4 Feb 2019 14:29:28 +0100
 Subject: [PATCH] Allocate temporary strings to hold dbus paths on the heap
@@ -15,7 +15,7 @@ Related: #1678641
  1 file changed, 54 insertions(+), 14 deletions(-)
 
 diff --git a/src/libsystemd/sd-bus/bus-objects.c b/src/libsystemd/sd-bus/bus-objects.c
-index a18ff88b0..53bf0fd62 100644
+index a18ff88b07..53bf0fd620 100644
 --- a/src/libsystemd/sd-bus/bus-objects.c
 +++ b/src/libsystemd/sd-bus/bus-objects.c
 @@ -1134,7 +1134,8 @@ static int object_manager_serialize_path_and_fallbacks(

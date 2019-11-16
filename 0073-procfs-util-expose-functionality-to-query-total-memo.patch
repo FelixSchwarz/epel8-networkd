@@ -21,7 +21,7 @@ Related: #1664976
  5 files changed, 12 insertions(+), 8 deletions(-)
 
 diff --git a/src/basic/procfs-util.c b/src/basic/procfs-util.c
-index a159e344b..7aaf95bfc 100644
+index a159e344b3..7aaf95bfce 100644
 --- a/src/basic/procfs-util.c
 +++ b/src/basic/procfs-util.c
 @@ -201,13 +201,11 @@ int procfs_cpu_get_usage(nsec_t *ret) {
@@ -51,7 +51,7 @@ index a159e344b..7aaf95bfc 100644
          return 0;
  }
 diff --git a/src/basic/procfs-util.h b/src/basic/procfs-util.h
-index f697ed92b..5a44e9eff 100644
+index f697ed92bc..5a44e9eff7 100644
 --- a/src/basic/procfs-util.h
 +++ b/src/basic/procfs-util.h
 @@ -11,4 +11,7 @@ int procfs_tasks_get_current(uint64_t *ret);
@@ -64,7 +64,7 @@ index f697ed92b..5a44e9eff 100644
 +        return procfs_memory_get(NULL, ret);
 +}
 diff --git a/src/cgtop/cgtop.c b/src/cgtop/cgtop.c
-index 8dda08ab4..792b13a43 100644
+index 8dda08ab4c..792b13a43d 100644
 --- a/src/cgtop/cgtop.c
 +++ b/src/cgtop/cgtop.c
 @@ -297,7 +297,7 @@ static int process(
@@ -77,7 +77,7 @@ index 8dda08ab4..792b13a43 100644
                                  return r;
                  } else {
 diff --git a/src/core/cgroup.c b/src/core/cgroup.c
-index bb0243620..62ab41a28 100644
+index bb02436203..62ab41a288 100644
 --- a/src/core/cgroup.c
 +++ b/src/core/cgroup.c
 @@ -2402,7 +2402,7 @@ int unit_get_memory_current(Unit *u, uint64_t *ret) {
@@ -90,7 +90,7 @@ index bb0243620..62ab41a28 100644
          if ((u->cgroup_realized_mask & CGROUP_MASK_MEMORY) == 0)
                  return -ENODATA;
 diff --git a/src/test/test-procfs-util.c b/src/test/test-procfs-util.c
-index 08af380cc..1d0612985 100644
+index 08af380cc7..1d0612985b 100644
 --- a/src/test/test-procfs-util.c
 +++ b/src/test/test-procfs-util.c
 @@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {

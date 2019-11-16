@@ -14,7 +14,7 @@ Resolves: #1664978
  2 files changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/src/journal/journald-syslog.c b/src/journal/journald-syslog.c
-index 9dea11672..97711ac7a 100644
+index 9dea116722..97711ac7a3 100644
 --- a/src/journal/journald-syslog.c
 +++ b/src/journal/journald-syslog.c
 @@ -194,7 +194,7 @@ size_t syslog_parse_identifier(const char **buf, char **identifier, char **pid)
@@ -38,7 +38,7 @@ index 9dea11672..97711ac7a 100644
          return e;
  }
 diff --git a/src/journal/test-journal-syslog.c b/src/journal/test-journal-syslog.c
-index 9ba86f6c8..05f759817 100644
+index 9ba86f6c8a..05f759817e 100644
 --- a/src/journal/test-journal-syslog.c
 +++ b/src/journal/test-journal-syslog.c
 @@ -5,8 +5,8 @@

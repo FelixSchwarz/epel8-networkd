@@ -1,0 +1,90 @@
+From 4bc21bbc61acd1ce114da381a9742f6bcd4ffde8 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 17 Jul 2019 18:57:13 +0200
+Subject: [PATCH] mount: rescan /proc/self/mountinfo before processing waitid()
+ results
+
+(The interesting bits about the what and why are in a comment in the
+patch, please have a look there instead of looking here in the commit
+msg).
+
+Fixes: #10872
+(cherry picked from commit 350804867dbcc9b7ccabae1187d730d37e2d8a21)
+
+Conflicts:
+	src/core/mount.c
+
+Resolves: #1696178
+---
+ src/core/mount.c | 30 +++++++++++++++++++++++++++---
+ 1 file changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/src/core/mount.c b/src/core/mount.c
+index 85b07375e2..2ac04e3874 100644
+--- a/src/core/mount.c
++++ b/src/core/mount.c
+@@ -53,6 +53,7 @@ static const UnitActiveState state_translation_table[_MOUNT_STATE_MAX] = {
+ 
+ static int mount_dispatch_timer(sd_event_source *source, usec_t usec, void *userdata);
+ static int mount_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata);
++static int mount_process_proc_self_mountinfo(Manager *m);
+ 
+ static bool MOUNT_STATE_WITH_PROCESS(MountState state) {
+         return IN_SET(state,
+@@ -1241,6 +1242,22 @@ static void mount_sigchld_event(Unit *u, pid_t pid, int code, int status) {
+         if (pid != m->control_pid)
+                 return;
+ 
++        /* So here's the thing, we really want to know before /usr/bin/mount or /usr/bin/umount exit whether
++         * they established/remove a mount. This is important when mounting, but even more so when unmounting
++         * since we need to deal with nested mounts and otherwise cannot safely determine whether to repeat
++         * the unmounts. In theory, the kernel fires /proc/self/mountinfo changes off before returning from
++         * the mount() or umount() syscalls, and thus we should see the changes to the proc file before we
++         * process the waitid() for the /usr/bin/(u)mount processes. However, this is unfortunately racy: we
++         * have to waitid() for processes using P_ALL (since we need to reap unexpected children that got
++         * reparented to PID 1), but when using P_ALL we might end up reaping processes that terminated just
++         * instants ago, i.e. already after our last event loop iteration (i.e. after the last point we might
++         * have noticed /proc/self/mountinfo events via epoll). This means event loop priorities for
++         * processing SIGCHLD vs. /proc/self/mountinfo IO events are not as relevant as we want. To fix that
++         * race, let's explicitly scan /proc/self/mountinfo before we start processing /usr/bin/(u)mount
++         * dying. It's ugly, but it makes our ordering systematic again, and makes sure we always see
++         * /proc/self/mountinfo changes before our mount/umount exits. */
++        (void) mount_process_proc_self_mountinfo(u->manager);
++
+         m->control_pid = 0;
+ 
+         if (is_clean_exit(code, status, EXIT_CLEAN_COMMAND, NULL))
+@@ -1781,16 +1798,14 @@ static int drain_libmount(Manager *m) {
+         return rescan;
+ }
+ 
+-static int mount_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata) {
++static int mount_process_proc_self_mountinfo(Manager *m) {
+         _cleanup_set_free_ Set *around = NULL, *gone = NULL;
+-        Manager *m = userdata;
+         const char *what;
+         Iterator i;
+         Unit *u;
+         int r;
+ 
+         assert(m);
+-        assert(revents & EPOLLIN);
+ 
+         r = drain_libmount(m);
+         if (r <= 0)
+@@ -1898,6 +1913,15 @@ static int mount_dispatch_io(sd_event_source *source, int fd, uint32_t revents,
+         return 0;
+ }
+ 
++static int mount_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata) {
++        Manager *m = userdata;
++
++        assert(m);
++        assert(revents & EPOLLIN);
++
++        return mount_process_proc_self_mountinfo(m);
++}
++
+ static void mount_reset_failed(Unit *u) {
+         Mount *m = MOUNT(u);
+ 

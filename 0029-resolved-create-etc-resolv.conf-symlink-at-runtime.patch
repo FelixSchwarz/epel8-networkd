@@ -18,7 +18,7 @@ https://bugzilla.redhat.com/show_bug.cgi?id=1313085
  2 files changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/src/resolve/resolved.c b/src/resolve/resolved.c
-index c01e53e9d..f3d96df45 100644
+index c01e53e9da..f3d96df458 100644
 --- a/src/resolve/resolved.c
 +++ b/src/resolve/resolved.c
 @@ -53,6 +53,10 @@ int main(int argc, char *argv[]) {
@@ -33,7 +33,7 @@ index c01e53e9d..f3d96df45 100644
                  /* Drop privileges, but keep three caps. Note that we drop those too, later on (see below) */
                  r = drop_privileges(uid, gid,
 diff --git a/tmpfiles.d/etc.conf.m4 b/tmpfiles.d/etc.conf.m4
-index df8d42101..928105ea8 100644
+index df8d42101c..928105ea8d 100644
 --- a/tmpfiles.d/etc.conf.m4
 +++ b/tmpfiles.d/etc.conf.m4
 @@ -13,9 +13,6 @@ L+ /etc/mtab - - - - ../proc/self/mounts

@@ -14,7 +14,7 @@ Resolves: #1647359
  1 file changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/src/core/dbus.c b/src/core/dbus.c
-index 256a41021..346a440c5 100644
+index 256a410215..346a440c5d 100644
 --- a/src/core/dbus.c
 +++ b/src/core/dbus.c
 @@ -55,13 +55,12 @@ int bus_send_pending_reload_message(Manager *m) {

@@ -18,7 +18,7 @@ Related: #1664977
  1 file changed, 37 insertions(+), 28 deletions(-)
 
 diff --git a/src/journal/journald-native.c b/src/journal/journald-native.c
-index 951d09205..110ab3641 100644
+index 951d092053..110ab3641c 100644
 --- a/src/journal/journald-native.c
 +++ b/src/journal/journald-native.c
 @@ -109,7 +109,7 @@ static int server_process_entry(

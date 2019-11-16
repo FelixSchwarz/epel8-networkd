@@ -1,0 +1,86 @@
+From 91bd0b915aa17f44625a0c0ce84ed73b6d33968e Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Thu, 30 Aug 2018 07:01:18 +0300
+Subject: [PATCH] tests: also run TEST-01-BASIC in an unprivileged container
+ (#9957)
+
+This should make it much easier to catch regressions like
+https://github.com/systemd/systemd/issues/9914 and
+https://github.com/systemd/systemd/issues/8535.
+
+(cherry picked from commit 746fbd9c34af5ed8b6d9aa7a9cbd7cac63a3afce)
+---
+ test/TEST-01-BASIC/test.sh |  1 +
+ test/test-functions        | 23 +++++++++++++++++------
+ 2 files changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/test/TEST-01-BASIC/test.sh b/test/TEST-01-BASIC/test.sh
+index 8b21ba05d3..1d2f833478 100755
+--- a/test/TEST-01-BASIC/test.sh
++++ b/test/TEST-01-BASIC/test.sh
+@@ -3,6 +3,7 @@
+ # ex: ts=8 sw=4 sts=4 et filetype=sh
+ set -e
+ TEST_DESCRIPTION="Basic systemd setup"
++RUN_IN_UNPRIVILEGED_CONTAINER=yes
+ 
+ . $TEST_BASE_DIR/test-functions
+ 
+diff --git a/test/test-functions b/test/test-functions
+index 8164858c2a..670c2625f7 100644
+--- a/test/test-functions
++++ b/test/test-functions
+@@ -190,7 +190,7 @@ $KERNEL_APPEND \
+ run_nspawn() {
+     [[ -d /run/systemd/system ]] || return 1
+ 
+-    local _nspawn_cmd="$BUILD_DIR/systemd-nspawn $NSPAWN_ARGUMENTS --register=no --kill-signal=SIGKILL --directory=$TESTDIR/nspawn-root $PATH_TO_INIT $KERNEL_APPEND"
++    local _nspawn_cmd="$BUILD_DIR/systemd-nspawn $NSPAWN_ARGUMENTS --register=no --kill-signal=SIGKILL --directory=$TESTDIR/$1 $PATH_TO_INIT $KERNEL_APPEND"
+     if [[ "$NSPAWN_TIMEOUT" != "infinity" ]]; then
+         _nspawn_cmd="timeout --foreground $NSPAWN_TIMEOUT $_nspawn_cmd"
+     fi
+@@ -450,9 +450,9 @@ EOF
+ 
+ check_result_nspawn() {
+     ret=1
+-    [[ -e $TESTDIR/nspawn-root/testok ]] && ret=0
+-    [[ -f $TESTDIR/nspawn-root/failed ]] && cp -a $TESTDIR/nspawn-root/failed $TESTDIR
+-    cp -a $TESTDIR/nspawn-root/var/log/journal $TESTDIR
++    [[ -e $TESTDIR/$1/testok ]] && ret=0
++    [[ -f $TESTDIR/$1/failed ]] && cp -a $TESTDIR/$1/failed $TESTDIR
++    cp -a $TESTDIR/$1/var/log/journal $TESTDIR
+     [[ -f $TESTDIR/failed ]] && cat $TESTDIR/failed
+     ls -l $TESTDIR/journal/*/*.journal
+     test -s $TESTDIR/failed && ret=$(($ret+1))
+@@ -662,6 +662,9 @@ setup_nspawn_root() {
+     cp -ar $initdir $TESTDIR/nspawn-root
+     # we don't mount in the nspawn root
+     rm -f $TESTDIR/nspawn-root/etc/fstab
++    if [[ "$RUN_IN_UNPRIVILEGED_CONTAINER" = "yes" ]]; then
++        cp -ar $TESTDIR/nspawn-root $TESTDIR/unprivileged-nspawn-root
++    fi
+ }
+ 
+ setup_basic_dirs() {
+@@ -1478,11 +1481,19 @@ test_run() {
+         fi
+     fi
+     if [ -z "$TEST_NO_NSPAWN" ]; then
+-        if run_nspawn; then
+-            check_result_nspawn || return 1
++        if run_nspawn "nspawn-root"; then
++            check_result_nspawn "nspawn-root" || return 1
+         else
+             dwarn "can't run systemd-nspawn, skipping"
+         fi
++
++        if [[ "$RUN_IN_UNPRIVILEGED_CONTAINER" = "yes" ]]; then
++            if NSPAWN_ARGUMENTS="-U --private-network $NSPAWN_ARGUMENTS" run_nspawn "unprivileged-nspawn-root"; then
++                check_result_nspawn "unprivileged-nspawn-root" || return 1
++            else
++                dwarn "can't run systemd-nspawn, skipping"
++            fi
++	fi
+     fi
+     return 0
+ }

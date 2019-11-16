@@ -23,7 +23,7 @@ Resolves: #1664977
  2 files changed, 8 insertions(+)
 
 diff --git a/src/journal/journal-file.h b/src/journal/journal-file.h
-index c8114ee2d..cd8a48a36 100644
+index c8114ee2d0..cd8a48a364 100644
 --- a/src/journal/journal-file.h
 +++ b/src/journal/journal-file.h
 @@ -165,6 +165,9 @@ int journal_file_open_reliably(
@@ -37,7 +37,7 @@ index c8114ee2d..cd8a48a36 100644
          /* This considers timestamps until the year 3112 valid. That should be plenty room... */
          return u > 0 && u < (1ULL << 55);
 diff --git a/src/journal/journald-native.c b/src/journal/journald-native.c
-index 5ff22a10a..951d09205 100644
+index 5ff22a10af..951d092053 100644
 --- a/src/journal/journald-native.c
 +++ b/src/journal/journald-native.c
 @@ -140,6 +140,11 @@ static int server_process_entry(

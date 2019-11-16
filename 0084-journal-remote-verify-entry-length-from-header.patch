@@ -43,7 +43,7 @@ Related: #1664977
  1 file changed, 24 insertions(+), 10 deletions(-)
 
 diff --git a/src/journal-remote/journal-remote-main.c b/src/journal-remote/journal-remote-main.c
-index 8fda9d149..e9b3702e8 100644
+index 8fda9d1499..e9b3702e8a 100644
 --- a/src/journal-remote/journal-remote-main.c
 +++ b/src/journal-remote/journal-remote-main.c
 @@ -210,16 +210,14 @@ static int process_http_upload(

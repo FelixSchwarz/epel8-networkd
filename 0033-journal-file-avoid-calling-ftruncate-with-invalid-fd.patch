@@ -14,7 +14,7 @@ Resolves: #1602706
  1 file changed, 3 insertions(+)
 
 diff --git a/src/journal/journal-file.c b/src/journal/journal-file.c
-index 62e7f68a1..efc3ee052 100644
+index 62e7f68a13..efc3ee052b 100644
 --- a/src/journal/journal-file.c
 +++ b/src/journal/journal-file.c
 @@ -1846,6 +1846,9 @@ static int journal_file_append_entry_internal(
