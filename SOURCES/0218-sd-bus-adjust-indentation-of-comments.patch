@@ -1,4 +1,4 @@
-From 5f9dbe5244c10c6d55b7c8bbba87352cb6ee2e6f Mon Sep 17 00:00:00 2001
+From 0bd92f0fbaf7105b6d1dd6a2d96dad7e5522e027 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
 Date: Tue, 27 Aug 2019 19:00:50 +0200
 Subject: [PATCH] sd-bus: adjust indentation of comments

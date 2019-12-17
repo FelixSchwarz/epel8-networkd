@@ -1,4 +1,4 @@
-From 1ac979b233499169d12e76472cf8d0eb3fb728c5 Mon Sep 17 00:00:00 2001
+From 4eedaaad7c0abb937482bc93c29c213acfe6c308 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
 Date: Tue, 27 Aug 2019 19:00:34 +0200
 Subject: [PATCH] shared/but-util: drop trusted annotation from

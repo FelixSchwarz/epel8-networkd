@@ -13,7 +13,7 @@
 Name:           systemd
 Url:            http://www.freedesktop.org/wiki/Software/systemd
 Version:        239
-Release:        18%{?dist}
+Release:        18%{?dist}.1
 # For a breakdown of the licensing, see README
 License:        LGPLv2+ and MIT and GPLv2+
 Summary:        System and Service Manager
@@ -265,11 +265,12 @@ Patch0212: 0212-mount-simplify-proc-self-mountinfo-handler.patch
 Patch0213: 0213-mount-rescan-proc-self-mountinfo-before-processing-w.patch
 Patch0214: 0214-swap-scan-proc-swaps-before-processing-waitid-result.patch
 Patch0215: 0215-analyze-security-fix-potential-division-by-zero.patch
-Patch0216: 0216-shared-but-util-drop-trusted-annotation-from-bus_ope.patch
-Patch0217: 0217-sd-bus-adjust-indentation-of-comments.patch
-Patch0218: 0218-resolved-do-not-run-loop-twice.patch
-Patch0219: 0219-resolved-allow-access-to-Set-Link-and-Revert-methods.patch
-Patch0220: 0220-resolved-query-polkit-only-after-parsing-the-data.patch
+Patch0216: 0216-journal-rely-on-_cleanup_free_-to-free-a-temporary-s.patch
+Patch0217: 0217-shared-but-util-drop-trusted-annotation-from-bus_ope.patch
+Patch0218: 0218-sd-bus-adjust-indentation-of-comments.patch
+Patch0219: 0219-resolved-do-not-run-loop-twice.patch
+Patch0220: 0220-resolved-allow-access-to-Set-Link-and-Revert-methods.patch
+Patch0221: 0221-resolved-query-polkit-only-after-parsing-the-data.patch
 
 
 %ifarch %{ix86} x86_64 aarch64
@@ -889,6 +890,9 @@ fi
 %files tests -f .file-list-tests
 
 %changelog
+* Tue Nov 05 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-18.1
+- journal: rely on _cleanup_free_ to free a temporary string used in client_context_read_cgroup (#1767716)
+
 * Fri Aug 30 2019 Lukas Nykryn <lnykryn@redhat.com> - 239-18
 - shared/but-util: drop trusted annotation from bus_open_system_watch_bind_with_description() (#1746857)
 - sd-bus: adjust indentation of comments (#1746857)

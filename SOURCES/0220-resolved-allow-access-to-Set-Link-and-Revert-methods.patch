@@ -1,4 +1,4 @@
-From 3645ee20b1efb5080b96f1a6ec2fc90837687c2f Mon Sep 17 00:00:00 2001
+From aa39a552bb52287c1a1da56e109c0fb4c0dc9621 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
 Date: Tue, 27 Aug 2019 19:25:05 +0200
 Subject: [PATCH] resolved: allow access to Set*Link and Revert methods through
