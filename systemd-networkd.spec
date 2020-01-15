@@ -13,11 +13,11 @@
 Name:           systemd-networkd
 Url:            http://www.freedesktop.org/wiki/Software/systemd
 Version:        239
-Release:        18%{?dist}
+Release:        18%{?dist}_1.1
 # For a breakdown of the licensing, see README
 License:        LGPLv2+ and MIT and GPLv2+
 Summary:        System and Service Manager
-Requires:       systemd = %{version}-18%{?dist}
+Requires:       systemd = %{version}-%{release}
 
 # download tarballs with "spectool -g systemd.spec"
 %if %{defined gitcommit}
@@ -266,11 +266,12 @@ Patch0212: 0212-mount-simplify-proc-self-mountinfo-handler.patch
 Patch0213: 0213-mount-rescan-proc-self-mountinfo-before-processing-w.patch
 Patch0214: 0214-swap-scan-proc-swaps-before-processing-waitid-result.patch
 Patch0215: 0215-analyze-security-fix-potential-division-by-zero.patch
-Patch0216: 0216-shared-but-util-drop-trusted-annotation-from-bus_ope.patch
-Patch0217: 0217-sd-bus-adjust-indentation-of-comments.patch
-Patch0218: 0218-resolved-do-not-run-loop-twice.patch
-Patch0219: 0219-resolved-allow-access-to-Set-Link-and-Revert-methods.patch
-Patch0220: 0220-resolved-query-polkit-only-after-parsing-the-data.patch
+Patch0216: 0216-journal-rely-on-_cleanup_free_-to-free-a-temporary-s.patch
+Patch0217: 0217-shared-but-util-drop-trusted-annotation-from-bus_ope.patch
+Patch0218: 0218-sd-bus-adjust-indentation-of-comments.patch
+Patch0219: 0219-resolved-do-not-run-loop-twice.patch
+Patch0220: 0220-resolved-allow-access-to-Set-Link-and-Revert-methods.patch
+Patch0221: 0221-resolved-query-polkit-only-after-parsing-the-data.patch
 
 # disable test to enable building with "systemd-nspawn" (+ COPR)
 Patch9990: 9990-disable-test-mount-util.patch
@@ -493,6 +494,9 @@ fi
 
 
 %changelog
+* Wed Jan 15 2020 Felix Schwarz <fschwarz@fedoraproject.org> - 239-18.el8_1.1
+- update package to 239-18.el8_1.1
+
 * Wed Oct 16 2019 Felix Schwarz <fschwarz@fedoraproject.org> - 239-13_0.5.1
 - initial packaging of systemd-networkd based on systemd RPM from CentOS 8
 

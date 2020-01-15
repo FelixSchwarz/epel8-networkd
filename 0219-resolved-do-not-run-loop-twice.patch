@@ -1,4 +1,4 @@
-From b72a0dc69d0c54efe2699560d3053847976f7ff2 Mon Sep 17 00:00:00 2001
+From 1ae0cf8c3ae565a19283d628f833668babf81b82 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
 Date: Tue, 27 Aug 2019 19:02:53 +0200
 Subject: [PATCH] resolved: do not run loop twice
