@@ -9,7 +9,7 @@ Subject: [PATCH] net_setup_link: allow renaming interfaces that were renamed
  1 file changed, 1 deletion(-)
 
 diff --git a/src/udev/net/link-config.c b/src/udev/net/link-config.c
-index cec4f4f77..511358645 100644
+index cec4f4f779..5113586457 100644
 --- a/src/udev/net/link-config.c
 +++ b/src/udev/net/link-config.c
 @@ -306,7 +306,6 @@ static bool should_rename(struct udev_device *device, bool respect_predictable)

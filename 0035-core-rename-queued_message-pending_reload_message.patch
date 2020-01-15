@@ -24,7 +24,7 @@ Resolves: #1647359
  5 files changed, 13 insertions(+), 13 deletions(-)
 
 diff --git a/src/core/dbus-manager.c b/src/core/dbus-manager.c
-index 4ed68af1e..d39c9b28c 100644
+index 4ed68af1e0..d39c9b28c4 100644
 --- a/src/core/dbus-manager.c
 +++ b/src/core/dbus-manager.c
 @@ -1329,8 +1329,8 @@ static int method_reload(sd_bus_message *message, void *userdata, sd_bus_error *
@@ -39,7 +39,7 @@ index 4ed68af1e..d39c9b28c 100644
                  return r;
  
 diff --git a/src/core/dbus.c b/src/core/dbus.c
-index bf5917696..256a41021 100644
+index bf5917696e..256a410215 100644
 --- a/src/core/dbus.c
 +++ b/src/core/dbus.c
 @@ -47,23 +47,23 @@
@@ -82,7 +82,7 @@ index bf5917696..256a41021 100644
          /* Possibly flush unwritten data, but only if we are
           * unprivileged, since we don't want to sync here */
 diff --git a/src/core/dbus.h b/src/core/dbus.h
-index 382a96da7..f1c0fa86c 100644
+index 382a96da7d..f1c0fa86c0 100644
 --- a/src/core/dbus.h
 +++ b/src/core/dbus.h
 @@ -5,7 +5,7 @@
@@ -95,7 +95,7 @@ index 382a96da7..f1c0fa86c 100644
  int bus_init_private(Manager *m);
  int bus_init_api(Manager *m);
 diff --git a/src/core/manager.c b/src/core/manager.c
-index 930df4e23..a24bfcacd 100644
+index 930df4e23a..a24bfcacdf 100644
 --- a/src/core/manager.c
 +++ b/src/core/manager.c
 @@ -2078,7 +2078,7 @@ static unsigned manager_dispatch_dbus_queue(Manager *m) {
@@ -119,7 +119,7 @@ index 930df4e23..a24bfcacd 100644
          }
  
 diff --git a/src/core/manager.h b/src/core/manager.h
-index ea5d42503..c7f4d66ec 100644
+index ea5d425030..c7f4d66ecd 100644
 --- a/src/core/manager.h
 +++ b/src/core/manager.h
 @@ -215,7 +215,7 @@ struct Manager {

@@ -1,0 +1,40 @@
+From 770b16b22dd0eec04fd1493dae644206c32f8e04 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 10 Oct 2018 11:12:54 +0200
+Subject: [PATCH] sd-bus: call cap_last_cap() only once in has_cap()
+
+Also, use the same type everywhere for dealing with it.
+
+(cherry picked from commit 92a40e20bf970c3ded8a50fbeeae882a7b970c9a)
+
+Resolves: #1683319
+---
+ src/libsystemd/sd-bus/bus-creds.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-creds.c b/src/libsystemd/sd-bus/bus-creds.c
+index 6896bcf246..2a47c68ffc 100644
+--- a/src/libsystemd/sd-bus/bus-creds.c
++++ b/src/libsystemd/sd-bus/bus-creds.c
+@@ -652,16 +652,19 @@ _public_ int sd_bus_creds_get_description(sd_bus_creds *c, const char **ret) {
+ }
+ 
+ static int has_cap(sd_bus_creds *c, size_t offset, int capability) {
++        unsigned long lc;
+         size_t sz;
+ 
+         assert(c);
+         assert(capability >= 0);
+         assert(c->capability);
+ 
+-        if ((unsigned) capability > cap_last_cap())
++        lc = cap_last_cap();
++
++        if ((unsigned long) capability > lc)
+                 return 0;
+ 
+-        sz = DIV_ROUND_UP(cap_last_cap(), 32U);
++        sz = DIV_ROUND_UP(lc, 32LU);
+ 
+         return !!(c->capability[offset * sz + CAP_TO_INDEX((uint32_t) capability)] & CAP_TO_MASK_CORRECTED((uint32_t) capability));
+ }

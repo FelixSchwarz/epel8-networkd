@@ -13,7 +13,7 @@ Subject: [PATCH] travis: RHEL8 support
  create mode 100755 ci/travis-centos-rhel8.sh
 
 diff --git a/.travis.yml b/.travis.yml
-index fc6388732..1c4e6f972 100644
+index fc63887324..1c4e6f9728 100644
 --- a/.travis.yml
 +++ b/.travis.yml
 @@ -19,11 +19,13 @@ jobs:
@@ -39,7 +39,7 @@ rename from ci/travis-centos.sh
 rename to ci/travis-centos-rhel7.sh
 diff --git a/ci/travis-centos-rhel8.sh b/ci/travis-centos-rhel8.sh
 new file mode 100755
-index 000000000..968603f94
+index 0000000000..968603f949
 --- /dev/null
 +++ b/ci/travis-centos-rhel8.sh
 @@ -0,0 +1,130 @@

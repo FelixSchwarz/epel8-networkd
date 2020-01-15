@@ -1,0 +1,43 @@
+From 03f2823251d39ea455c2e98ae8bf109f6caf153f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Fri, 3 Aug 2018 16:36:51 +0200
+Subject: [PATCH] bus-message: drop asserts in functions which are wrappers for
+ varargs version
+
+The function does no processing on it's own, and just forwards arguments
+to the other function. Let's just use the asserts there.
+
+(cherry picked from commit 8792bdf8a3311f9e629daa0ec592c97c1cfb2a7c)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index ac823aaf58..153cdf933b 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -2469,11 +2469,6 @@ _public_ int sd_bus_message_append(sd_bus_message *m, const char *types, ...) {
+         va_list ap;
+         int r;
+ 
+-        assert_return(m, -EINVAL);
+-        assert_return(types, -EINVAL);
+-        assert_return(!m->sealed, -EPERM);
+-        assert_return(!m->poisoned, -ESTALE);
+-
+         va_start(ap, types);
+         r = sd_bus_message_appendv(m, types, ap);
+         va_end(ap);
+@@ -4524,10 +4519,6 @@ _public_ int sd_bus_message_read(sd_bus_message *m, const char *types, ...) {
+         va_list ap;
+         int r;
+ 
+-        assert_return(m, -EINVAL);
+-        assert_return(m->sealed, -EPERM);
+-        assert_return(types, -EINVAL);
+-
+         va_start(ap, types);
+         r = message_read_ap(m, types, ap);
+         va_end(ap);

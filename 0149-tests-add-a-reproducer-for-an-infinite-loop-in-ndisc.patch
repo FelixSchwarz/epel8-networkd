@@ -1,0 +1,46 @@
+From 514d782be9af0bd3e37a4e224816d3ba70b51ec0 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Wed, 26 Sep 2018 15:10:21 +0000
+Subject: [PATCH] tests: add a reproducer for an infinite loop in
+ ndisc_handle_datagram
+
+=0  ndisc_router_parse (rt=0x60d000000110) at ../src/libsystemd-network/ndisc-router.c:126
+=1  0x000055555558dc67 in ndisc_handle_datagram (nd=0x608000000020, rt=0x60d000000110) at ../src/libsystemd-network/sd-ndisc.c:170
+=2  0x000055555558e65d in ndisc_recv (s=0x611000000040, fd=4, revents=1, userdata=0x608000000020) at ../src/libsystemd-network/sd-ndisc.c:233
+=3  0x00007ffff63913a8 in source_dispatch (s=0x611000000040) at ../src/libsystemd/sd-event/sd-event.c:3042
+=4  0x00007ffff6395eab in sd_event_dispatch (e=0x617000000080) at ../src/libsystemd/sd-event/sd-event.c:3455
+=5  0x00007ffff6396b12 in sd_event_run (e=0x617000000080, timeout=18446744073709551615) at ../src/libsystemd/sd-event/sd-event.c:3512
+=6  0x0000555555583f5c in LLVMFuzzerTestOneInput (data=0x6060000000e0 "\206", size=53) at ../src/fuzz/fuzz-ndisc-rs.c:422
+=7  0x0000555555586356 in main (argc=2, argv=0x7fffffffe3d8) at ../src/fuzz/fuzz-main.c:33
+
+(cherry picked from commit df30e78e02f653c9e6ee6677b7ccaea21d3dcd7d)
+
+Resolves: #1696224
+---
+ ...imeout-2815b773c712fa33bea62f541dfa3017c64ea2f1 | Bin 0 -> 53 bytes
+ test/fuzz-regressions/meson.build                  |   1 +
+ 2 files changed, 1 insertion(+)
+ create mode 100644 test/fuzz-regressions/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+
+diff --git a/test/fuzz-regressions/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1 b/test/fuzz-regressions/fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+new file mode 100644
+index 0000000000000000000000000000000000000000..410cf38c1ec2156680e80160825b883fb4f12aa9
+GIT binary patch
+literal 53
+ucmZo;U|{$U0h55t23AHOm-#;v2(&S9GpRCgaeXR_WB`f-fhq$7NEHAcu@3A2
+
+literal 0
+HcmV?d00001
+
+diff --git a/test/fuzz-regressions/meson.build b/test/fuzz-regressions/meson.build
+index 74fd88cfcd..7aa2cbce11 100644
+--- a/test/fuzz-regressions/meson.build
++++ b/test/fuzz-regressions/meson.build
+@@ -22,6 +22,7 @@ fuzz_regression_tests = '''
+         fuzz-journald-syslog/github-9820
+         fuzz-journald-syslog/github-9827
+         fuzz-journald-syslog/github-9829
++        fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+         fuzz-unit-file/oss-fuzz-6884
+         fuzz-unit-file/oss-fuzz-6885
+         fuzz-unit-file/oss-fuzz-6886

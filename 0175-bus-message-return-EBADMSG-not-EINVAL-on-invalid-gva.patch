@@ -1,0 +1,41 @@
+From b63440ad69581bad39a2eda7ab449f8a3f901c4e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 11 Aug 2018 11:43:09 +0200
+Subject: [PATCH] bus-message: return -EBADMSG not -EINVAL on invalid !gvariant
+ messages
+
+(cherry picked from commit d831fb6f2bde829f9309aea242f502587662d1cc)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c               |   2 +-
+ ...crash-4162a61a79e4c5a832ca5232212f75fa560a1f75 | Bin 0 -> 534 bytes
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-4162a61a79e4c5a832ca5232212f75fa560a1f75
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index e71d29f91d..613722a1a0 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -5047,7 +5047,7 @@ static int message_skip_fields(
+ 
+                         *signature += l;
+                 } else
+-                        return -EINVAL;
++                        return -EBADMSG;
+         }
+ }
+ 
+diff --git a/test/fuzz/fuzz-bus-message/crash-4162a61a79e4c5a832ca5232212f75fa560a1f75 b/test/fuzz/fuzz-bus-message/crash-4162a61a79e4c5a832ca5232212f75fa560a1f75
+new file mode 100644
+index 0000000000000000000000000000000000000000..5faf3308e7ac9c14d66422169e74ba8c05ad7319
+GIT binary patch
+literal 534
+zcmd5(y$ZrW3{L#Rf|Cy*1sA)t;uE+zxcCZJw53qIqj#v2xH$UGez{(yI63-3NWO$5
+zU+!uqzB5rdCwdYQvnEi=V1glA8o?i`lMy}upTQSe=c-Assy=GTr+lHv=4$0!Vy$EX
+z_LzYX&1*Ob(W(=vPGKsxuBpzYaDn6&un5*x;uk`Xz?Yk^O%qgGJ(zd<Eb+@AlE$ca
+sLgf|{Zt3X?n*AhyXRr3JnuD(2&Q!)fgDPC^-?wYdB<S$iZQH+p1AQA$o&W#<
+
+literal 0
+HcmV?d00001
+

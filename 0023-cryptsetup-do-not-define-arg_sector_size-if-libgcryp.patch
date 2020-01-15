@@ -14,7 +14,7 @@ Related: #1572563
  1 file changed, 2 insertions(+)
 
 diff --git a/src/cryptsetup/cryptsetup.c b/src/cryptsetup/cryptsetup.c
-index 87008cb96..abeba44ee 100644
+index 87008cb969..abeba44ee8 100644
 --- a/src/cryptsetup/cryptsetup.c
 +++ b/src/cryptsetup/cryptsetup.c
 @@ -30,7 +30,9 @@

@@ -28,7 +28,7 @@ Resolves: CVE-2018-15686
  4 files changed, 50 insertions(+), 52 deletions(-)
 
 diff --git a/src/core/job.c b/src/core/job.c
-index 734756b66..8552ffb70 100644
+index 734756b666..8552ffb704 100644
 --- a/src/core/job.c
 +++ b/src/core/job.c
 @@ -10,6 +10,7 @@
@@ -75,7 +75,7 @@ index 734756b66..8552ffb70 100644
  
                  k = strcspn(l, "=");
 diff --git a/src/core/manager.c b/src/core/manager.c
-index 3b2fe11e8..c83e296cf 100644
+index 3b2fe11e87..c83e296cf3 100644
 --- a/src/core/manager.c
 +++ b/src/core/manager.c
 @@ -3144,22 +3144,17 @@ int manager_deserialize(Manager *m, FILE *f, FDSet *fds) {
@@ -152,7 +152,7 @@ index 3b2fe11e8..c83e296cf 100644
                  }
  
 diff --git a/src/core/unit.c b/src/core/unit.c
-index 721d8d60a..cc43ddc4f 100644
+index 721d8d60a3..cc43ddc4f1 100644
 --- a/src/core/unit.c
 +++ b/src/core/unit.c
 @@ -3368,21 +3368,19 @@ int unit_deserialize(Unit *u, FILE *f, FDSet *fds) {
@@ -220,7 +220,7 @@ index 721d8d60a..cc43ddc4f 100644
  }
  
 diff --git a/src/core/unit.h b/src/core/unit.h
-index b3131eba1..e1a60da24 100644
+index b3131eba1b..e1a60da244 100644
 --- a/src/core/unit.h
 +++ b/src/core/unit.h
 @@ -679,7 +679,7 @@ bool unit_can_serialize(Unit *u) _pure_;

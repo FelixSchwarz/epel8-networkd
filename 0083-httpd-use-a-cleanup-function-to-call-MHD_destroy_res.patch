@@ -17,7 +17,7 @@ Related: #1664977
  3 files changed, 19 insertions(+), 47 deletions(-)
 
 diff --git a/src/journal-remote/journal-gatewayd.c b/src/journal-remote/journal-gatewayd.c
-index 9e77e314f..3a167ab89 100644
+index 9e77e314ff..3a167ab890 100644
 --- a/src/journal-remote/journal-gatewayd.c
 +++ b/src/journal-remote/journal-gatewayd.c
 @@ -451,7 +451,7 @@ static int request_handler_entries(
@@ -158,7 +158,7 @@ index 9e77e314f..3a167ab89 100644
  
  static int request_handler(
 diff --git a/src/journal-remote/microhttpd-util.c b/src/journal-remote/microhttpd-util.c
-index 34dd9ea55..2ae5172fe 100644
+index 34dd9ea555..2ae5172fe9 100644
 --- a/src/journal-remote/microhttpd-util.c
 +++ b/src/journal-remote/microhttpd-util.c
 @@ -32,21 +32,16 @@ static int mhd_respond_internal(struct MHD_Connection *connection,
@@ -187,7 +187,7 @@ index 34dd9ea55..2ae5172fe 100644
  
  int mhd_respond(struct MHD_Connection *connection,
 diff --git a/src/journal-remote/microhttpd-util.h b/src/journal-remote/microhttpd-util.h
-index a50a2a75c..26909082a 100644
+index a50a2a75c7..26909082a1 100644
 --- a/src/journal-remote/microhttpd-util.h
 +++ b/src/journal-remote/microhttpd-util.h
 @@ -73,3 +73,5 @@ int check_permissions(struct MHD_Connection *connection, int *code, char **hostn

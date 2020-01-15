@@ -1,0 +1,24 @@
+From 164ead52f895785e0461ef205c5be317b400b0ff Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Thu, 5 Jul 2018 16:30:52 +0000
+Subject: [PATCH] tests: allow passing additional arguments to nspawn via
+ NSPAWN_ARGUMENTS
+
+(cherry picked from commit 57916ea352b85153ecbed803d52861ca8b933dd3)
+---
+ test/test-functions | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/test/test-functions b/test/test-functions
+index 76eef8aa4d..8164858c2a 100644
+--- a/test/test-functions
++++ b/test/test-functions
+@@ -190,7 +190,7 @@ $KERNEL_APPEND \
+ run_nspawn() {
+     [[ -d /run/systemd/system ]] || return 1
+ 
+-    local _nspawn_cmd="$BUILD_DIR/systemd-nspawn --register=no --kill-signal=SIGKILL --directory=$TESTDIR/nspawn-root $PATH_TO_INIT $KERNEL_APPEND"
++    local _nspawn_cmd="$BUILD_DIR/systemd-nspawn $NSPAWN_ARGUMENTS --register=no --kill-signal=SIGKILL --directory=$TESTDIR/nspawn-root $PATH_TO_INIT $KERNEL_APPEND"
+     if [[ "$NSPAWN_TIMEOUT" != "infinity" ]]; then
+         _nspawn_cmd="timeout --foreground $NSPAWN_TIMEOUT $_nspawn_cmd"
+     fi

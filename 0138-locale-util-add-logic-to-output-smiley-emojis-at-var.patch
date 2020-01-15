@@ -1,0 +1,207 @@
+From bc00d9db41a87b7a4b92c46f277e62ad58768420 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Tue, 6 Nov 2018 17:59:58 +0100
+Subject: [PATCH] locale-util: add logic to output smiley emojis at various
+ happiness levels
+
+(cherry picked from commit 5f1b0cc6d064f7847982e7b680cab3d080aef52e)
+
+Conflicts:
+	doc/ENVIRONMENT.md
+	src/basic/locale-util.c
+	src/basic/locale-util.h
+	src/test/test-locale-util.c
+
+Related: #1689832
+---
+ doc/ENVIRONMENT.md          |  5 +++
+ src/basic/locale-util.c     | 81 ++++++++++++++++++++++++++++---------
+ src/basic/locale-util.h     | 12 ++++++
+ src/test/test-locale-util.c | 12 +++++-
+ 4 files changed, 90 insertions(+), 20 deletions(-)
+
+diff --git a/doc/ENVIRONMENT.md b/doc/ENVIRONMENT.md
+index 85d26fe28c..1e648be640 100644
+--- a/doc/ENVIRONMENT.md
++++ b/doc/ENVIRONMENT.md
+@@ -37,6 +37,11 @@ All tools:
+   useful for debugging, in order to test generators and other code against
+   specific kernel command lines.
+ 
++* `$SYSTEMD_EMOJI=0` — if set, tools such as "systemd-analyze security" will
++  not output graphical smiley emojis, but ASCII alternatives instead. Note that
++  this only controls use of Unicode emoji glyphs, and has no effect on other
++  Unicode glyphs.
++
+ systemctl:
+ 
+ * `$SYSTEMCTL_FORCE_BUS=1` — if set, do not connect to PID1's private D-Bus
+diff --git a/src/basic/locale-util.c b/src/basic/locale-util.c
+index 3ad352f22f..7cd143ea6f 100644
+--- a/src/basic/locale-util.c
++++ b/src/basic/locale-util.c
+@@ -16,6 +16,7 @@
+ 
+ #include "def.h"
+ #include "dirent-util.h"
++#include "env-util.h"
+ #include "fd-util.h"
+ #include "hashmap.h"
+ #include "locale-util.h"
+@@ -347,6 +348,24 @@ bool keymap_is_valid(const char *name) {
+         return true;
+ }
+ 
++static bool emoji_enabled(void) {
++        static int cached_emoji_enabled = -1;
++
++        if (cached_emoji_enabled < 0) {
++                int val;
++
++                val = getenv_bool("SYSTEMD_EMOJI");
++                if (val < 0)
++                        cached_emoji_enabled =
++                                is_locale_utf8() &&
++                                !STRPTR_IN_SET(getenv("TERM"), "dumb", "linux");
++                else
++                        cached_emoji_enabled = val;
++        }
++
++        return cached_emoji_enabled;
++}
++
+ const char *special_glyph(SpecialGlyph code) {
+ 
+         /* A list of a number of interesting unicode glyphs we can use to decorate our output. It's probably wise to be
+@@ -359,32 +378,56 @@ const char *special_glyph(SpecialGlyph code) {
+         static const char* const draw_table[2][_SPECIAL_GLYPH_MAX] = {
+                 /* ASCII fallback */
+                 [false] = {
+-                        [TREE_VERTICAL]      = "| ",
+-                        [TREE_BRANCH]        = "|-",
+-                        [TREE_RIGHT]         = "`-",
+-                        [TREE_SPACE]         = "  ",
+-                        [TRIANGULAR_BULLET]  = ">",
+-                        [BLACK_CIRCLE]       = "*",
+-                        [ARROW]              = "->",
+-                        [MDASH]              = "-",
+-                        [ELLIPSIS]           = "..."
++                        [TREE_VERTICAL]           = "| ",
++                        [TREE_BRANCH]             = "|-",
++                        [TREE_RIGHT]              = "`-",
++                        [TREE_SPACE]              = "  ",
++                        [TRIANGULAR_BULLET]       = ">",
++                        [BLACK_CIRCLE]            = "*",
++                        [BULLET]                  = "*",
++                        [ARROW]                   = "->",
++                        [MDASH]                   = "-",
++                        [ELLIPSIS]                = "...",
++                        [MU]                      = "u",
++                        [CHECK_MARK]              = "+",
++                        [CROSS_MARK]              = "-",
++                        [ECSTATIC_SMILEY]         = ":-]",
++                        [HAPPY_SMILEY]            = ":-}",
++                        [SLIGHTLY_HAPPY_SMILEY]   = ":-)",
++                        [NEUTRAL_SMILEY]          = ":-|",
++                        [SLIGHTLY_UNHAPPY_SMILEY] = ":-(",
++                        [UNHAPPY_SMILEY]          = ":-{️",
++                        [DEPRESSED_SMILEY]        = ":-[",
+                 },
+ 
+                 /* UTF-8 */
+                 [true] = {
+-                        [TREE_VERTICAL]      = "\342\224\202 ",            /* │  */
+-                        [TREE_BRANCH]        = "\342\224\234\342\224\200", /* ├─ */
+-                        [TREE_RIGHT]         = "\342\224\224\342\224\200", /* └─ */
+-                        [TREE_SPACE]         = "  ",                       /*    */
+-                        [TRIANGULAR_BULLET]  = "\342\200\243",             /* ‣ */
+-                        [BLACK_CIRCLE]       = "\342\227\217",             /* ● */
+-                        [ARROW]              = "\342\206\222",             /* → */
+-                        [MDASH]              = "\342\200\223",             /* – */
+-                        [ELLIPSIS]           = "\342\200\246",             /* … */
++                        [TREE_VERTICAL]           = "\342\224\202 ",            /* │  */
++                        [TREE_BRANCH]             = "\342\224\234\342\224\200", /* ├─ */
++                        [TREE_RIGHT]              = "\342\224\224\342\224\200", /* └─ */
++                        [TREE_SPACE]              = "  ",                       /*    */
++                        [TRIANGULAR_BULLET]       = "\342\200\243",             /* ‣ */
++                        [BLACK_CIRCLE]            = "\342\227\217",             /* ● */
++                        [BULLET]                  = "\342\200\242",             /* • */
++                        [ARROW]                   = "\342\206\222",             /* → */
++                        [MDASH]                   = "\342\200\223",             /* – */
++                        [ELLIPSIS]                = "\342\200\246",             /* … */
++                        [MU]                      = "\316\274",                 /* μ */
++                        [CHECK_MARK]              = "\342\234\223",             /* ✓ */
++                        [CROSS_MARK]              = "\342\234\227",             /* ✗ */
++                        [ECSTATIC_SMILEY]         = "\360\237\230\207",         /* 😇 */
++                        [HAPPY_SMILEY]            = "\360\237\230\200",         /* 😀 */
++                        [SLIGHTLY_HAPPY_SMILEY]   = "\360\237\231\202",         /* 🙂 */
++                        [NEUTRAL_SMILEY]          = "\360\237\230\220",         /* 😐 */
++                        [SLIGHTLY_UNHAPPY_SMILEY] = "\360\237\231\201",         /* 🙁 */
++                        [UNHAPPY_SMILEY]          = "\360\237\230\250",         /* 😨️️ */
++                        [DEPRESSED_SMILEY]        = "\360\237\244\242",         /* 🤢 */
+                 },
+         };
+ 
+-        return draw_table[is_locale_utf8()][code];
++        assert(code < _SPECIAL_GLYPH_MAX);
++
++        return draw_table[code >= _SPECIAL_GLYPH_FIRST_SMILEY ? emoji_enabled() : is_locale_utf8()][code];
+ }
+ 
+ static const char * const locale_variable_table[_VARIABLE_LC_MAX] = {
+diff --git a/src/basic/locale-util.h b/src/basic/locale-util.h
+index 775fe8bc72..368675f286 100644
+--- a/src/basic/locale-util.h
++++ b/src/basic/locale-util.h
+@@ -45,9 +45,21 @@ typedef enum {
+         TREE_SPACE,
+         TRIANGULAR_BULLET,
+         BLACK_CIRCLE,
++        BULLET,
+         ARROW,
+         MDASH,
+         ELLIPSIS,
++        MU,
++        CHECK_MARK,
++        CROSS_MARK,
++        _SPECIAL_GLYPH_FIRST_SMILEY,
++        ECSTATIC_SMILEY = _SPECIAL_GLYPH_FIRST_SMILEY,
++        HAPPY_SMILEY,
++        SLIGHTLY_HAPPY_SMILEY,
++        NEUTRAL_SMILEY,
++        SLIGHTLY_UNHAPPY_SMILEY,
++        UNHAPPY_SMILEY,
++        DEPRESSED_SMILEY,
+         _SPECIAL_GLYPH_MAX
+ } SpecialGlyph;
+ 
+diff --git a/src/test/test-locale-util.c b/src/test/test-locale-util.c
+index 8ffae8ca03..0c3f6a62ed 100644
+--- a/src/test/test-locale-util.c
++++ b/src/test/test-locale-util.c
+@@ -65,7 +65,7 @@ static void test_keymaps(void) {
+ 
+ #define dump_glyph(x) log_info(STRINGIFY(x) ": %s", special_glyph(x))
+ static void dump_special_glyphs(void) {
+-        assert_cc(ELLIPSIS + 1 == _SPECIAL_GLYPH_MAX);
++        assert_cc(DEPRESSED_SMILEY + 1 == _SPECIAL_GLYPH_MAX);
+ 
+         log_info("/* %s */", __func__);
+ 
+@@ -80,6 +80,16 @@ static void dump_special_glyphs(void) {
+         dump_glyph(ARROW);
+         dump_glyph(MDASH);
+         dump_glyph(ELLIPSIS);
++        dump_glyph(MU);
++        dump_glyph(CHECK_MARK);
++        dump_glyph(CROSS_MARK);
++        dump_glyph(ECSTATIC_SMILEY);
++        dump_glyph(HAPPY_SMILEY);
++        dump_glyph(SLIGHTLY_HAPPY_SMILEY);
++        dump_glyph(NEUTRAL_SMILEY);
++        dump_glyph(SLIGHTLY_UNHAPPY_SMILEY);
++        dump_glyph(UNHAPPY_SMILEY);
++        dump_glyph(DEPRESSED_SMILEY);
+ }
+ 
+ int main(int argc, char *argv[]) {

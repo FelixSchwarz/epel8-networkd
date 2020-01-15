@@ -14,7 +14,7 @@ Related: #1635435
  1 file changed, 1 insertion(+)
 
 diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
-index d55cb1484..780c8c618 100644
+index d55cb14843..780c8c6185 100644
 --- a/src/libsystemd/sd-bus/bus-message.c
 +++ b/src/libsystemd/sd-bus/bus-message.c
 @@ -2004,6 +2004,7 @@ _public_ int sd_bus_message_open_container(

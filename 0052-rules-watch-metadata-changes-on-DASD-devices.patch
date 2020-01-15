@@ -14,7 +14,7 @@ Resolves: #1638676
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/rules/60-block.rules b/rules/60-block.rules
-index 343fc06f8..a1458e918 100644
+index 343fc06f85..a1458e9188 100644
 --- a/rules/60-block.rules
 +++ b/rules/60-block.rules
 @@ -8,4 +8,4 @@ ACTION=="add", SUBSYSTEM=="module", KERNEL=="block", ATTR{parameters/events_dfl_

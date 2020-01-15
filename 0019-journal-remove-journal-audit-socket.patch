@@ -12,7 +12,7 @@ Resolves: #1614554
  delete mode 100644 units/systemd-journald-audit.socket
 
 diff --git a/units/meson.build b/units/meson.build
-index e4ac6ced6..e54a84ccb 100644
+index e4ac6ced64..e54a84ccbf 100644
 --- a/units/meson.build
 +++ b/units/meson.build
 @@ -89,8 +89,6 @@ units = [
@@ -26,7 +26,7 @@ index e4ac6ced6..e54a84ccb 100644
          ['systemd-journald.socket',             '',
 diff --git a/units/systemd-journald-audit.socket b/units/systemd-journald-audit.socket
 deleted file mode 100644
-index cb8b77496..000000000
+index cb8b774963..0000000000
 --- a/units/systemd-journald-audit.socket
 +++ /dev/null
 @@ -1,22 +0,0 @@
@@ -53,7 +53,7 @@ index cb8b77496..000000000
 -ListenNetlink=audit 1
 -PassCredentials=yes
 diff --git a/units/systemd-journald.service.in b/units/systemd-journald.service.in
-index 52939e682..8f5021d0d 100644
+index 52939e6820..8f5021d0de 100644
 --- a/units/systemd-journald.service.in
 +++ b/units/systemd-journald.service.in
 @@ -12,12 +12,12 @@ Description=Journal Service

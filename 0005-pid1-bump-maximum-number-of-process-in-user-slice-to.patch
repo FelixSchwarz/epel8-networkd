@@ -11,7 +11,7 @@ Related: #1523236
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/basic/cgroup-util.h b/src/basic/cgroup-util.h
-index f10c26ad5..26e3ae040 100644
+index f10c26ad51..26e3ae0404 100644
 --- a/src/basic/cgroup-util.h
 +++ b/src/basic/cgroup-util.h
 @@ -101,7 +101,7 @@ static inline bool CGROUP_BLKIO_WEIGHT_IS_OK(uint64_t x) {
@@ -24,7 +24,7 @@ index f10c26ad5..26e3ae040 100644
  typedef enum CGroupUnified {
          CGROUP_UNIFIED_UNKNOWN = -1,
 diff --git a/units/user-.slice.d/10-defaults.conf b/units/user-.slice.d/10-defaults.conf
-index 95ab11b30..efc9d37c8 100644
+index 95ab11b30b..efc9d37c8e 100644
 --- a/units/user-.slice.d/10-defaults.conf
 +++ b/units/user-.slice.d/10-defaults.conf
 @@ -12,4 +12,4 @@ Description=User Slice of UID %j

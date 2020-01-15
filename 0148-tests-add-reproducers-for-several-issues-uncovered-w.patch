@@ -1,0 +1,70 @@
+From 8918fcc041a7f58e55d6d2b40e8dc3c396819b67 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Sun, 2 Sep 2018 18:13:31 +0000
+Subject: [PATCH] tests: add reproducers for several issues uncovered with
+ fuzz-journald-syslog
+
+This is a follow-up to a70f343cacf03ac51cdefb0d2e.
+
+(cherry picked from commit 3311c74d0560e4aa6a223f5e288a5fbf2404d3fa)
+
+Resolves: #1696224
+---
+ test/fuzz-regressions/fuzz-journald-syslog/github-9795 | 1 +
+ test/fuzz-regressions/fuzz-journald-syslog/github-9820 | 1 +
+ test/fuzz-regressions/fuzz-journald-syslog/github-9827 | 1 +
+ test/fuzz-regressions/fuzz-journald-syslog/github-9829 | 1 +
+ test/fuzz-regressions/meson.build                      | 4 ++++
+ 5 files changed, 8 insertions(+)
+ create mode 100644 test/fuzz-regressions/fuzz-journald-syslog/github-9795
+ create mode 100644 test/fuzz-regressions/fuzz-journald-syslog/github-9820
+ create mode 100644 test/fuzz-regressions/fuzz-journald-syslog/github-9827
+ create mode 100644 test/fuzz-regressions/fuzz-journald-syslog/github-9829
+
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9795 b/test/fuzz-regressions/fuzz-journald-syslog/github-9795
+new file mode 100644
+index 0000000000..0519ecba6e
+--- /dev/null
++++ b/test/fuzz-regressions/fuzz-journald-syslog/github-9795
+@@ -0,0 +1 @@
++ 
+\ No newline at end of file
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9820 b/test/fuzz-regressions/fuzz-journald-syslog/github-9820
+new file mode 100644
+index 0000000000..55e1bb5967
+--- /dev/null
++++ b/test/fuzz-regressions/fuzz-journald-syslog/github-9820
+@@ -0,0 +1 @@
++<13>Aug  4 04:08:03 something-is-about-to-go-wrong:
+\ No newline at end of file
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9827 b/test/fuzz-regressions/fuzz-journald-syslog/github-9827
+new file mode 100644
+index 0000000000..6787e487a4
+--- /dev/null
++++ b/test/fuzz-regressions/fuzz-journald-syslog/github-9827
+@@ -0,0 +1 @@
++<>
+\ No newline at end of file
+diff --git a/test/fuzz-regressions/fuzz-journald-syslog/github-9829 b/test/fuzz-regressions/fuzz-journald-syslog/github-9829
+new file mode 100644
+index 0000000000..22ded55aa2
+--- /dev/null
++++ b/test/fuzz-regressions/fuzz-journald-syslog/github-9829
+@@ -0,0 +1 @@
++:
+\ No newline at end of file
+diff --git a/test/fuzz-regressions/meson.build b/test/fuzz-regressions/meson.build
+index 3a2c306492..74fd88cfcd 100644
+--- a/test/fuzz-regressions/meson.build
++++ b/test/fuzz-regressions/meson.build
+@@ -18,6 +18,10 @@ fuzz_regression_tests = '''
+         fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45
+         fuzz-journal-remote/oss-fuzz-8659
+         fuzz-journal-remote/oss-fuzz-8686
++        fuzz-journald-syslog/github-9795
++        fuzz-journald-syslog/github-9820
++        fuzz-journald-syslog/github-9827
++        fuzz-journald-syslog/github-9829
+         fuzz-unit-file/oss-fuzz-6884
+         fuzz-unit-file/oss-fuzz-6885
+         fuzz-unit-file/oss-fuzz-6886

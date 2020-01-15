@@ -11,7 +11,7 @@ Resolves: #1523233
  3 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/man/logind.conf.xml b/man/logind.conf.xml
-index 9e88764c6..7d7e869a2 100644
+index 9e88764c6f..7d7e869a26 100644
 --- a/man/logind.conf.xml
 +++ b/man/logind.conf.xml
 @@ -319,7 +319,7 @@
@@ -24,7 +24,7 @@ index 9e88764c6..7d7e869a2 100644
  
      </variablelist>
 diff --git a/src/login/logind-core.c b/src/login/logind-core.c
-index dbae4bf5a..511e3acf8 100644
+index dbae4bf5af..511e3acf8f 100644
 --- a/src/login/logind-core.c
 +++ b/src/login/logind-core.c
 @@ -25,7 +25,7 @@ void manager_reset_config(Manager *m) {
@@ -37,7 +37,7 @@ index dbae4bf5a..511e3acf8 100644
          m->handle_power_key = HANDLE_POWEROFF;
          m->handle_suspend_key = HANDLE_SUSPEND;
 diff --git a/src/login/logind.conf.in b/src/login/logind.conf.in
-index 1029e29bc..c7346f981 100644
+index 1029e29bc7..c7346f9819 100644
 --- a/src/login/logind.conf.in
 +++ b/src/login/logind.conf.in
 @@ -32,6 +32,6 @@

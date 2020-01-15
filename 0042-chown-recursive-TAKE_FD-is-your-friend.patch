@@ -11,7 +11,7 @@ Related: #1643368
  1 file changed, 1 insertion(+), 5 deletions(-)
 
 diff --git a/src/core/chown-recursive.c b/src/core/chown-recursive.c
-index 447b77126..7767301f7 100644
+index 447b771267..7767301f7d 100644
 --- a/src/core/chown-recursive.c
 +++ b/src/core/chown-recursive.c
 @@ -111,7 +111,6 @@ static int chown_recursive_internal(int fd, const struct stat *st, uid_t uid, gi

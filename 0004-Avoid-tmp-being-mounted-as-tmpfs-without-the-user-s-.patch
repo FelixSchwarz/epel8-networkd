@@ -15,7 +15,7 @@ Resolves: #1578772
  2 files changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/src/core/unit.c b/src/core/unit.c
-index 113205bf2..c9f756c9c 100644
+index 113205bf25..c9f756c9c7 100644
 --- a/src/core/unit.c
 +++ b/src/core/unit.c
 @@ -982,13 +982,13 @@ int unit_add_exec_dependencies(Unit *u, ExecContext *c) {
@@ -39,7 +39,7 @@ index 113205bf2..c9f756c9c 100644
                  r = unit_add_dependency_by_name(u, UNIT_AFTER, SPECIAL_TMPFILES_SETUP_SERVICE, NULL, true, UNIT_DEPENDENCY_FILE);
                  if (r < 0)
 diff --git a/units/basic.target b/units/basic.target
-index 4f4429224..8fc7c73ef 100644
+index 4f44292249..8fc7c73ef2 100644
 --- a/units/basic.target
 +++ b/units/basic.target
 @@ -19,4 +19,5 @@ After=sysinit.target sockets.target paths.target slices.target tmp.mount

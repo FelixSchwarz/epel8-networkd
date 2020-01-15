@@ -9,7 +9,7 @@ Related: #1523227
  1 file changed, 4 insertions(+)
 
 diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
-index 2b494e57c..8231caae9 100644
+index 2b494e57cf..8231caae98 100644
 --- a/rules/40-redhat.rules
 +++ b/rules/40-redhat.rules
 @@ -1,3 +1,7 @@

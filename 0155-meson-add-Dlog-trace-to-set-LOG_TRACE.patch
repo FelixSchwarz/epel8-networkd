@@ -1,0 +1,50 @@
+From c405c3035b595970e65ac9586909618525372c45 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Tue, 7 Aug 2018 17:34:47 +0200
+Subject: [PATCH] meson: add -Dlog-trace to set LOG_TRACE
+
+The justification is the same as for -Dvalgrind: setting config in
+meson in this way is easier, because when the value is changed stuff
+that should be rebuilt is rebuilt.
+
+(cherry picked from commit fd5dec9adf76591d713f163d43d04e3beb76893e)
+
+Resolves: #1696224
+---
+ meson.build       | 2 ++
+ meson_options.txt | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/meson.build b/meson.build
+index 709597e5c4..c1013d525b 100644
+--- a/meson.build
++++ b/meson.build
+@@ -782,6 +782,7 @@ conf.set10('ENABLE_DEBUG_HASHMAP', enable_debug_hashmap)
+ conf.set10('ENABLE_DEBUG_MMAP_CACHE', enable_debug_mmap_cache)
+ 
+ conf.set10('VALGRIND', get_option('valgrind'))
++conf.set10('LOG_TRACE', get_option('log-trace'))
+ 
+ #####################################################################
+ 
+@@ -2993,6 +2994,7 @@ foreach tuple : [
+         ['debug hashmap'],
+         ['debug mmap cache'],
+         ['valgrind',         conf.get('VALGRIND') == 1],
++        ['trace logging',    conf.get('LOG_TRACE') == 1],
+ ]
+ 
+         if tuple.length() >= 2
+diff --git a/meson_options.txt b/meson_options.txt
+index 5716f45ccf..f06a130582 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -52,6 +52,8 @@ option('memory-accounting-default', type : 'boolean',
+        description : 'enable MemoryAccounting= by default')
+ option('valgrind', type : 'boolean', value : false,
+        description : 'do extra operations to avoid valgrind warnings')
++option('log-trace', type : 'boolean', value : false,
++       description : 'enable low level debug logging')
+ 
+ option('utmp', type : 'boolean',
+        description : 'support for utmp/wtmp log handling')

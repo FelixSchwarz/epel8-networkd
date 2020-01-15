@@ -14,7 +14,7 @@ Related: CVE-2018-15686
  2 files changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/src/core/service.c b/src/core/service.c
-index db1356c41..db1722188 100644
+index db1356c417..db17221888 100644
 --- a/src/core/service.c
 +++ b/src/core/service.c
 @@ -3549,8 +3549,12 @@ static void service_notify_message(
@@ -33,7 +33,7 @@ index db1356c41..db1722188 100644
                                  t = strdup(e);
                                  if (!t)
 diff --git a/src/core/service.h b/src/core/service.h
-index 9c06e9188..a142b09f0 100644
+index 9c06e91883..a142b09f0d 100644
 --- a/src/core/service.h
 +++ b/src/core/service.h
 @@ -202,3 +202,5 @@ const char* service_result_to_string(ServiceResult i) _const_;

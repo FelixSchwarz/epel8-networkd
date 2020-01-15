@@ -1,0 +1,27 @@
+From 465534a9417b7d7cf74f686da674b3f74d77ac58 Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Wed, 8 Aug 2018 16:22:55 +0900
+Subject: [PATCH] util: introduce memcmp_safe()
+
+(cherry picked from commit f30faf854b9bf01da294547a1bc3660506d750db)
+
+Resolves: #1683319
+---
+ src/basic/util.h | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/src/basic/util.h b/src/basic/util.h
+index 4659a21b06..c70467f98c 100644
+--- a/src/basic/util.h
++++ b/src/basic/util.h
+@@ -113,9 +113,7 @@ static inline void qsort_r_safe(void *base, size_t nmemb, size_t size, int (*com
+         qsort_r(base, nmemb, size, compar, userdata);
+ }
+ 
+-/**
+- * Normal memcpy requires src to be nonnull. We do nothing if n is 0.
+- */
++/* Normal memcpy requires src to be nonnull. We do nothing if n is 0. */
+ static inline void memcpy_safe(void *dst, const void *src, size_t n) {
+         if (n == 0)
+                 return;

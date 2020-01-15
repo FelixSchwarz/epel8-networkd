@@ -1,0 +1,66 @@
+From a652268ae11633cf64c87586bed1fd3c7141707a Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Wed, 22 Aug 2018 12:33:27 +0900
+Subject: [PATCH] util: do not use stack frame for parsing arbitrary inputs
+
+This replaces strndupa() by strndup() in socket_address_parse(),
+as input string may be too long.
+
+Fixes issue 10007 by ClusterFuzz-External:
+https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=10007
+
+(cherry picked from commit 8d30fcb9b51b1d102a589171b6e28f5f370236f6)
+
+Resolves: #1696224
+---
+ src/basic/socket-util.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/src/basic/socket-util.c b/src/basic/socket-util.c
+index a913102e13..3f90a81d35 100644
+--- a/src/basic/socket-util.c
++++ b/src/basic/socket-util.c
+@@ -50,7 +50,8 @@ static const char* const socket_address_type_table[] = {
+ DEFINE_STRING_TABLE_LOOKUP(socket_address_type, int);
+ 
+ int socket_address_parse(SocketAddress *a, const char *s) {
+-        char *e, *n;
++        _cleanup_free_ char *n = NULL;
++        char *e;
+         int r;
+ 
+         assert(a);
+@@ -68,7 +69,9 @@ int socket_address_parse(SocketAddress *a, const char *s) {
+                 if (!e)
+                         return -EINVAL;
+ 
+-                n = strndupa(s+1, e-s-1);
++                n = strndup(s+1, e-s-1);
++                if (!n)
++                        return -ENOMEM;
+ 
+                 errno = 0;
+                 if (inet_pton(AF_INET6, n, &a->sockaddr.in6.sin6_addr) <= 0)
+@@ -125,7 +128,10 @@ int socket_address_parse(SocketAddress *a, const char *s) {
+                 if (r < 0)
+                         return r;
+ 
+-                n = strndupa(cid_start, e - cid_start);
++                n = strndup(cid_start, e - cid_start);
++                if (!n)
++                        return -ENOMEM;
++
+                 if (!isempty(n)) {
+                         r = safe_atou(n, &a->sockaddr.vm.svm_cid);
+                         if (r < 0)
+@@ -146,7 +152,9 @@ int socket_address_parse(SocketAddress *a, const char *s) {
+                         if (r < 0)
+                                 return r;
+ 
+-                        n = strndupa(s, e-s);
++                        n = strndup(s, e-s);
++                        if (!n)
++                                return -ENOMEM;
+ 
+                         /* IPv4 in w.x.y.z:p notation? */
+                         r = inet_pton(AF_INET, n, &a->sockaddr.in.sin_addr);

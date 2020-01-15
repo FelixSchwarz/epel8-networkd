@@ -12,7 +12,7 @@ Cherry-picked from: f02582f69fe1e7663a87ba80bd4f90d5d23ee75f
  2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/README b/README
-index 2cde08c37..7d06e0480 100644
+index 2cde08c37e..7d06e04800 100644
 --- a/README
 +++ b/README
 @@ -154,6 +154,7 @@ REQUIREMENTS:
@@ -24,7 +24,7 @@ index 2cde08c37..7d06e0480 100644
          polkit (optional)
          pkg-config
 diff --git a/meson.build b/meson.build
-index ebc55872c..d58926c98 100644
+index ebc55872c9..d58926c981 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -1148,7 +1148,7 @@ substs.set('DEFAULT_DNSSEC_MODE', default_dnssec)

@@ -35,7 +35,7 @@ Resolves: #1635435
  create mode 100644 test/fuzz/fuzz-bus-message/leak-c09c0e2256d43bc5e2d02748c8d8760e7bc25d20
 
 diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
-index 7c8bad2bd..d55cb1484 100644
+index 7c8bad2bdd..d55cb14843 100644
 --- a/src/libsystemd/sd-bus/bus-message.c
 +++ b/src/libsystemd/sd-bus/bus-message.c
 @@ -77,19 +77,38 @@ static void message_reset_parts(sd_bus_message *m) {

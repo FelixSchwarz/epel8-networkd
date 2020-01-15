@@ -25,7 +25,7 @@ Resolves: #1664976
  4 files changed, 38 insertions(+), 30 deletions(-)
 
 diff --git a/src/basic/io-util.c b/src/basic/io-util.c
-index 1f64cc933..575398fbe 100644
+index 1f64cc933b..575398fbe6 100644
 --- a/src/basic/io-util.c
 +++ b/src/basic/io-util.c
 @@ -8,6 +8,7 @@
@@ -50,7 +50,7 @@ index 1f64cc933..575398fbe 100644
 +        return x;
 +}
 diff --git a/src/basic/io-util.h b/src/basic/io-util.h
-index ed189b582..792a64ad5 100644
+index ed189b5820..792a64ad5e 100644
 --- a/src/basic/io-util.h
 +++ b/src/basic/io-util.h
 @@ -71,3 +71,5 @@ static inline bool FILE_SIZE_VALID_OR_INFINITY(uint64_t l) {
@@ -60,7 +60,7 @@ index ed189b582..792a64ad5 100644
 +
 +char* set_iovec_string_field(struct iovec *iovec, size_t *n_iovec, const char *field, const char *value);
 diff --git a/src/coredump/coredump.c b/src/coredump/coredump.c
-index d7dd81c1b..ffa88f612 100644
+index d7dd81c1b4..ffa88f612d 100644
 --- a/src/coredump/coredump.c
 +++ b/src/coredump/coredump.c
 @@ -1054,19 +1054,10 @@ static int send_iovec(const struct iovec iovec[], size_t n_iovec, int input_fd)
@@ -140,7 +140,7 @@ index d7dd81c1b..ffa88f612 100644
          return 0; /* we successfully acquired all metadata */
  }
 diff --git a/src/journal/journald-server.c b/src/journal/journald-server.c
-index ce2446a2f..8de45552f 100644
+index ce2446a2f1..8de45552f6 100644
 --- a/src/journal/journald-server.c
 +++ b/src/journal/journald-server.c
 @@ -753,6 +753,7 @@ static void dispatch_message_real(

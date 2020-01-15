@@ -17,7 +17,7 @@ Resolves: #1572563
  3 files changed, 45 insertions(+)
 
 diff --git a/man/crypttab.xml b/man/crypttab.xml
-index dcaf03d2c..3574ce00d 100644
+index dcaf03d2ca..3574ce00da 100644
 --- a/man/crypttab.xml
 +++ b/man/crypttab.xml
 @@ -250,6 +250,15 @@
@@ -37,7 +37,7 @@ index dcaf03d2c..3574ce00d 100644
          <term><option>swap</option></term>
  
 diff --git a/meson.build b/meson.build
-index a0e724070..f308db263 100644
+index a0e7240708..f308db2631 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -927,11 +927,17 @@ if want_libcryptsetup != 'false' and not fuzzer_build
@@ -59,7 +59,7 @@ index a0e724070..f308db263 100644
  want_libcurl = get_option('libcurl')
  if want_libcurl != 'false' and not fuzzer_build
 diff --git a/src/cryptsetup/cryptsetup.c b/src/cryptsetup/cryptsetup.c
-index 832168184..87008cb96 100644
+index 832168184a..87008cb969 100644
 --- a/src/cryptsetup/cryptsetup.c
 +++ b/src/cryptsetup/cryptsetup.c
 @@ -23,10 +23,14 @@

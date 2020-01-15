@@ -9,7 +9,7 @@ Subject: [PATCH] travis: fix syntax error in .travis.yml
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/.travis.yml b/.travis.yml
-index 1c4e6f972..c5c9c345a 100644
+index 1c4e6f9728..c5c9c345a9 100644
 --- a/.travis.yml
 +++ b/.travis.yml
 @@ -19,8 +19,7 @@ jobs:

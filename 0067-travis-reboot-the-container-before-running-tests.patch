@@ -9,7 +9,7 @@ Subject: [PATCH] travis: reboot the container before running tests
  2 files changed, 8 insertions(+)
 
 diff --git a/ci/travis-centos-rhel7.sh b/ci/travis-centos-rhel7.sh
-index b1b3de1cc..73416798e 100755
+index b1b3de1cc2..73416798ed 100755
 --- a/ci/travis-centos-rhel7.sh
 +++ b/ci/travis-centos-rhel7.sh
 @@ -52,6 +52,10 @@ for phase in "${PHASES[@]}"; do
@@ -24,7 +24,7 @@ index b1b3de1cc..73416798e 100755
                  $DOCKER_EXEC cat test-suite.log
                  exit 1
 diff --git a/ci/travis-centos-rhel8.sh b/ci/travis-centos-rhel8.sh
-index 8eda5e982..1f72d984e 100755
+index 8eda5e982f..1f72d984e0 100755
 --- a/ci/travis-centos-rhel8.sh
 +++ b/ci/travis-centos-rhel8.sh
 @@ -113,6 +113,10 @@ for phase in "${PHASES[@]}"; do

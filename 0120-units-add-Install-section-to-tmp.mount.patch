@@ -1,0 +1,24 @@
+From bb3d205bea1c83cbd0e27b504f5f1faa884fb602 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Tue, 22 Jan 2019 10:28:42 +0100
+Subject: [PATCH] units: add [Install] section to tmp.mount
+
+rhel-only
+
+Resolves: #1667065
+---
+ units/tmp.mount | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/units/tmp.mount b/units/tmp.mount
+index 742d86385c..b558047030 100644
+--- a/units/tmp.mount
++++ b/units/tmp.mount
+@@ -22,3 +22,7 @@ What=tmpfs
+ Where=/tmp
+ Type=tmpfs
+ Options=mode=1777,strictatime,nosuid,nodev
++
++# Make 'systemctl enable tmp.mount' work:
++[Install]
++WantedBy=local-fs.target

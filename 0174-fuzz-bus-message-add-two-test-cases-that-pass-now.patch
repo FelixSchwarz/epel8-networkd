@@ -1,0 +1,39 @@
+From 5ae60bf0848d38b101f8c79ffa82efcb27d6767c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 11 Aug 2018 11:31:45 +0200
+Subject: [PATCH] fuzz-bus-message: add two test cases that pass now
+
+It seems that they got fixed by one of the patches. Let's add them
+just in case.
+
+(cherry picked from commit edde66ffc2404de58e8b19810951f376efb344da)
+
+Resolves: #1696224
+---
+ ...crash-32bf69483cbd4f2e6d46c25a2f92a472109aee45 | Bin 0 -> 89 bytes
+ ...crash-4f0211eb269e28db941961061494bfdbf3345e54 | Bin 0 -> 143 bytes
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-32bf69483cbd4f2e6d46c25a2f92a472109aee45
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-4f0211eb269e28db941961061494bfdbf3345e54
+
+diff --git a/test/fuzz/fuzz-bus-message/crash-32bf69483cbd4f2e6d46c25a2f92a472109aee45 b/test/fuzz/fuzz-bus-message/crash-32bf69483cbd4f2e6d46c25a2f92a472109aee45
+new file mode 100644
+index 0000000000000000000000000000000000000000..aa0c6ff7f7b6d2e3fa4358716ee1d05ba74cefc0
+GIT binary patch
+literal 89
+scmc~<lEK8lpj!w8nPr*`8k%Jc8Xy{kL4pX;d}L9u6jlOkN|~kr0GQ+)G5`Po
+
+literal 0
+HcmV?d00001
+
+diff --git a/test/fuzz/fuzz-bus-message/crash-4f0211eb269e28db941961061494bfdbf3345e54 b/test/fuzz/fuzz-bus-message/crash-4f0211eb269e28db941961061494bfdbf3345e54
+new file mode 100644
+index 0000000000000000000000000000000000000000..865b29507c8a91b5205201775094a8a564be1adf
+GIT binary patch
+literal 143
+zcmc~{Wng0XZ}|QH|Nk0IiG_@bOh!hArWVFY7KVw2#>q)(CT7OTMiz#q2KEMtDT&4=
+liD{N8W@+Y0hK!61V4zWvq@j_NlvJFQnL&wm%}Py80RUy_C0PIf
+
+literal 0
+HcmV?d00001
+

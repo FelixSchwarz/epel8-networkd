@@ -1,0 +1,69 @@
+From a0c135f7771dbe3a6cd3da2aaa106900be0f4470 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 17 Jul 2019 18:58:44 +0200
+Subject: [PATCH] swap: scan /proc/swaps before processing waitid() results
+
+Similar to the previous commit, but for /proc/swaps, where the same
+logic and rationale applies.
+
+(cherry picked from commit bcce581d65de68cca01c73e1c890e261e72d20af)
+
+Related: #1696178
+---
+ src/core/swap.c | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/src/core/swap.c b/src/core/swap.c
+index e01e61e56d..b644753a1c 100644
+--- a/src/core/swap.c
++++ b/src/core/swap.c
+@@ -40,6 +40,7 @@ static const UnitActiveState state_translation_table[_SWAP_STATE_MAX] = {
+ 
+ static int swap_dispatch_timer(sd_event_source *source, usec_t usec, void *userdata);
+ static int swap_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata);
++static int swap_process_proc_swaps(Manager *m);
+ 
+ static bool SWAP_STATE_WITH_PROCESS(SwapState state) {
+         return IN_SET(state,
+@@ -990,6 +991,10 @@ static void swap_sigchld_event(Unit *u, pid_t pid, int code, int status) {
+         if (pid != s->control_pid)
+                 return;
+ 
++        /* Let's scan /proc/swaps before we process SIGCHLD. For the reasoning see the similar code in
++         * mount.c */
++        (void) swap_process_proc_swaps(u->manager);
++
+         s->control_pid = 0;
+ 
+         if (is_clean_exit(code, status, EXIT_CLEAN_COMMAND, NULL))
+@@ -1125,13 +1130,11 @@ static int swap_load_proc_swaps(Manager *m, bool set_flags) {
+         return r;
+ }
+ 
+-static int swap_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata) {
+-        Manager *m = userdata;
++static int swap_process_proc_swaps(Manager *m) {
+         Unit *u;
+         int r;
+ 
+         assert(m);
+-        assert(revents & EPOLLPRI);
+ 
+         r = swap_load_proc_swaps(m, true);
+         if (r < 0) {
+@@ -1205,6 +1208,15 @@ static int swap_dispatch_io(sd_event_source *source, int fd, uint32_t revents, v
+         return 1;
+ }
+ 
++static int swap_dispatch_io(sd_event_source *source, int fd, uint32_t revents, void *userdata) {
++        Manager *m = userdata;
++
++        assert(m);
++        assert(revents & EPOLLPRI);
++
++        return swap_process_proc_swaps(m);
++}
++
+ static Unit *swap_following(Unit *u) {
+         Swap *s = SWAP(u);
+         Swap *other, *first = NULL;

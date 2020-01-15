@@ -13,7 +13,7 @@ Resolves: #1602706
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/shared/dissect-image.c b/src/shared/dissect-image.c
-index fa1cf26ee..e076c8e7d 100644
+index fa1cf26ee1..e076c8e7db 100644
 --- a/src/shared/dissect-image.c
 +++ b/src/shared/dissect-image.c
 @@ -230,7 +230,7 @@ int dissect_image(

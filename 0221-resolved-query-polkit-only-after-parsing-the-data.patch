@@ -1,0 +1,48 @@
+From 7c9077683df0c3959b1bcae973a05e114b15a600 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Tue, 27 Aug 2019 19:28:19 +0200
+Subject: [PATCH] resolved: query polkit only after parsing the data
+
+That's what we do everywhere else because it leads to nicer user experience.
+
+Related: #1746857
+---
+ src/resolve/resolved-bus.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/src/resolve/resolved-bus.c b/src/resolve/resolved-bus.c
+index 4d6cc4fd48..3f6a6f9e12 100644
+--- a/src/resolve/resolved-bus.c
++++ b/src/resolve/resolved-bus.c
+@@ -1632,15 +1632,6 @@ static int bus_method_register_service(sd_bus_message *message, void *userdata,
+         if (m->mdns_support != RESOLVE_SUPPORT_YES)
+                 return sd_bus_error_setf(error, SD_BUS_ERROR_NOT_SUPPORTED, "Support for MulticastDNS is disabled");
+ 
+-        r = bus_verify_polkit_async(message, CAP_SYS_ADMIN,
+-                                    "org.freedesktop.resolve1.register-service",
+-                                    NULL, false, UID_INVALID,
+-                                    &m->polkit_registry, error);
+-        if (r < 0)
+-                return r;
+-        if (r == 0)
+-                return 1; /* Polkit will call us back */
+-
+         service = new0(DnssdService, 1);
+         if (!service)
+                 return log_oom();
+@@ -1765,6 +1756,15 @@ static int bus_method_register_service(sd_bus_message *message, void *userdata,
+         if (r < 0)
+                 return r;
+ 
++        r = bus_verify_polkit_async(message, CAP_SYS_ADMIN,
++                                    "org.freedesktop.resolve1.register-service",
++                                    NULL, false, UID_INVALID,
++                                    &m->polkit_registry, error);
++        if (r < 0)
++                return r;
++        if (r == 0)
++                return 1; /* Polkit will call us back */
++
+         r = hashmap_ensure_allocated(&m->dnssd_services, &string_hash_ops);
+         if (r < 0)
+                 return r;

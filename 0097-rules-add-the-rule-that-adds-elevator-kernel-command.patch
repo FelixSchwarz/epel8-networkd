@@ -1,4 +1,4 @@
-From 09ed23dd20cc4ecb45a50081d3bce1ef830e90b7 Mon Sep 17 00:00:00 2001
+From 16d1f6e5122038fa24392e166a0a88c6cab41dd0 Mon Sep 17 00:00:00 2001
 From: Lukas Nykryn <lnykryn@redhat.com>
 Date: Tue, 26 Feb 2019 15:22:38 +0100
 Subject: [PATCH] rules: add the rule that adds elevator= kernel command line
@@ -11,7 +11,7 @@ Resolves: #1670126
  1 file changed, 1 insertion(+)
 
 diff --git a/rules/meson.build b/rules/meson.build
-index e04a18aca..b6aae596b 100644
+index e04a18aca6..b6aae596b6 100644
 --- a/rules/meson.build
 +++ b/rules/meson.build
 @@ -2,6 +2,7 @@

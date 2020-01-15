@@ -1,0 +1,31 @@
+From ee93272cf9915710251704c7bf7c1f1a0b02cb7f Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <frantisek@sumsal.cz>
+Date: Fri, 9 Nov 2018 12:47:30 +0100
+Subject: [PATCH] tests: keep SYS_PTRACE when running under ASan
+
+(cherry picked from commit 7a3025658836c536f81fdd742fa338545294f5bf)
+
+Resolves: #1683319
+---
+ src/test/test-capability.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/test/test-capability.c b/src/test/test-capability.c
+index 72975cef94..20eb877a3c 100644
+--- a/src/test/test-capability.c
++++ b/src/test/test-capability.c
+@@ -19,8 +19,13 @@
+ static uid_t test_uid = -1;
+ static gid_t test_gid = -1;
+ 
++#ifdef __SANITIZE_ADDRESS__
++/* Keep CAP_SYS_PTRACE when running under Address Sanitizer */
++static const uint64_t test_flags = UINT64_C(1) << CAP_SYS_PTRACE;
++#else
+ /* We keep CAP_DAC_OVERRIDE to avoid errors with gcov when doing test coverage */
+-static uint64_t test_flags = 1ULL << CAP_DAC_OVERRIDE;
++static const uint64_t test_flags = UINT64_C(1) << CAP_DAC_OVERRIDE;
++#endif
+ 
+ /* verify cap_last_cap() against /proc/sys/kernel/cap_last_cap */
+ static void test_last_cap_file(void) {

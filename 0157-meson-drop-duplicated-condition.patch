@@ -1,0 +1,33 @@
+From fff862ce6f33acb6ce8dc422e0f53ec681ebed6d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Tue, 7 Aug 2018 18:10:53 +0200
+Subject: [PATCH] meson: drop duplicated condition
+
+The generic check suffices for those four.
+
+(cherry picked from commit 6bd2bc8e16a6d515f8a21c47fd6b833d7fcfdd1c)
+
+Resolves: #1696224
+---
+ meson.build | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 863e8eb399..f623bcf37d 100644
+--- a/meson.build
++++ b/meson.build
+@@ -3003,10 +3003,10 @@ foreach tuple : [
+         ['blkid'],
+         ['dbus'],
+         ['glib'],
+-        ['nss-myhostname',   conf.get('ENABLE_NSS_MYHOSTNAME') == 1],
+-        ['nss-mymachines',   conf.get('ENABLE_NSS_MYMACHINES') == 1],
+-        ['nss-resolve',      conf.get('ENABLE_NSS_RESOLVE') == 1],
+-        ['nss-systemd',      conf.get('ENABLE_NSS_SYSTEMD') == 1],
++        ['nss-myhostname'],
++        ['nss-mymachines'],
++        ['nss-resolve'],
++        ['nss-systemd'],
+         ['hwdb'],
+         ['tpm'],
+         ['man pages',        want_man],

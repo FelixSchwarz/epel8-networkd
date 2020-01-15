@@ -1,0 +1,33 @@
+From 625795e6214ae7c7f0f7f35b2c1f53e1e173b1ad Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Thu, 2 Aug 2018 00:46:20 +0200
+Subject: [PATCH] bus: do not print (null) if the message has unknown type
+
+(cherry picked from commit e8fd7e4b5b5269377efc641a7da43850822c1250)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-dump.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-dump.c b/src/libsystemd/sd-bus/bus-dump.c
+index 3a28c7c6e3..2bd06053a6 100644
+--- a/src/libsystemd/sd-bus/bus-dump.c
++++ b/src/libsystemd/sd-bus/bus-dump.c
+@@ -59,8 +59,14 @@ int bus_message_dump(sd_bus_message *m, FILE *f, unsigned flags) {
+                         "%s%s%s Type=%s%s%s  Endian=%c  Flags=%u  Version=%u  Priority=%"PRIi64,
+                         m->header->type == SD_BUS_MESSAGE_METHOD_ERROR ? ansi_highlight_red() :
+                         m->header->type == SD_BUS_MESSAGE_METHOD_RETURN ? ansi_highlight_green() :
+-                        m->header->type != SD_BUS_MESSAGE_SIGNAL ? ansi_highlight() : "", special_glyph(TRIANGULAR_BULLET), ansi_normal(),
+-                        ansi_highlight(), bus_message_type_to_string(m->header->type), ansi_normal(),
++                        m->header->type != SD_BUS_MESSAGE_SIGNAL ? ansi_highlight() : "",
++                        special_glyph(TRIANGULAR_BULLET),
++                        ansi_normal(),
++
++                        ansi_highlight(),
++                        bus_message_type_to_string(m->header->type) ?: "(unknown)",
++                        ansi_normal(),
++
+                         m->header->endian,
+                         m->header->flags,
+                         m->header->version,

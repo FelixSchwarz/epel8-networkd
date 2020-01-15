@@ -1,0 +1,46 @@
+From 401f1fdc309175d3920c0fe168e52c601474c000 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Wed, 10 Oct 2018 11:07:54 +0200
+Subject: [PATCH] capability: introduce CAP_TO_MASK_CORRECTED() macro replacing
+ CAP_TO_MASK()
+
+linux/capability.h's CAP_TO_MASK potentially shifts a signed int "1"
+(i.e. 32bit wide) left by 31 which means it becomes negative. That's
+just weird, and ubsan complains about it. Let's introduce our own macro
+CAP_TO_MASK_CORRECTED which doesn't fall into this trap, and make use of
+it.
+
+Fixes: #10347
+(cherry picked from commit 5f00c5684f96c93a22840f7241ee444b9a632b1e)
+
+Resolves: #1683319
+---
+ src/basic/capability-util.h       | 4 ++++
+ src/libsystemd/sd-bus/bus-creds.c | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/basic/capability-util.h b/src/basic/capability-util.h
+index 4a4a86093a..59591d4b52 100644
+--- a/src/basic/capability-util.h
++++ b/src/basic/capability-util.h
+@@ -39,3 +39,7 @@ static inline bool cap_test_all(uint64_t caps) {
+ }
+ 
+ bool ambient_capabilities_supported(void);
++
++/* Identical to linux/capability.h's CAP_TO_MASK(), but uses an unsigned 1U instead of a signed 1 for shifting left, in
++ * order to avoid complaints about shifting a signed int left by 31 bits, which would make it negative. */
++#define CAP_TO_MASK_CORRECTED(x) (1U << ((x) & 31U))
+diff --git a/src/libsystemd/sd-bus/bus-creds.c b/src/libsystemd/sd-bus/bus-creds.c
+index aae9fcd58b..b180a033b8 100644
+--- a/src/libsystemd/sd-bus/bus-creds.c
++++ b/src/libsystemd/sd-bus/bus-creds.c
+@@ -663,7 +663,7 @@ static int has_cap(sd_bus_creds *c, unsigned offset, int capability) {
+ 
+         sz = DIV_ROUND_UP(cap_last_cap(), 32U);
+ 
+-        return !!(c->capability[offset * sz + CAP_TO_INDEX(capability)] & CAP_TO_MASK(capability));
++        return !!(c->capability[offset * sz + CAP_TO_INDEX((uint32_t) capability)] & CAP_TO_MASK_CORRECTED((uint32_t) capability));
+ }
+ 
+ _public_ int sd_bus_creds_has_effective_cap(sd_bus_creds *c, int capability) {

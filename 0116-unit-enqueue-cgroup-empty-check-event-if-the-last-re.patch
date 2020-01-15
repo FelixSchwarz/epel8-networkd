@@ -1,0 +1,31 @@
+From 7b629b3a853c3b1e4e6a916a080996960343d7f2 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Fri, 5 Oct 2018 23:04:51 +0200
+Subject: [PATCH] unit: enqueue cgroup empty check event if the last ref on a
+ unit is dropped
+
+(cherry picked from commit e5c36295d81971ef75d9c6f98f0890b92a4a353f)
+
+Resolves: #1697893
+---
+ src/core/dbus-unit.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/core/dbus-unit.c b/src/core/dbus-unit.c
+index ae0410414e..c5bca10979 100644
+--- a/src/core/dbus-unit.c
++++ b/src/core/dbus-unit.c
+@@ -1746,7 +1746,13 @@ static int bus_unit_track_handler(sd_bus_track *t, void *userdata) {
+ 
+         u->bus_track = sd_bus_track_unref(u->bus_track); /* make sure we aren't called again */
+ 
++        /* If the client that tracks us disappeared, then there's reason to believe that the cgroup is empty now too,
++         * let's see */
++        unit_add_to_cgroup_empty_queue(u);
++
++        /* Also add the unit to the GC queue, after all if the client left it might be time to GC this unit */
+         unit_add_to_gc_queue(u);
++
+         return 0;
+ }
+ 

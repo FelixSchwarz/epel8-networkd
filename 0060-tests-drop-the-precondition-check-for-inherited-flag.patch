@@ -15,7 +15,7 @@ Cherry-picked from: c446b8486d9ed18d1bc780948ae9ee8a53fa4c3f
  1 file changed, 8 deletions(-)
 
 diff --git a/src/test/test-capability.c b/src/test/test-capability.c
-index af6d808b6..72975cef9 100644
+index af6d808b6d..72975cef94 100644
 --- a/src/test/test-capability.c
 +++ b/src/test/test-capability.c
 @@ -180,8 +180,6 @@ static void test_update_inherited_set(void) {

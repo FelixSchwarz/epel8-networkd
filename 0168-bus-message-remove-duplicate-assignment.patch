@@ -1,0 +1,24 @@
+From fcaaf6f3640c6cac73ba2b3807cde9fd94e0789b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Thu, 2 Aug 2018 14:25:31 +0200
+Subject: [PATCH] bus-message: remove duplicate assignment
+
+(cherry picked from commit 4d82a8d5052fce8c1ea51f8bdec3476fb8cc4747)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index d0af34f632..c8f7937102 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -4305,7 +4305,6 @@ _public_ int sd_bus_message_rewind(sd_bus_message *m, int complete) {
+         } else {
+                 c = message_get_last_container(m);
+ 
+-                c->offset_index = 0;
+                 c->index = 0;
+                 m->rindex = c->begin;
+         }

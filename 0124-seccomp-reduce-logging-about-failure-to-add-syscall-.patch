@@ -1,0 +1,309 @@
+From da8ea9abbacf381513896a7064a1fa0067b3d549 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Mon, 24 Sep 2018 16:59:12 +0200
+Subject: [PATCH] seccomp: reduce logging about failure to add syscall to
+ seccomp
+
+Our logs are full of:
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call oldstat() / -10037, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call get_thread_area() / -10076, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call set_thread_area() / -10079, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call oldfstat() / -10034, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call oldolduname() / -10036, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call oldlstat() / -10035, ignoring: Numerical argument out of domain
+Sep 19 09:22:10 autopkgtest systemd[690]: Failed to add rule for system call waitpid() / -10073, ignoring: Numerical argument out of domain
+...
+This is pointless and makes debug logs hard to read. Let's keep the logs
+in test code, but disable it in nspawn and pid1. This is done through a function
+parameter because those functions operate recursively and it's not possible to
+make the caller to log meaningfully.
+
+There should be no functional change, except the skipped debug logs.
+
+(cherry-picked from commit b54f36c604472ffe08830ec4306fa2885b4a5424)
+
+Resolves: #1658691
+---
+ src/core/execute.c          |  6 ++--
+ src/nspawn/nspawn-seccomp.c |  4 +--
+ src/shared/seccomp-util.c   | 57 ++++++++++++++++++++-----------------
+ src/shared/seccomp-util.h   |  6 ++--
+ src/test/test-seccomp.c     | 16 +++++------
+ 5 files changed, 47 insertions(+), 42 deletions(-)
+
+diff --git a/src/core/execute.c b/src/core/execute.c
+index 8ac69d1a0f..ffb92ddfc7 100644
+--- a/src/core/execute.c
++++ b/src/core/execute.c
+@@ -1415,7 +1415,7 @@ static int apply_syscall_filter(const Unit* u, const ExecContext *c, bool needs_
+                         return r;
+         }
+ 
+-        return seccomp_load_syscall_filter_set_raw(default_action, c->syscall_filter, action);
++        return seccomp_load_syscall_filter_set_raw(default_action, c->syscall_filter, action, false);
+ }
+ 
+ static int apply_syscall_archs(const Unit *u, const ExecContext *c) {
+@@ -1498,7 +1498,7 @@ static int apply_protect_kernel_modules(const Unit *u, const ExecContext *c) {
+         if (skip_seccomp_unavailable(u, "ProtectKernelModules="))
+                 return 0;
+ 
+-        return seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + SYSCALL_FILTER_SET_MODULE, SCMP_ACT_ERRNO(EPERM));
++        return seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + SYSCALL_FILTER_SET_MODULE, SCMP_ACT_ERRNO(EPERM), false);
+ }
+ 
+ static int apply_private_devices(const Unit *u, const ExecContext *c) {
+@@ -1513,7 +1513,7 @@ static int apply_private_devices(const Unit *u, const ExecContext *c) {
+         if (skip_seccomp_unavailable(u, "PrivateDevices="))
+                 return 0;
+ 
+-        return seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + SYSCALL_FILTER_SET_RAW_IO, SCMP_ACT_ERRNO(EPERM));
++        return seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + SYSCALL_FILTER_SET_RAW_IO, SCMP_ACT_ERRNO(EPERM), false);
+ }
+ 
+ static int apply_restrict_namespaces(const Unit *u, const ExecContext *c) {
+diff --git a/src/nspawn/nspawn-seccomp.c b/src/nspawn/nspawn-seccomp.c
+index eb1964bb6d..b56c5b04a8 100644
+--- a/src/nspawn/nspawn-seccomp.c
++++ b/src/nspawn/nspawn-seccomp.c
+@@ -148,7 +148,7 @@ static int seccomp_add_default_syscall_filter(
+                 if (whitelist[i].capability != 0 && (cap_list_retain & (1ULL << whitelist[i].capability)) == 0)
+                         continue;
+ 
+-                r = seccomp_add_syscall_filter_item(ctx, whitelist[i].name, SCMP_ACT_ALLOW, syscall_blacklist);
++                r = seccomp_add_syscall_filter_item(ctx, whitelist[i].name, SCMP_ACT_ALLOW, syscall_blacklist, false);
+                 if (r < 0)
+                         /* If the system call is not known on this architecture, then that's fine, let's ignore it */
+                         log_debug_errno(r, "Failed to add rule for system call %s on %s, ignoring: %m", whitelist[i].name, seccomp_arch_to_string(arch));
+@@ -157,7 +157,7 @@ static int seccomp_add_default_syscall_filter(
+         }
+ 
+         STRV_FOREACH(p, syscall_whitelist) {
+-                r = seccomp_add_syscall_filter_item(ctx, *p, SCMP_ACT_ALLOW, syscall_blacklist);
++                r = seccomp_add_syscall_filter_item(ctx, *p, SCMP_ACT_ALLOW, syscall_blacklist, false);
+                 if (r < 0)
+                         log_debug_errno(r, "Failed to add rule for system call %s on %s, ignoring: %m", *p, seccomp_arch_to_string(arch));
+                 else
+diff --git a/src/shared/seccomp-util.c b/src/shared/seccomp-util.c
+index c433cb90dc..92910acf0e 100644
+--- a/src/shared/seccomp-util.c
++++ b/src/shared/seccomp-util.c
+@@ -857,11 +857,9 @@ const SyscallFilterSet *syscall_filter_set_find(const char *name) {
+         return NULL;
+ }
+ 
+-static int seccomp_add_syscall_filter_set(scmp_filter_ctx seccomp, const SyscallFilterSet *set, uint32_t action, char **exclude);
+-
+-int seccomp_add_syscall_filter_item(scmp_filter_ctx *seccomp, const char *name, uint32_t action, char **exclude) {
+-        int r;
++static int seccomp_add_syscall_filter_set(scmp_filter_ctx seccomp, const SyscallFilterSet *set, uint32_t action, char **exclude, bool log_missing);
+ 
++int seccomp_add_syscall_filter_item(scmp_filter_ctx *seccomp, const char *name, uint32_t action, char **exclude, bool log_missing) {
+         assert(seccomp);
+         assert(name);
+ 
+@@ -877,32 +875,36 @@ int seccomp_add_syscall_filter_item(scmp_filter_ctx *seccomp, const char *name,
+                         return -EINVAL;
+                 }
+ 
+-                r = seccomp_add_syscall_filter_set(seccomp, other, action, exclude);
+-                if (r < 0)
+-                        return r;
++                return seccomp_add_syscall_filter_set(seccomp, other, action, exclude, log_missing);
++
+         } else {
+-                int id;
++                int id, r;
+ 
+                 id = seccomp_syscall_resolve_name(name);
+                 if (id == __NR_SCMP_ERROR) {
+-                        log_debug("System call %s is not known, ignoring.", name);
++                        if (log_missing)
++                                log_debug("System call %s is not known, ignoring.", name);
+                         return 0;
+                 }
+ 
+                 r = seccomp_rule_add_exact(seccomp, action, id, 0);
+-                if (r < 0)
++                if (r < 0) {
+                         /* If the system call is not known on this architecture, then that's fine, let's ignore it */
+-                        log_debug_errno(r, "Failed to add rule for system call %s() / %d, ignoring: %m", name, id);
+-        }
++                        if (log_missing)
++                                log_debug_errno(r, "Failed to add rule for system call %s() / %d, ignoring: %m",
++                                                name, id);
++                }
+ 
+-        return 0;
++                return 0;
++        }
+ }
+ 
+ static int seccomp_add_syscall_filter_set(
+                 scmp_filter_ctx seccomp,
+                 const SyscallFilterSet *set,
+                 uint32_t action,
+-                char **exclude) {
++                char **exclude,
++                bool log_missing) {
+ 
+         const char *sys;
+         int r;
+@@ -911,7 +913,7 @@ static int seccomp_add_syscall_filter_set(
+         assert(set);
+ 
+         NULSTR_FOREACH(sys, set->value) {
+-                r = seccomp_add_syscall_filter_item(seccomp, sys, action, exclude);
++                r = seccomp_add_syscall_filter_item(seccomp, sys, action, exclude, log_missing);
+                 if (r < 0)
+                         return r;
+         }
+@@ -919,7 +921,7 @@ static int seccomp_add_syscall_filter_set(
+         return 0;
+ }
+ 
+-int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilterSet *set, uint32_t action) {
++int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilterSet *set, uint32_t action, bool log_missing) {
+         uint32_t arch;
+         int r;
+ 
+@@ -937,7 +939,7 @@ int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilter
+                 if (r < 0)
+                         return r;
+ 
+-                r = seccomp_add_syscall_filter_set(seccomp, set, action, NULL);
++                r = seccomp_add_syscall_filter_set(seccomp, set, action, NULL, log_missing);
+                 if (r < 0) {
+                         log_debug_errno(r, "Failed to add filter set, ignoring: %m");
+                         continue;
+@@ -953,7 +955,7 @@ int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilter
+         return 0;
+ }
+ 
+-int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, uint32_t action) {
++int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, uint32_t action, bool log_missing) {
+         uint32_t arch;
+         int r;
+ 
+@@ -966,7 +968,7 @@ int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, u
+         SECCOMP_FOREACH_LOCAL_ARCH(arch) {
+                 _cleanup_(seccomp_releasep) scmp_filter_ctx seccomp = NULL;
+                 Iterator i;
+-                void *id, *val;
++                void *syscall_id, *val;
+ 
+                 log_debug("Operating on architecture: %s", seccomp_arch_to_string(arch));
+ 
+@@ -974,20 +976,23 @@ int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, u
+                 if (r < 0)
+                         return r;
+ 
+-                HASHMAP_FOREACH_KEY(val, id, set, i) {
++                HASHMAP_FOREACH_KEY(val, syscall_id, set, i) {
+                         uint32_t a = action;
+-                        int e = PTR_TO_INT(val);
++                        int id = PTR_TO_INT(syscall_id) - 1;
++                        int error = PTR_TO_INT(val);
+ 
+-                        if (action != SCMP_ACT_ALLOW && e >= 0)
+-                                a = SCMP_ACT_ERRNO(e);
++                        if (action != SCMP_ACT_ALLOW && error >= 0)
++                                a = SCMP_ACT_ERRNO(error);
+ 
+-                        r = seccomp_rule_add_exact(seccomp, a, PTR_TO_INT(id) - 1, 0);
++                        r = seccomp_rule_add_exact(seccomp, a, id, 0);
+                         if (r < 0) {
+                                 /* If the system call is not known on this architecture, then that's fine, let's ignore it */
+                                 _cleanup_free_ char *n = NULL;
+ 
+-                                n = seccomp_syscall_resolve_num_arch(SCMP_ARCH_NATIVE, PTR_TO_INT(id) - 1);
+-                                log_debug_errno(r, "Failed to add rule for system call %s() / %d, ignoring: %m", strna(n), PTR_TO_INT(id) - 1);
++                                n = seccomp_syscall_resolve_num_arch(SCMP_ARCH_NATIVE, id);
++                                if (log_missing)
++                                        log_debug_errno(r, "Failed to add rule for system call %s() / %d, ignoring: %m",
++                                                        strna(n), id);
+                         }
+                 }
+ 
+diff --git a/src/shared/seccomp-util.h b/src/shared/seccomp-util.h
+index eac857afb9..d8a36c4e21 100644
+--- a/src/shared/seccomp-util.h
++++ b/src/shared/seccomp-util.h
+@@ -58,10 +58,10 @@ const SyscallFilterSet *syscall_filter_set_find(const char *name);
+ 
+ int seccomp_filter_set_add(Hashmap *s, bool b, const SyscallFilterSet *set);
+ 
+-int seccomp_add_syscall_filter_item(scmp_filter_ctx *ctx, const char *name, uint32_t action, char **exclude);
++int seccomp_add_syscall_filter_item(scmp_filter_ctx *ctx, const char *name, uint32_t action, char **exclude, bool log_missing);
+ 
+-int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilterSet *set, uint32_t action);
+-int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, uint32_t action);
++int seccomp_load_syscall_filter_set(uint32_t default_action, const SyscallFilterSet *set, uint32_t action, bool log_missing);
++int seccomp_load_syscall_filter_set_raw(uint32_t default_action, Hashmap* set, uint32_t action, bool log_missing);
+ 
+ typedef enum SeccompParseFlags {
+         SECCOMP_PARSE_INVERT     = 1 << 0,
+diff --git a/src/test/test-seccomp.c b/src/test/test-seccomp.c
+index d82cb5c1c5..d177515ac7 100644
+--- a/src/test/test-seccomp.c
++++ b/src/test/test-seccomp.c
+@@ -104,11 +104,11 @@ static void test_filter_sets(void) {
+                 if (pid == 0) { /* Child? */
+                         int fd;
+ 
+-                        /* if we look at the default set (or one that includes it), whitelist instead of blacklist */
++                        /* If we look at the default set (or one that includes it), whitelist instead of blacklist */
+                         if (IN_SET(i, SYSCALL_FILTER_SET_DEFAULT, SYSCALL_FILTER_SET_SYSTEM_SERVICE))
+-                                r = seccomp_load_syscall_filter_set(SCMP_ACT_ERRNO(EUCLEAN), syscall_filter_sets + i, SCMP_ACT_ALLOW);
++                                r = seccomp_load_syscall_filter_set(SCMP_ACT_ERRNO(EUCLEAN), syscall_filter_sets + i, SCMP_ACT_ALLOW, true);
+                         else
+-                                r = seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + i, SCMP_ACT_ERRNO(EUCLEAN));
++                                r = seccomp_load_syscall_filter_set(SCMP_ACT_ALLOW, syscall_filter_sets + i, SCMP_ACT_ERRNO(EUCLEAN), true);
+                         if (r < 0)
+                                 _exit(EXIT_FAILURE);
+ 
+@@ -515,7 +515,7 @@ static void test_load_syscall_filter_set_raw(void) {
+                 assert_se(access("/", F_OK) >= 0);
+                 assert_se(poll(NULL, 0, 0) == 0);
+ 
+-                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, NULL, SCMP_ACT_KILL) >= 0);
++                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, NULL, SCMP_ACT_KILL, true) >= 0);
+                 assert_se(access("/", F_OK) >= 0);
+                 assert_se(poll(NULL, 0, 0) == 0);
+ 
+@@ -526,7 +526,7 @@ static void test_load_syscall_filter_set_raw(void) {
+                 assert_se(hashmap_put(s, UINT32_TO_PTR(__NR_faccessat + 1), INT_TO_PTR(-1)) >= 0);
+ #endif
+ 
+-                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUCLEAN)) >= 0);
++                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUCLEAN), true) >= 0);
+ 
+                 assert_se(access("/", F_OK) < 0);
+                 assert_se(errno == EUCLEAN);
+@@ -542,7 +542,7 @@ static void test_load_syscall_filter_set_raw(void) {
+                 assert_se(hashmap_put(s, UINT32_TO_PTR(__NR_faccessat + 1), INT_TO_PTR(EILSEQ)) >= 0);
+ #endif
+ 
+-                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUCLEAN)) >= 0);
++                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUCLEAN), true) >= 0);
+ 
+                 assert_se(access("/", F_OK) < 0);
+                 assert_se(errno == EILSEQ);
+@@ -558,7 +558,7 @@ static void test_load_syscall_filter_set_raw(void) {
+                 assert_se(hashmap_put(s, UINT32_TO_PTR(__NR_ppoll + 1), INT_TO_PTR(-1)) >= 0);
+ #endif
+ 
+-                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUNATCH)) >= 0);
++                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUNATCH), true) >= 0);
+ 
+                 assert_se(access("/", F_OK) < 0);
+                 assert_se(errno == EILSEQ);
+@@ -575,7 +575,7 @@ static void test_load_syscall_filter_set_raw(void) {
+                 assert_se(hashmap_put(s, UINT32_TO_PTR(__NR_ppoll + 1), INT_TO_PTR(EILSEQ)) >= 0);
+ #endif
+ 
+-                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUNATCH)) >= 0);
++                assert_se(seccomp_load_syscall_filter_set_raw(SCMP_ACT_ALLOW, s, SCMP_ACT_ERRNO(EUNATCH), true) >= 0);
+ 
+                 assert_se(access("/", F_OK) < 0);
+                 assert_se(errno == EILSEQ);

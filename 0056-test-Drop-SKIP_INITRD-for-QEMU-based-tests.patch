@@ -18,7 +18,7 @@ Cherry-picked from: c2d4da002095fe6f86f89a508a81e48fb6d3196f
  6 files changed, 2 insertions(+), 6 deletions(-)
 
 diff --git a/test/TEST-08-ISSUE-2730/test.sh b/test/TEST-08-ISSUE-2730/test.sh
-index 68159c331..90bf133c6 100755
+index 68159c331f..90bf133c6a 100755
 --- a/test/TEST-08-ISSUE-2730/test.sh
 +++ b/test/TEST-08-ISSUE-2730/test.sh
 @@ -6,7 +6,6 @@ TEST_DESCRIPTION="https://github.com/systemd/systemd/issues/2730"
@@ -30,7 +30,7 @@ index 68159c331..90bf133c6 100755
  FSTYPE=ext4
  
 diff --git a/test/TEST-09-ISSUE-2691/test.sh b/test/TEST-09-ISSUE-2691/test.sh
-index 4c3e9496b..9b5990bc6 100755
+index 4c3e9496b4..9b5990bc60 100755
 --- a/test/TEST-09-ISSUE-2691/test.sh
 +++ b/test/TEST-09-ISSUE-2691/test.sh
 @@ -6,7 +6,6 @@ TEST_DESCRIPTION="https://github.com/systemd/systemd/issues/2691"
@@ -42,7 +42,7 @@ index 4c3e9496b..9b5990bc6 100755
  
  test_setup() {
 diff --git a/test/TEST-10-ISSUE-2467/test.sh b/test/TEST-10-ISSUE-2467/test.sh
-index 2f95e9062..e61f5acd3 100755
+index 2f95e9062d..e61f5acd3c 100755
 --- a/test/TEST-10-ISSUE-2467/test.sh
 +++ b/test/TEST-10-ISSUE-2467/test.sh
 @@ -5,7 +5,6 @@ set -e
@@ -54,7 +54,7 @@ index 2f95e9062..e61f5acd3 100755
  test_setup() {
      create_empty_image
 diff --git a/test/TEST-11-ISSUE-3166/test.sh b/test/TEST-11-ISSUE-3166/test.sh
-index 4602bdfc9..8aae4d5ed 100755
+index 4602bdfc98..8aae4d5ed9 100755
 --- a/test/TEST-11-ISSUE-3166/test.sh
 +++ b/test/TEST-11-ISSUE-3166/test.sh
 @@ -6,7 +6,6 @@ TEST_DESCRIPTION="https://github.com/systemd/systemd/issues/3166"
@@ -66,7 +66,7 @@ index 4602bdfc9..8aae4d5ed 100755
  test_setup() {
      create_empty_image
 diff --git a/test/TEST-13-NSPAWN-SMOKE/test.sh b/test/TEST-13-NSPAWN-SMOKE/test.sh
-index c0789b5d2..a676384bf 100755
+index c0789b5d20..a676384bfc 100755
 --- a/test/TEST-13-NSPAWN-SMOKE/test.sh
 +++ b/test/TEST-13-NSPAWN-SMOKE/test.sh
 @@ -4,7 +4,7 @@
@@ -79,7 +79,7 @@ index c0789b5d2..a676384bf 100755
  
  test_setup() {
 diff --git a/test/TEST-14-MACHINE-ID/test.sh b/test/TEST-14-MACHINE-ID/test.sh
-index 7342645bc..62003b91b 100755
+index 7342645bc5..62003b91b6 100755
 --- a/test/TEST-14-MACHINE-ID/test.sh
 +++ b/test/TEST-14-MACHINE-ID/test.sh
 @@ -4,7 +4,7 @@

@@ -1,0 +1,29 @@
+From f6af2bfe4b353b25a61c362c3ada9be06c8f15c9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Fri, 3 Aug 2018 18:05:27 +0200
+Subject: [PATCH] bus-message: output debug information about offset troubles
+
+(cherry picked from commit 0b4775b52747bebf7ecb62062798475629767044)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 153cdf933b..09e72d89dd 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -3845,8 +3845,11 @@ static int build_struct_offsets(
+                                         x = size - (n_variable * sz);
+ 
+                                 offset = m->rindex + x;
+-                                if (offset < start)
++                                if (offset < start) {
++                                        log_debug("For type %s with alignment %zu, message specifies offset %zu which is smaller than previous end %zu + alignment = %zu",
++                                                  t, align, offset, previous, start);
+                                         return -EBADMSG;
++                                }
+                         } else
+                                 /* Fixed size */
+                                 offset = start + k;

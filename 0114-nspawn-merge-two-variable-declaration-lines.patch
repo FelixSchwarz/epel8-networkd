@@ -1,0 +1,27 @@
+From 45085ba5ef810dc527f439fe165c5d393443bda9 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Fri, 5 Oct 2018 22:56:20 +0200
+Subject: [PATCH] nspawn: merge two variable declaration lines
+
+(cherry picked from commit df61bc5e4aa19f9b211dbe8414343b44361e442c)
+
+Resolves: #1697893
+---
+ src/nspawn/nspawn-register.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/nspawn/nspawn-register.c b/src/nspawn/nspawn-register.c
+index e459cb63ec..0d45cce66e 100644
+--- a/src/nspawn/nspawn-register.c
++++ b/src/nspawn/nspawn-register.c
+@@ -236,9 +236,8 @@ int allocate_scope(
+                 int kill_signal,
+                 char **properties) {
+ 
++        _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL, *reply = NULL;
+         _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
+-        _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
+-        _cleanup_(sd_bus_message_unrefp) sd_bus_message *reply = NULL;
+         _cleanup_(bus_wait_for_jobs_freep) BusWaitForJobs *w = NULL;
+         _cleanup_free_ char *scope = NULL;
+         const char *description, *object;

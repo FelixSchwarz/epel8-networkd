@@ -1,0 +1,31 @@
+From 8c937623864721345a5789d664775416723b6614 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Thu, 5 Jul 2018 10:00:52 +0200
+Subject: [PATCH] execute: use our usual syntax for defining bit masks
+
+(cherry picked from commit ce0d60a7c4e07c5bdfed9f076bd48752287f0777)
+
+Resolves: #1683334
+---
+ src/core/execute.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/core/execute.h b/src/core/execute.h
+index 49705e0d3a..f24dbf581a 100644
+--- a/src/core/execute.h
++++ b/src/core/execute.h
+@@ -85,10 +85,10 @@ struct ExecStatus {
+ };
+ 
+ typedef enum ExecCommandFlags {
+-        EXEC_COMMAND_IGNORE_FAILURE = 1,
+-        EXEC_COMMAND_FULLY_PRIVILEGED = 2,
+-        EXEC_COMMAND_NO_SETUID = 4,
+-        EXEC_COMMAND_AMBIENT_MAGIC = 8,
++        EXEC_COMMAND_IGNORE_FAILURE   = 1 << 0,
++        EXEC_COMMAND_FULLY_PRIVILEGED = 1 << 1,
++        EXEC_COMMAND_NO_SETUID        = 1 << 2,
++        EXEC_COMMAND_AMBIENT_MAGIC    = 1 << 3,
+ } ExecCommandFlags;
+ 
+ struct ExecCommand {

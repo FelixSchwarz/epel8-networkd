@@ -1,0 +1,101 @@
+From 709214f554355158b2c3e70c7f3424997e002cee Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Thu, 23 Aug 2018 14:48:40 +0200
+Subject: [PATCH] bus-message: avoid wrap-around when using length read from
+ message
+
+We would read (-1), and then add 1 to it, call message_peek_body(..., 0, ...),
+and when trying to make use of the data.
+
+The fuzzer test case is just for one site, but they all look similar.
+
+v2: fix two UINT8_MAX/UINT32_MAX mismatches founds by LGTM
+(cherry picked from commit 902000c19830f5e5a96e8948d691b42e91ecb1e7)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c           |  24 ++++++++++++++++++
+ ...h-603dfd98252375ac7dbced53c2ec312671939a36 | Bin 0 -> 40 bytes
+ 2 files changed, 24 insertions(+)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-603dfd98252375ac7dbced53c2ec312671939a36
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 613722a1a0..53cbd675b7 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -3414,6 +3414,10 @@ _public_ int sd_bus_message_read_basic(sd_bus_message *m, char type, void *p) {
+                                 return r;
+ 
+                         l = BUS_MESSAGE_BSWAP32(m, *(uint32_t*) q);
++                        if (l == UINT32_MAX)
++                                /* avoid overflow right below */
++                                return -EBADMSG;
++
+                         r = message_peek_body(m, &rindex, 1, l+1, &q);
+                         if (r < 0)
+                                 return r;
+@@ -3436,6 +3440,10 @@ _public_ int sd_bus_message_read_basic(sd_bus_message *m, char type, void *p) {
+                                 return r;
+ 
+                         l = *(uint8_t*) q;
++                        if (l == UINT8_MAX)
++                                /* avoid overflow right below */
++                                return -EBADMSG;
++
+                         r = message_peek_body(m, &rindex, 1, l+1, &q);
+                         if (r < 0)
+                                 return r;
+@@ -3701,6 +3709,10 @@ static int bus_message_enter_variant(
+                         return r;
+ 
+                 l = *(uint8_t*) q;
++                if (l == UINT8_MAX)
++                        /* avoid overflow right below */
++                        return -EBADMSG;
++
+                 r = message_peek_body(m, &rindex, 1, l+1, &q);
+                 if (r < 0)
+                         return r;
+@@ -4269,6 +4281,10 @@ _public_ int sd_bus_message_peek_type(sd_bus_message *m, char *type, const char
+                                         return r;
+ 
+                                 l = *(uint8_t*) q;
++                                if (l == UINT8_MAX)
++                                        /* avoid overflow right below */
++                                        return -EBADMSG;
++
+                                 r = message_peek_body(m, &rindex, 1, l+1, &q);
+                                 if (r < 0)
+                                         return r;
+@@ -4849,6 +4865,10 @@ static int message_peek_field_string(
+                 if (r < 0)
+                         return r;
+ 
++                if (l == UINT32_MAX)
++                        /* avoid overflow right below */
++                        return -EBADMSG;
++
+                 r = message_peek_fields(m, ri, 1, l+1, &q);
+                 if (r < 0)
+                         return r;
+@@ -4900,6 +4920,10 @@ static int message_peek_field_signature(
+                         return r;
+ 
+                 l = *(uint8_t*) q;
++                if (l == UINT8_MAX)
++                        /* avoid overflow right below */
++                        return -EBADMSG;
++
+                 r = message_peek_fields(m, ri, 1, l+1, &q);
+                 if (r < 0)
+                         return r;
+diff --git a/test/fuzz/fuzz-bus-message/crash-603dfd98252375ac7dbced53c2ec312671939a36 b/test/fuzz/fuzz-bus-message/crash-603dfd98252375ac7dbced53c2ec312671939a36
+new file mode 100644
+index 0000000000000000000000000000000000000000..b3fee9e07af4f925697a549bbc8ffc03a277fac0
+GIT binary patch
+literal 40
+mcmc~{Vqjzdg7laF|BC@>cE)0c{}2$`*K@IKT2AZ~5ElR}@e}O;
+
+literal 0
+HcmV?d00001
+

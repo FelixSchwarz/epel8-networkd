@@ -1,0 +1,59 @@
+From d212765dc94ba25c04e0e9a278586f0e86851e35 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Sat, 11 Aug 2018 08:32:20 +0200
+Subject: [PATCH] bus-message: fix skipping of array fields in !gvariant
+ messages
+
+We copied part of the string into a buffer that was off by two.
+If the element signature had length one, we'd copy 0 bytes and crash when
+looking at the "first" byte. Otherwise, we would crash because strncpy would
+not terminate the string.
+
+(cherry picked from commit 73777ddba5100fe6c0791cd37a91f24a515f3202)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c               |   8 ++++----
+ ...crash-37449529b1ad867f0c2671fa80aca5d7812a2b70 | Bin 0 -> 534 bytes
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-37449529b1ad867f0c2671fa80aca5d7812a2b70
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 09e72d89dd..202f1aab30 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -4981,18 +4981,18 @@ static int message_skip_fields(
+ 
+                 } else if (t == SD_BUS_TYPE_ARRAY) {
+ 
+-                        r = signature_element_length(*signature+1, &l);
++                        r = signature_element_length(*signature + 1, &l);
+                         if (r < 0)
+                                 return r;
+ 
+                         assert(l >= 1);
+                         {
+-                                char sig[l-1], *s;
++                                char sig[l + 1], *s = sig;
+                                 uint32_t nas;
+                                 int alignment;
+ 
+-                                strncpy(sig, *signature + 1, l-1);
+-                                s = sig;
++                                strncpy(sig, *signature + 1, l);
++                                sig[l] = '\0';
+ 
+                                 alignment = bus_type_get_alignment(sig[0]);
+                                 if (alignment < 0)
+diff --git a/test/fuzz/fuzz-bus-message/crash-37449529b1ad867f0c2671fa80aca5d7812a2b70 b/test/fuzz/fuzz-bus-message/crash-37449529b1ad867f0c2671fa80aca5d7812a2b70
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a20265a39e1b4a318b50aee2b13727ddc4113bf
+GIT binary patch
+literal 534
+zcmc~{WMHggWMD`aVqj=xU|>*W&P&W-;Q0Fg|9>Elfq|V9OfmRED27Bi2!jjC2Wn-|
+z17hYPAOVtNW-Ml42GVKy`9P9^ffdMS1=8h-IVt%J91NTwNgyEFV4&K>#6$*=MMgl(
+r%#fH?l1eMv=;=K=_yi-CK!KUB2_%6r0c0u^mlS2@rGxk|0FGY(dwVLU
+
+literal 0
+HcmV?d00001
+

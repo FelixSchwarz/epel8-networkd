@@ -15,7 +15,7 @@ Resolves: #1670126
 
 diff --git a/rules/40-elevator.rules b/rules/40-elevator.rules
 new file mode 100644
-index 000000000..dbe8fc81a
+index 0000000000..dbe8fc81a4
 --- /dev/null
 +++ b/rules/40-elevator.rules
 @@ -0,0 +1,20 @@

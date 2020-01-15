@@ -1,0 +1,126 @@
+From 38a5ae776dc62b42ef5ced8f9812771181af528b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Thu, 2 Aug 2018 14:25:11 +0200
+Subject: [PATCH] bus-message: fix calculation of offsets table
+
+The offsets specify the ends of variable length data. We would trust the
+incoming data, putting the offsets specified in our message
+into the offsets tables after doing some superficial verification.
+But when actually reading the data we apply alignment, so we would take
+the previous offset, align it, making it bigger then current offset, and
+then we'd try to read data of negative length.
+
+In the attached example, the message specifies the following offsets:
+[1, 4]
+but the alignment of those items is
+[1, 8]
+so we'd calculate the second item as starting at 8 and ending at 4.
+
+(cherry picked from commit 12603b84d2fb07603e2ea94b240c6b78ad17510e)
+
+Resolves: #1696224
+---
+ src/libsystemd/sd-bus/bus-message.c           |  36 +++++++++---------
+ ...h-e1b811da5ca494e494b77c6bd8e1c2f2989425c5 | Bin 0 -> 28 bytes
+ 2 files changed, 18 insertions(+), 18 deletions(-)
+ create mode 100644 test/fuzz/fuzz-bus-message/crash-e1b811da5ca494e494b77c6bd8e1c2f2989425c5
+
+diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
+index 81aaa7f59f..d0af34f632 100644
+--- a/src/libsystemd/sd-bus/bus-message.c
++++ b/src/libsystemd/sd-bus/bus-message.c
+@@ -3140,6 +3140,7 @@ static int container_next_item(sd_bus_message *m, struct bus_container *c, size_
+                         assert(alignment > 0);
+ 
+                         *rindex = ALIGN_TO(c->offsets[c->offset_index], alignment);
++                        assert(c->offsets[c->offset_index+1] >= *rindex);
+                         c->item_size = c->offsets[c->offset_index+1] - *rindex;
+                 } else {
+ 
+@@ -3179,6 +3180,7 @@ static int container_next_item(sd_bus_message *m, struct bus_container *c, size_
+                 assert(alignment > 0);
+ 
+                 *rindex = ALIGN_TO(c->offsets[c->offset_index], alignment);
++                assert(c->offsets[c->offset_index+1] >= *rindex);
+                 c->item_size = c->offsets[c->offset_index+1] - *rindex;
+ 
+                 c->offset_index++;
+@@ -3725,7 +3727,7 @@ static int build_struct_offsets(
+                 size_t *n_offsets) {
+ 
+         unsigned n_variable = 0, n_total = 0, v;
+-        size_t previous = 0, where;
++        size_t previous, where;
+         const char *p;
+         size_t sz;
+         void *q;
+@@ -3804,6 +3806,7 @@ static int build_struct_offsets(
+ 
+         /* Second, loop again and build an offset table */
+         p = signature;
++        previous = m->rindex;
+         while (*p != 0) {
+                 size_t n, offset;
+                 int k;
+@@ -3817,37 +3820,34 @@ static int build_struct_offsets(
+                         memcpy(t, p, n);
+                         t[n] = 0;
+ 
++                        size_t align = bus_gvariant_get_alignment(t);
++                        assert(align > 0);
++
++                        /* The possible start of this member after including alignment */
++                        size_t start = ALIGN_TO(previous, align);
++
+                         k = bus_gvariant_get_size(t);
+                         if (k < 0) {
+                                 size_t x;
+ 
+-                                /* variable size */
++                                /* Variable size */
+                                 if (v > 0) {
+                                         v--;
+ 
+                                         x = bus_gvariant_read_word_le((uint8_t*) q + v*sz, sz);
+                                         if (x >= size)
+                                                 return -EBADMSG;
+-                                        if (m->rindex + x < previous)
+-                                                return -EBADMSG;
+                                 } else
+-                                        /* The last item's end
+-                                         * is determined from
+-                                         * the start of the
+-                                         * offset array */
++                                        /* The last item's end is determined
++                                         * from the start of the offset array */
+                                         x = size - (n_variable * sz);
+ 
+                                 offset = m->rindex + x;
+-
+-                        } else {
+-                                size_t align;
+-
+-                                /* fixed size */
+-                                align = bus_gvariant_get_alignment(t);
+-                                assert(align > 0);
+-
+-                                offset = (*n_offsets == 0 ? m->rindex  : ALIGN_TO((*offsets)[*n_offsets-1], align)) + k;
+-                        }
++                                if (offset < start)
++                                        return -EBADMSG;
++                        } else
++                                /* Fixed size */
++                                offset = start + k;
+                 }
+ 
+                 previous = (*offsets)[(*n_offsets)++] = offset;
+diff --git a/test/fuzz/fuzz-bus-message/crash-e1b811da5ca494e494b77c6bd8e1c2f2989425c5 b/test/fuzz/fuzz-bus-message/crash-e1b811da5ca494e494b77c6bd8e1c2f2989425c5
+new file mode 100644
+index 0000000000000000000000000000000000000000..9d3fa0035fd360a37833e8b58cc4aea90df9de83
+GIT binary patch
+literal 28
+fcmd1#|DTDG0Z1?a!8`>PAeqj{pplqVrYQgbfcytC
+
+literal 0
+HcmV?d00001
+

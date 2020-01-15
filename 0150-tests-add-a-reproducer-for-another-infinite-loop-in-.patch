@@ -1,0 +1,37 @@
+From 1d33acf3ae230456db55fb7d153047cbd6b76623 Mon Sep 17 00:00:00 2001
+From: Evgeny Vereshchagin <evvers@ya.ru>
+Date: Wed, 26 Sep 2018 18:09:09 +0000
+Subject: [PATCH] tests: add a reproducer for another infinite loop in
+ ndisc_handle_datagram
+
+(cherry picked from commit bbb393877b2cfcbe2f205c902ca7d9f7ce91f1a1)
+
+Resolves: #1696224
+---
+ ...imeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b | Bin 0 -> 71 bytes
+ test/fuzz-regressions/meson.build                  |   1 +
+ 2 files changed, 1 insertion(+)
+ create mode 100644 test/fuzz-regressions/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+
+diff --git a/test/fuzz-regressions/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b b/test/fuzz-regressions/fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+new file mode 100644
+index 0000000000000000000000000000000000000000..04e871fbcbddfe0642bd6855228bf8da163ad6e3
+GIT binary patch
+literal 71
+ucmZo;U}$4tu#$oUW@d)Jzy1TkUp6M@U)f7<HZepq{+E)%CJqy1WB>q<fgKkB
+
+literal 0
+HcmV?d00001
+
+diff --git a/test/fuzz-regressions/meson.build b/test/fuzz-regressions/meson.build
+index 7aa2cbce11..776ee07f67 100644
+--- a/test/fuzz-regressions/meson.build
++++ b/test/fuzz-regressions/meson.build
+@@ -23,6 +23,7 @@ fuzz_regression_tests = '''
+         fuzz-journald-syslog/github-9827
+         fuzz-journald-syslog/github-9829
+         fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
++        fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+         fuzz-unit-file/oss-fuzz-6884
+         fuzz-unit-file/oss-fuzz-6885
+         fuzz-unit-file/oss-fuzz-6886

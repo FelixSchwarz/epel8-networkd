@@ -1,4 +1,4 @@
-From 4573166e9384f4ffe17a87f7b41aacc4cfe8bad0 Mon Sep 17 00:00:00 2001
+From f2f784ac5e4b7d0e20eadf97049eaec8c685e5fe Mon Sep 17 00:00:00 2001
 From: Lennart Poettering <lennart@poettering.net>
 Date: Wed, 13 Feb 2019 16:51:22 +0100
 Subject: [PATCH] sd-bus: if we receive an invalid dbus message, ignore and
@@ -20,7 +20,7 @@ Related: #1678641
  1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/src/libsystemd/sd-bus/bus-socket.c b/src/libsystemd/sd-bus/bus-socket.c
-index a5513d1ab..17cfa8e1f 100644
+index a5513d1ab5..17cfa8e1fd 100644
 --- a/src/libsystemd/sd-bus/bus-socket.c
 +++ b/src/libsystemd/sd-bus/bus-socket.c
 @@ -1078,7 +1078,7 @@ static int bus_socket_read_message_need(sd_bus *bus, size_t *need) {

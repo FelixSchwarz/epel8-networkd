@@ -20,7 +20,7 @@ Resolves: #1664977
  2 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/src/journal-remote/journal-remote-main.c b/src/journal-remote/journal-remote-main.c
-index e9b3702e8..5b0bbba31 100644
+index e9b3702e8a..5b0bbba310 100644
 --- a/src/journal-remote/journal-remote-main.c
 +++ b/src/journal-remote/journal-remote-main.c
 @@ -211,9 +211,12 @@ static int process_http_upload(
@@ -39,7 +39,7 @@ index e9b3702e8..5b0bbba31 100644
                                  log_warning_errno(r, "Failed to process data, aborting connection %p: %m",
                                                    connection);
 diff --git a/src/journal-remote/journal-remote.c b/src/journal-remote/journal-remote.c
-index beb75a1cb..67e3a70c0 100644
+index beb75a1cb4..67e3a70c06 100644
 --- a/src/journal-remote/journal-remote.c
 +++ b/src/journal-remote/journal-remote.c
 @@ -408,7 +408,10 @@ int journal_remote_handle_raw_source(

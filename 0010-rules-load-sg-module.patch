@@ -9,7 +9,7 @@ Related: #1523227
  1 file changed, 3 insertions(+)
 
 diff --git a/rules/40-redhat.rules b/rules/40-redhat.rules
-index 556a3a3a9..305e75228 100644
+index 556a3a3a90..305e752285 100644
 --- a/rules/40-redhat.rules
 +++ b/rules/40-redhat.rules
 @@ -8,3 +8,6 @@ SUBSYSTEM=="memory", ACTION=="add", ATTR{state}=="offline", ATTR{state}="online"

@@ -1,0 +1,141 @@
+From 6a8c286e1a45dfa64c48cd4d5a911d4f71de9a16 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Zbigniew=20J=C4=99drzejewski-Szmek?= <zbyszek@in.waw.pl>
+Date: Fri, 10 Aug 2018 17:15:05 +0200
+Subject: [PATCH] meson: treat all fuzz cases as unit tests
+
+318/365 fuzz-bus-message:crash-26bba7182dedc8848939931d9fcefcb7922f2e56:address  OK       0.03 s
+319/365 fuzz-bus-message:crash-29ed3c202e0ffade3cad42c8bbeb6cc68a21eb8e:address  OK       0.03 s
+320/365 fuzz-bus-message:crash-b88ad9ecf4aacf4a0caca5b5543953265367f084:address  OK       0.03 s
+321/365 fuzz-bus-message:crash-c1b37b4729b42c0c05b23cba4eed5d8102498a1e:address  OK       0.03 s
+322/365 fuzz-bus-message:crash-d8f3941c74219b4c03532c9b244d5ea539c61af5:address  OK       0.03 s
+323/365 fuzz-bus-message:crash-e1b811da5ca494e494b77c6bd8e1c2f2989425c5:address  OK       0.03 s
+324/365 fuzz-bus-message:leak-c09c0e2256d43bc5e2d02748c8d8760e7bc25d20:address  OK       0.04 s
+325/365 fuzz-bus-message:message1:address       OK       0.03 s
+326/365 fuzz-bus-message:timeout-08ee8f6446a4064db064e8e0b3d220147f7d0b5b:address  OK       0.03 s
+327/365 fuzz-dhcp-server:discover-existing:address  OK       0.04 s
+328/365 fuzz-dhcp-server:discover-new:address   OK       0.03 s
+329/365 fuzz-dhcp-server:release:address        OK       0.04 s
+330/365 fuzz-dhcp-server:request-existing:address  OK       0.03 s
+331/365 fuzz-dhcp-server:request-new:address    OK       0.03 s
+332/365 fuzz-dhcp-server:request-reboot:address  OK       0.03 s
+333/365 fuzz-dhcp-server:request-renew:address  OK       0.03 s
+334/365 fuzz-dns-packet:issue-7888:address      OK       0.03 s
+335/365 fuzz-dns-packet:oss-fuzz-5465:address   OK       0.03 s
+336/365 fuzz-journal-remote:crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76:address  OK       0.06 s
+337/365 fuzz-journal-remote:crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45:address  OK       0.04 s
+338/365 fuzz-journal-remote:invalid-ts.txt:address  OK       0.04 s
+339/365 fuzz-journal-remote:oss-fuzz-8659:address  OK       0.06 s
+340/365 fuzz-journal-remote:oss-fuzz-8686:address  OK       0.04 s
+341/365 fuzz-journal-remote:sample.txt:address  OK       0.07 s
+342/365 fuzz-unit-file:directives.service:address  OK       0.03 s
+343/365 fuzz-unit-file:empty.scope:address      OK       0.04 s
+344/365 fuzz-unit-file:machine.slice:address    OK       0.03 s
+345/365 fuzz-unit-file:oss-fuzz-6884:address    OK       0.05 s
+346/365 fuzz-unit-file:oss-fuzz-6885:address    OK       0.03 s
+347/365 fuzz-unit-file:oss-fuzz-6886:address    OK       0.04 s
+348/365 fuzz-unit-file:oss-fuzz-6892:address    OK       0.03 s
+349/365 fuzz-unit-file:oss-fuzz-6897:address    OK       0.05 s
+350/365 fuzz-unit-file:oss-fuzz-6897-evverx:address  OK       0.04 s
+351/365 fuzz-unit-file:oss-fuzz-6908:address    OK       0.05 s
+352/365 fuzz-unit-file:oss-fuzz-6917:address    OK       0.06 s
+353/365 fuzz-unit-file:oss-fuzz-6977:address    OK       0.08 s
+354/365 fuzz-unit-file:oss-fuzz-6977-unminimized:address  OK       0.10 s
+355/365 fuzz-unit-file:oss-fuzz-7004:address    OK       0.03 s
+356/365 fuzz-unit-file:oss-fuzz-8064:address    OK       0.03 s
+357/365 fuzz-unit-file:oss-fuzz-8827:address    OK       0.50 s
+358/365 fuzz-unit-file:proc-sys-fs-binfmt_misc.automount:address  OK       0.03 s
+359/365 fuzz-unit-file:syslog.socket:address    OK       0.03 s
+360/365 fuzz-unit-file:systemd-ask-password-console.path:address  OK       0.03 s
+361/365 fuzz-unit-file:systemd-machined.service:address  OK       0.03 s
+362/365 fuzz-unit-file:systemd-resolved.service:address  OK       0.03 s
+363/365 fuzz-unit-file:systemd-tmpfiles-clean.timer:address  OK       0.03 s
+364/365 fuzz-unit-file:timers.target:address    OK       0.03 s
+365/365 fuzz-unit-file:var-lib-machines.mount:address  OK       0.04 s
+
+This gives us slightly nicer coverage in the normal test run.
+
+When in a git repo, git ls-files is used to get a list of files known to git.
+This mirrors what update-man-rules does for man files. Only looking at files
+known to git makes it easier to not forget to commit the test file to git,
+and also makes bisecting easier if some files are left in repo.
+
+When outside of a git repo, we expect to be unpacked from a tarball, so just
+using all files reported by ls is OK.
+
+(cherry picked from commit e6bad6746151c79a5f408e95714ffa5cea290ab0)
+
+Resolves: #1696224
+---
+ meson.build           |  2 +-
+ test/fuzz/meson.build | 48 ++++++++++++++++++-------------------------
+ 2 files changed, 21 insertions(+), 29 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index fe161e5ec5..04b461dcd4 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2804,7 +2804,7 @@ foreach tuple : sanitizers
+                                 test('@0@:@1@:@2@'.format(b, c, sanitizer),
+                                      env,
+                                      args : [exe.full_path(),
+-                                             join_paths(meson.source_root(), 'test/fuzz', p)])
++                                             join_paths(meson.source_root(), p)])
+                         endif
+                 endforeach
+         endif
+diff --git a/test/fuzz/meson.build b/test/fuzz/meson.build
+index b98436a4af..56d0f69660 100644
+--- a/test/fuzz/meson.build
++++ b/test/fuzz/meson.build
+@@ -11,31 +11,23 @@ sanitize_address = custom_target(
+ 
+ sanitizers = [['address', sanitize_address]]
+ 
+-fuzz_regression_tests = '''
+-        fuzz-dns-packet/issue-7888
+-        fuzz-dns-packet/oss-fuzz-5465
+-        fuzz-journal-remote/crash-5a8f03d4c3a46fcded39527084f437e8e4b54b76
+-        fuzz-journal-remote/crash-96dee870ea66d03e89ac321eee28ea63a9b9aa45
+-        fuzz-journal-remote/oss-fuzz-8659
+-        fuzz-journal-remote/oss-fuzz-8686
+-        fuzz-journald-syslog/github-9795
+-        fuzz-journald-syslog/github-9820
+-        fuzz-journald-syslog/github-9827
+-        fuzz-journald-syslog/github-9829
+-        fuzz-ndisc-rs/timeout-2815b773c712fa33bea62f541dfa3017c64ea2f1
+-        fuzz-ndisc-rs/timeout-61fff7fd1e5dcc07e1b656baab29065ce634ad5b
+-        fuzz-unit-file/oss-fuzz-6884
+-        fuzz-unit-file/oss-fuzz-6885
+-        fuzz-unit-file/oss-fuzz-6886
+-        fuzz-unit-file/oss-fuzz-6892
+-        fuzz-unit-file/oss-fuzz-6897
+-        fuzz-unit-file/oss-fuzz-6897-evverx
+-        fuzz-unit-file/oss-fuzz-6908
+-        fuzz-unit-file/oss-fuzz-6917
+-        fuzz-unit-file/oss-fuzz-6977
+-        fuzz-unit-file/oss-fuzz-6977-unminimized
+-        fuzz-unit-file/oss-fuzz-7004
+-        fuzz-unit-file/oss-fuzz-8064
+-        fuzz-unit-file/oss-fuzz-8827
+-        fuzz-unit-file/oss-fuzz-10007
+-'''.split()
++if git.found()
++        out = run_command(
++                git,
++                '--git-dir=@0@/.git'.format(meson.source_root()),
++                 'ls-files', ':/test/fuzz/*/*')
++else
++        out = run_command(
++                'sh', '-c', 'ls @0@/*/*'.format(meson.current_source_dir()))
++endif
++
++fuzz_regression_tests = []
++foreach p : out.stdout().split()
++        # Remove the last entry which is ''.
++        #
++        # Also, backslashes get mangled, so skip test. See
++        # https://github.com/mesonbuild/meson/issues/1564.
++        if not p.contains('\\')
++                fuzz_regression_tests += p
++        endif
++endforeach

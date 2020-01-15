@@ -13,11 +13,11 @@
 Name:           systemd-networkd
 Url:            http://www.freedesktop.org/wiki/Software/systemd
 Version:        239
-Release:        13%{?dist}_0.5.2
+Release:        18%{?dist}_1.1
 # For a breakdown of the licensing, see README
 License:        LGPLv2+ and MIT and GPLv2+
-Summary:        System daemon that manages network configurations
-Requires:       systemd = %{version}-13%{?dist}_0.5
+Summary:        System and Service Manager
+Requires:       systemd = %{version}-%{release}
 
 # download tarballs with "spectool -g systemd.spec"
 %if %{defined gitcommit}
@@ -140,12 +140,139 @@ Patch0086: 0086-journald-correctly-attribute-log-messages-also-with-.patch
 Patch0087: 0087-test-replace-echo-with-socat.patch
 Patch0088: 0088-test-network-ignore-tunnel-devices-automatically-add.patch
 Patch0089: 0089-rules-add-elevator-kernel-command-line-parameter.patch
-Patch0090: 0090-rules-add-the-rule-that-adds-elevator-kernel-command.patch
-Patch0091: 0091-bus-socket-Fix-line_begins-to-accept-word-matching-f.patch
-Patch0092: 0092-Refuse-dbus-message-paths-longer-than-BUS_PATH_SIZE_.patch
-Patch0093: 0093-Allocate-temporary-strings-to-hold-dbus-paths-on-the.patch
-Patch0094: 0094-sd-bus-if-we-receive-an-invalid-dbus-message-ignore-.patch
-Patch0095: 0095-Revert-core-one-step-back-again-for-nspawn-we-actual.patch
+Patch0090: 0090-rule-syntax-check-allow-PROGRAM-as-an-assignment.patch
+Patch0091: 0091-rules-implement-new-memory-hotplug-policy.patch
+Patch0092: 0092-LGTM-make-LGTM.com-use-meson-from-pip.patch
+Patch0093: 0093-lgtm-use-python3.patch
+Patch0094: 0094-tools-use-print-function-in-Python-3-code.patch
+Patch0095: 0095-lgtm-add-a-custom-query-for-catching-the-use-of-fget.patch
+Patch0096: 0096-lgtm-drop-redundant-newlines.patch
+Patch0097: 0097-rules-add-the-rule-that-adds-elevator-kernel-command.patch
+Patch0098: 0098-test-add-TEST-24-UNIT-TESTS-running-all-basic-tests-.patch
+Patch0099: 0099-tests-create-the-asan-wrapper-automatically-if-syste.patch
+Patch0100: 0100-tests-add-a-wrapper-for-when-systemd-is-built-with-A.patch
+Patch0101: 0101-tests-redirect-ASAN-reports-on-journald-to-a-file.patch
+Patch0102: 0102-tests-use-the-asan-wrapper-to-boot-a-VM-container-if.patch
+Patch0103: 0103-tests-allow-passing-additional-arguments-to-nspawn-v.patch
+Patch0104: 0104-tests-also-run-TEST-01-BASIC-in-an-unprivileged-cont.patch
+Patch0105: 0105-test-don-t-overwrite-TESTDIR-if-already-set.patch
+Patch0106: 0106-bus-socket-Fix-line_begins-to-accept-word-matching-f.patch
+Patch0107: 0107-Refuse-dbus-message-paths-longer-than-BUS_PATH_SIZE_.patch
+Patch0108: 0108-Allocate-temporary-strings-to-hold-dbus-paths-on-the.patch
+Patch0109: 0109-sd-bus-if-we-receive-an-invalid-dbus-message-ignore-.patch
+Patch0110: 0110-meson-drop-misplaced-Wl-undefined-argument.patch
+Patch0111: 0111-Revert-core-one-step-back-again-for-nspawn-we-actual.patch
+Patch0112: 0112-tree-wide-shorten-error-logging-a-bit.patch
+Patch0113: 0113-nspawn-simplify-machine-terminate-bus-call.patch
+Patch0114: 0114-nspawn-merge-two-variable-declaration-lines.patch
+Patch0115: 0115-nspawn-rework-how-we-allocate-kill-scopes.patch
+Patch0116: 0116-unit-enqueue-cgroup-empty-check-event-if-the-last-re.patch
+Patch0117: 0117-Revert-journal-remove-journal-audit-socket.patch
+Patch0118: 0118-journal-don-t-enable-systemd-journald-audit.socket-b.patch
+Patch0119: 0119-logs-show-use-grey-color-for-de-emphasizing-journal-.patch
+Patch0120: 0120-units-add-Install-section-to-tmp.mount.patch
+Patch0121: 0121-nss-do-not-modify-errno-when-NSS_STATUS_NOTFOUND-or-.patch
+Patch0122: 0122-util.h-add-new-UNPROTECT_ERRNO-macro.patch
+Patch0123: 0123-nss-unportect-errno-before-writing-to-NSS-errnop.patch
+Patch0124: 0124-seccomp-reduce-logging-about-failure-to-add-syscall-.patch
+Patch0125: 0125-format-table-when-duplicating-a-cell-also-copy-the-c.patch
+Patch0126: 0126-format-table-optionally-make-specific-cells-clickabl.patch
+Patch0127: 0127-format-table-before-outputting-a-color-check-if-colo.patch
+Patch0128: 0128-format-table-add-option-to-store-format-percent-and-.patch
+Patch0129: 0129-format-table-optionally-allow-reversing-the-sort-ord.patch
+Patch0130: 0130-format-table-add-table_update-to-update-existing-ent.patch
+Patch0131: 0131-format-table-add-an-API-for-getting-the-cell-at-a-sp.patch
+Patch0132: 0132-format-table-always-underline-header-line.patch
+Patch0133: 0133-format-table-add-calls-to-query-the-data-in-a-specif.patch
+Patch0134: 0134-format-table-make-sure-we-never-call-memcmp-with-NUL.patch
+Patch0135: 0135-format-table-use-right-field-for-display.patch
+Patch0136: 0136-format-table-add-option-to-uppercase-cells-on-displa.patch
+Patch0137: 0137-format-table-never-try-to-reuse-cells-that-have-colo.patch
+Patch0138: 0138-locale-util-add-logic-to-output-smiley-emojis-at-var.patch
+Patch0139: 0139-analyze-add-new-security-verb.patch
+Patch0140: 0140-tests-add-a-rudimentary-fuzzer-for-server_process_sy.patch
+Patch0141: 0141-journald-make-it-clear-that-dev_kmsg_record-modifies.patch
+Patch0142: 0142-journald-free-the-allocated-memory-before-returning-.patch
+Patch0143: 0143-tests-rework-the-code-fuzzing-journald.patch
+Patch0144: 0144-journald-make-server_process_native_message-compatib.patch
+Patch0145: 0145-tests-add-a-fuzzer-for-server_process_native_message.patch
+Patch0146: 0146-tests-add-a-fuzzer-for-sd-ndisc.patch
+Patch0147: 0147-ndisc-fix-two-infinite-loops.patch
+Patch0148: 0148-tests-add-reproducers-for-several-issues-uncovered-w.patch
+Patch0149: 0149-tests-add-a-reproducer-for-an-infinite-loop-in-ndisc.patch
+Patch0150: 0150-tests-add-a-reproducer-for-another-infinite-loop-in-.patch
+Patch0151: 0151-fuzz-rename-fuzz-corpus-directory-to-just-fuzz.patch
+Patch0152: 0152-test-add-testcase-for-issue-10007-by-oss-fuzz.patch
+Patch0153: 0153-fuzz-unify-the-fuzz-regressions-directory-with-the-m.patch
+Patch0154: 0154-test-bus-marshal-use-cescaping-instead-of-hexmem.patch
+Patch0155: 0155-meson-add-Dlog-trace-to-set-LOG_TRACE.patch
+Patch0156: 0156-meson-allow-building-resolved-and-machined-without-n.patch
+Patch0157: 0157-meson-drop-duplicated-condition.patch
+Patch0158: 0158-meson-use-.source_root-in-more-places.patch
+Patch0159: 0159-meson-treat-all-fuzz-cases-as-unit-tests.patch
+Patch0160: 0160-fuzz-bus-message-add-fuzzer-for-message-parsing.patch
+Patch0161: 0161-bus-message-use-structured-initialization-to-avoid-u.patch
+Patch0162: 0162-bus-message-avoid-an-infinite-loop-on-empty-structur.patch
+Patch0163: 0163-bus-message-let-s-always-use-EBADMSG-when-the-messag.patch
+Patch0164: 0164-bus-message-rename-function-for-clarity.patch
+Patch0165: 0165-bus-message-use-define.patch
+Patch0166: 0166-bus-do-not-print-null-if-the-message-has-unknown-typ.patch
+Patch0167: 0167-bus-message-fix-calculation-of-offsets-table.patch
+Patch0168: 0168-bus-message-remove-duplicate-assignment.patch
+Patch0169: 0169-bus-message-fix-calculation-of-offsets-table-for-arr.patch
+Patch0170: 0170-bus-message-drop-asserts-in-functions-which-are-wrap.patch
+Patch0171: 0171-bus-message-output-debug-information-about-offset-tr.patch
+Patch0172: 0172-bus-message-fix-skipping-of-array-fields-in-gvariant.patch
+Patch0173: 0173-bus-message-also-properly-copy-struct-signature-when.patch
+Patch0174: 0174-fuzz-bus-message-add-two-test-cases-that-pass-now.patch
+Patch0175: 0175-bus-message-return-EBADMSG-not-EINVAL-on-invalid-gva.patch
+Patch0176: 0176-bus-message-avoid-wrap-around-when-using-length-read.patch
+Patch0177: 0177-util-do-not-use-stack-frame-for-parsing-arbitrary-in.patch
+Patch0178: 0178-travis-enable-ASan-and-UBSan-on-RHEL8.patch
+Patch0179: 0179-tests-keep-SYS_PTRACE-when-running-under-ASan.patch
+Patch0180: 0180-tree-wide-various-ubsan-zero-size-memory-fixes.patch
+Patch0181: 0181-util-introduce-memcmp_safe.patch
+Patch0182: 0182-test-socket-util-avoid-memleak-reported-by-valgrind.patch
+Patch0183: 0183-sd-journal-escape-binary-data-in-match_make_string.patch
+Patch0184: 0184-capability-introduce-CAP_TO_MASK_CORRECTED-macro-rep.patch
+Patch0185: 0185-sd-bus-use-size_t-when-dealing-with-memory-offsets.patch
+Patch0186: 0186-sd-bus-call-cap_last_cap-only-once-in-has_cap.patch
+Patch0187: 0187-mount-point-honour-AT_SYMLINK_FOLLOW-correctly.patch
+Patch0188: 0188-travis-switch-from-trusty-to-xenial.patch
+Patch0189: 0189-test-socket-util-Add-tests-for-receive_fd_iov-and-fr.patch
+Patch0190: 0190-socket-util-Introduce-send_one_fd_iov-and-receive_on.patch
+Patch0191: 0191-core-swap-order-of-n_storage_fds-and-n_socket_fds-pa.patch
+Patch0192: 0192-execute-use-our-usual-syntax-for-defining-bit-masks.patch
+Patch0193: 0193-core-introduce-new-Type-exec-service-type.patch
+Patch0194: 0194-man-document-the-new-Type-exec-type.patch
+Patch0195: 0195-sd-bus-allow-connecting-to-the-pseudo-container-.hos.patch
+Patch0196: 0196-sd-login-let-s-also-make-sd-login-understand-.host.patch
+Patch0197: 0197-test-add-test-for-Type-exec.patch
+Patch0198: 0198-journal-gateway-explicitly-declare-local-variables.patch
+Patch0199: 0199-tools-drop-unused-variable.patch
+Patch0200: 0200-journal-gateway-use-localStorage-cursor-only-when-it.patch
+Patch0201: 0201-sd-bus-deal-with-cookie-overruns.patch
+Patch0202: 0202-journal-remote-do-not-request-Content-Length-if-Tran.patch
+Patch0203: 0203-journal-do-not-remove-multiple-spaces-after-identifi.patch
+Patch0204: 0204-cryptsetup-Do-not-fallback-to-PLAIN-mapping-if-LUKS-.patch
+Patch0205: 0205-cryptsetup-call-crypt_load-for-LUKS-only-once.patch
+Patch0206: 0206-cryptsetup-Add-LUKS2-token-support.patch
+Patch0207: 0207-udev-scsi_id-fix-incorrect-page-length-when-get-devi.patch
+Patch0208: 0208-Change-job-mode-of-manager-triggered-restarts-to-JOB.patch
+Patch0209: 0209-bash-completion-analyze-support-security.patch
+Patch0210: 0210-man-note-that-journal-does-not-validate-syslog-field.patch
+Patch0211: 0211-rules-skip-memory-hotplug-on-ppc64.patch
+Patch0212: 0212-mount-simplify-proc-self-mountinfo-handler.patch
+Patch0213: 0213-mount-rescan-proc-self-mountinfo-before-processing-w.patch
+Patch0214: 0214-swap-scan-proc-swaps-before-processing-waitid-result.patch
+Patch0215: 0215-analyze-security-fix-potential-division-by-zero.patch
+Patch0216: 0216-journal-rely-on-_cleanup_free_-to-free-a-temporary-s.patch
+Patch0217: 0217-shared-but-util-drop-trusted-annotation-from-bus_ope.patch
+Patch0218: 0218-sd-bus-adjust-indentation-of-comments.patch
+Patch0219: 0219-resolved-do-not-run-loop-twice.patch
+Patch0220: 0220-resolved-allow-access-to-Set-Link-and-Revert-methods.patch
+Patch0221: 0221-resolved-query-polkit-only-after-parsing-the-data.patch
+
 # disable test to enable building with "systemd-nspawn" (+ COPR)
 Patch9990: 9990-disable-test-mount-util.patch
 
@@ -214,7 +341,7 @@ configurations.
 
 
 %prep
-%autosetup -n systemd-%{version} -S git_am
+%autosetup -n systemd-%{?gitcommit:%{gitcommit}}%{!?gitcommit:%{version}} -S git_am
 
 %build
 %define ntpvendor %(source /etc/os-release; echo ${ID})
@@ -324,7 +451,7 @@ fi
 %global _docdir_fmt systemd
 
 %files
-%license LICENSE.LGPL2.1
+%license LICENSE.GPL2 LICENSE.LGPL2.1
 %{_bindir}/networkctl
 
 %{_sysconfdir}/systemd/system/dbus-org.freedesktop.network1.service
@@ -367,6 +494,9 @@ fi
 
 
 %changelog
+* Wed Jan 15 2020 Felix Schwarz <fschwarz@fedoraproject.org> - 239-18.el8_1.1
+- update package to 239-18.el8_1.1
+
 * Wed Oct 16 2019 Felix Schwarz <fschwarz@fedoraproject.org> - 239-13_0.5.1
 - initial packaging of systemd-networkd based on systemd RPM from CentOS 8
 
