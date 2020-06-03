@@ -8,6 +8,9 @@ CentOS 8/RHEL 8 *without replacing Red Hat's systemd*.
 This work is based on Red Hat's systemd spec file and I tried to keep the changes as small
 as possible.
 
+#### Update 06/2020:  REPO IS DEPRECATED
+EPEL8 contains `systemd-networkd` as a separate package so I don't use these RPMs anymore.
+
 **Beta status**: I'm using this package for several VMs which have pretty simple networking configurations. Please run your own tests before using this in production.
 
 #### COPR for EPEL 8
